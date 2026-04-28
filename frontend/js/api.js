@@ -170,8 +170,10 @@ const API = (() => {
     // ==========================================
     const config = {
         get() { return get('/api/config'); },
-        save(data) { return put('/api/config', data); },
+        save(data, summary) { return put('/api/config', { config: data, summary: summary || '' }); },
         reset() { return post('/api/config/reset'); },
+        versions() { return get('/api/config/versions'); },
+        rollback(index) { return post(`/api/config/rollback/${index}`); },
     };
 
     // ==========================================

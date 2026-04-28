@@ -16,6 +16,7 @@ const App = (() => {
         config: ConfigPage,
         mcp: McpPage,
         logs: LogsPage,
+        about: AboutPage,
     };
 
     const pageTitles = {
@@ -30,6 +31,7 @@ const App = (() => {
         config: '系统配置',
         mcp: 'MCP 服务',
         logs: '操作日志',
+        about: '关于',
     };
 
     let _currentPage = null;
