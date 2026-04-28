@@ -306,7 +306,14 @@ def install_builtin(name: str, meta: Dict[str, Any]) -> Dict[str, Any]:
         )
 
     # 记录到 installed.json
-    _record_install(name, meta.get("version", "1.0.0"), "builtin")
+    installed_data = _load_installed()
+    installed_data["plugins"].append({
+        "name": name,
+        "version": meta.get("version", "1.0.0"),
+        "source": "builtin",
+        "installed_at": datetime.now().isoformat(),
+    })
+    _save_installed(installed_data)
 
     return {"success": True, "message": f"内置插件 '{name}' 安装成功"}
 

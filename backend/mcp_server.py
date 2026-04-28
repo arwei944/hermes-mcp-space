@@ -633,7 +633,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         return f"对话已记录到会话 {session_id[:16]}"
 
     else:
-        return f"未知工具: {name}"
+        raise ValueError(f"未知工具: {name}")
 
 
 async def _read_resource(uri: str) -> str:
