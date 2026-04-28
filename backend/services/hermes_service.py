@@ -399,9 +399,11 @@ class HermesService:
             for item in skills_dir.iterdir():
                 if item.is_dir():
                     skill_md = item / "SKILL.md"
+                    meta = self._read_skill_meta(item.name)
                     skills.append({
                         "name": item.name,
-                        "description": self._read_skill_description(skill_md),
+                        "description": meta.get("description") or self._read_skill_description(skill_md),
+                        "tags": meta.get("tags", []),
                         "has_skill_md": skill_md.exists(),
                         "path": str(item),
                         "format": "directory",
@@ -414,9 +416,11 @@ class HermesService:
                     # 跳过已作为目录处理的
                     if any(s["name"] == name for s in skills):
                         continue
+                    meta = self._read_skill_meta(name)
                     skills.append({
                         "name": name,
-                        "description": self._read_skill_description(item),
+                        "description": meta.get("description") or self._read_skill_description(item),
+                        "tags": meta.get("tags", []),
                         "has_skill_md": True,
                         "path": str(item),
                         "format": "file",
@@ -473,7 +477,7 @@ class HermesService:
 
         return {"name": name, "content": content, "files": files, "format": fmt}
 
-    def create_skill(self, name: str, content: str = "") -> Dict[str, Any]:
+    def create_skill(self, name: str, content: str = "", description: str = "", tags: list = None) -> Dict[str, Any]:
         """创建新技能（文件格式）"""
         skills_dir = get_skills_dir()
         skill_dir = skills_dir / name
@@ -484,12 +488,23 @@ class HermesService:
 
         try:
             skills_dir.mkdir(parents=True, exist_ok=True)
-            skill_file.write_text(content or f"# {name}\n\n技能描述", encoding="utf-8")
+            # 将 description 和 tags 写入内容头部
+            if not content:
+                content = f"# {name}\n\n{description or '技能描述'}"
+            elif description and not content.startswith(f"# {name}"):
+                content = f"# {name}\n\n> {description}\n\n{content}"
+            skill_file.write_text(content, encoding="utf-8")
+            # 保存元数据
+            if tags or description:
+                meta_file = skills_dir / f"{name}.meta.json"
+                import json
+                meta = {"description": description, "tags": tags or []}
+                meta_file.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
             return {"success": True, "message": f"技能 '{name}' 创建成功", "name": name}
         except Exception as e:
             return {"success": False, "message": f"创建失败: {str(e)}"}
 
-    def update_skill(self, name: str, content: str) -> Dict[str, Any]:
+    def update_skill(self, name: str, content: str = "", description: str = "", tags: list = None) -> Dict[str, Any]:
         """更新技能（支持目录和文件两种格式）"""
         skills_dir = get_skills_dir()
         skill_dir = skills_dir / name
@@ -502,6 +517,21 @@ class HermesService:
                 skill_file.write_text(content, encoding="utf-8")
             else:
                 return {"success": False, "message": f"技能 '{name}' 不存在"}
+            # 更新元数据
+            if tags is not None or description:
+                import json
+                meta_file = skills_dir / f"{name}.meta.json"
+                meta = {}
+                if meta_file.exists():
+                    try:
+                        meta = json.loads(meta_file.read_text(encoding="utf-8"))
+                    except Exception:
+                        pass
+                if description:
+                    meta["description"] = description
+                if tags is not None:
+                    meta["tags"] = tags
+                meta_file.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
             return {"success": True, "message": f"技能 '{name}' 更新成功", "name": name}
         except Exception as e:
             return {"success": False, "message": f"更新失败: {str(e)}"}
@@ -520,9 +550,24 @@ class HermesService:
                 skill_file.unlink()
             else:
                 return {"success": False, "message": f"技能 '{name}' 不存在"}
+            # 删除元数据文件
+            meta_file = skills_dir / f"{name}.meta.json"
+            if meta_file.exists():
+                meta_file.unlink()
             return {"success": True, "message": f"技能 '{name}' 已删除", "name": name}
         except Exception as e:
             return {"success": False, "message": f"删除失败: {str(e)}"}
+
+    def _read_skill_meta(self, name: str) -> dict:
+        """读取技能元数据文件"""
+        import json
+        meta_file = get_skills_dir() / f"{name}.meta.json"
+        if meta_file.exists():
+            try:
+                return json.loads(meta_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        return {}
 
     def _read_skill_description(self, skill_md: Path) -> str:
         """从 SKILL.md 中提取简短描述"""

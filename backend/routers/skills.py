@@ -18,11 +18,15 @@ class SkillCreateRequest(BaseModel):
     """创建技能请求体"""
     name: str = Field(..., description="技能名称", min_length=1, max_length=100)
     content: str = Field(default="", description="SKILL.md 内容")
+    description: str = Field(default="", description="技能描述")
+    tags: List[str] = Field(default_factory=list, description="标签列表")
 
 
 class SkillUpdateRequest(BaseModel):
     """更新技能请求体"""
-    content: str = Field(..., description="SKILL.md 内容")
+    content: str = Field(default="", description="SKILL.md 内容")
+    description: str = Field(default="", description="技能描述")
+    tags: Optional[List[str]] = Field(default=None, description="标签列表")
 
 
 @router.get("", summary="列出所有技能")
@@ -51,7 +55,7 @@ async def create_skill(request: SkillCreateRequest) -> Dict[str, Any]:
             detail="技能名称只能包含字母、数字、下划线、连字符和中文字符",
         )
 
-    result = hermes_service.create_skill(request.name, request.content)
+    result = hermes_service.create_skill(request.name, request.content, request.description, request.tags)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "创建失败"))
     return result
@@ -60,7 +64,7 @@ async def create_skill(request: SkillCreateRequest) -> Dict[str, Any]:
 @router.put("/{skill_name}", summary="更新技能")
 async def update_skill(skill_name: str, request: SkillUpdateRequest) -> Dict[str, Any]:
     """更新指定技能的 SKILL.md 内容"""
-    result = hermes_service.update_skill(skill_name, request.content)
+    result = hermes_service.update_skill(skill_name, request.content, request.description, request.tags)
     if not result.get("success"):
         raise HTTPException(status_code=404, detail=result.get("message", "更新失败"))
     return result
