@@ -34,6 +34,7 @@ const App = (() => {
         Components.Toast.init();
         Components.Modal.init();
         bindGlobalEvents();
+        initTheme();
 
         // 启动热更新检查
         API.checkForUpdate();
@@ -44,6 +45,25 @@ const App = (() => {
 
         // 初始路由
         handleRoute();
+    }
+
+    function initTheme() {
+        const saved = localStorage.getItem('hermes-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = saved === 'dark' || (!saved && prefersDark);
+        applyTheme(isDark);
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const current = document.documentElement.getAttribute('data-theme') === 'dark';
+            applyTheme(!current);
+        });
+    }
+
+    function applyTheme(isDark) {
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem('hermes-theme', isDark ? 'dark' : 'light');
     }
 
     async function checkBackendStatus() {

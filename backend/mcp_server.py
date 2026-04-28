@@ -51,6 +51,18 @@ def _get_tools():
             }
         },
         {
+            "name": "search_sessions",
+            "description": "搜索会话（按标题或模型名模糊匹配）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "keyword": {"type": "string", "description": "搜索关键词"},
+                    "limit": {"type": "integer", "default": 10, "description": "返回的最大数量"}
+                },
+                "required": ["keyword"]
+            }
+        },
+        {
             "name": "get_session_messages",
             "description": "获取指定会话的消息历史",
             "inputSchema": {
@@ -58,6 +70,17 @@ def _get_tools():
                 "properties": {
                     "session_id": {"type": "string", "description": "会话 ID"},
                     "limit": {"type": "integer", "default": 50, "description": "返回的最大消息数"}
+                },
+                "required": ["session_id"]
+            }
+        },
+        {
+            "name": "delete_session",
+            "description": "删除指定会话及其所有消息",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "要删除的会话 ID"}
                 },
                 "required": ["session_id"]
             }
@@ -84,6 +107,18 @@ def _get_tools():
             }
         },
         {
+            "name": "create_skill",
+            "description": "创建一个新技能",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "技能名称（英文、数字、下划线）"},
+                    "content": {"type": "string", "description": "技能内容（Markdown 格式）"}
+                },
+                "required": ["name"]
+            }
+        },
+        {
             "name": "read_memory",
             "description": "读取 Agent 的长期记忆（MEMORY.md）",
             "inputSchema": {"type": "object", "properties": {}}
@@ -102,6 +137,35 @@ def _get_tools():
                     "content": {"type": "string", "description": "要保存的记忆内容（Markdown 格式）"}
                 },
                 "required": ["content"]
+            }
+        },
+        {
+            "name": "write_user_profile",
+            "description": "写入/更新用户画像（USER.md）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "用户画像内容（Markdown 格式）"}
+                },
+                "required": ["content"]
+            }
+        },
+        {
+            "name": "list_cron_jobs",
+            "description": "列出所有定时任务",
+            "inputSchema": {"type": "object", "properties": {}}
+        },
+        {
+            "name": "create_cron_job",
+            "description": "创建一个定时任务",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "任务名称"},
+                    "schedule": {"type": "string", "description": "Cron 表达式，如 '0 9 * * *'"},
+                    "command": {"type": "string", "description": "要执行的命令或任务描述"}
+                },
+                "required": ["name", "schedule", "command"]
             }
         },
         {
@@ -160,11 +224,30 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         lines = []
         for s in result:
             lines.append(
-                f"- [{s.get('id', '?')}] {s.get('source', '?')} | "
-                f"{s.get('model', '?')} | {s.get('status', '?')} | "
-                f"{s.get('created_at', '?')}"
+                f"- [{s.get('id', '?')}] {s.get('title', s.get('source', '?'))} | "
+                f"{s.get('model', '?')} | {s.get('created_at', '?')}"
             )
         return f"共 {len(sessions)} 个会话:\n" + "\n".join(lines)
+
+    elif name == "search_sessions":
+        keyword = arguments["keyword"].lower()
+        limit = arguments.get("limit", 10)
+        sessions = hermes_service.list_sessions()
+        matched = [
+            s for s in sessions
+            if keyword in str(s.get("title", "")).lower()
+            or keyword in str(s.get("model", "")).lower()
+            or keyword in str(s.get("id", "")).lower()
+        ]
+        result = matched[:limit]
+        if not result:
+            return f"没有找到包含 '{arguments['keyword']}' 的会话"
+        lines = []
+        for s in result:
+            lines.append(
+                f"- [{s.get('id', '?')}] {s.get('title', '?')} | {s.get('model', '?')}"
+            )
+        return f"找到 {len(matched)} 个匹配会话:\n" + "\n".join(lines)
 
     elif name == "get_session_messages":
         messages = hermes_service.get_session_messages(arguments["session_id"])
@@ -212,6 +295,42 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 
     elif name == "write_memory":
         result = hermes_service.update_memory(memory=arguments["content"])
+        return result.get("message", "操作完成")
+
+    elif name == "write_user_profile":
+        result = hermes_service.update_memory(user=arguments["content"])
+        return result.get("message", "操作完成")
+
+    elif name == "delete_session":
+        success = hermes_service.delete_session(arguments["session_id"])
+        return f"会话 {arguments['session_id']} 已删除" if success else f"删除失败：会话 {arguments['session_id']} 不存在"
+
+    elif name == "create_skill":
+        result = hermes_service.create_skill(
+            name=arguments["name"],
+            content=arguments.get("content", ""),
+        )
+        return result.get("message", "操作完成")
+
+    elif name == "list_cron_jobs":
+        jobs = hermes_service.list_cron_jobs()
+        if not jobs:
+            return "当前没有定时任务"
+        lines = []
+        for j in jobs:
+            status = "✅" if j.get("status") == "active" else "⏸️"
+            lines.append(
+                f"{status} [{j.get('id', '?')}] {j.get('name', '?')} | "
+                f"{j.get('schedule', '?')} | {j.get('command', '?')}"
+            )
+        return f"共 {len(jobs)} 个定时任务:\n" + "\n".join(lines)
+
+    elif name == "create_cron_job":
+        result = hermes_service.create_cron_job({
+            "name": arguments["name"],
+            "schedule": arguments["schedule"],
+            "command": arguments["command"],
+        })
         return result.get("message", "操作完成")
 
     elif name == "get_system_status":
