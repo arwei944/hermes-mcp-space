@@ -5,6 +5,16 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '2.1.0',
+            date: '2026-04-28 22:30',
+            title: '第三方测试修复',
+            changes: [
+                'update_config 写入后清除配置缓存（修复配置不持久化）',
+                'install_plugin 支持 name 参数安装内置插件',
+                'install_plugin 移除 source 必填限制',
+                'MCP 工具描述更新（参数说明更准确）',
+            ],
+        },        {
             version: '2.0.0',
             date: '2026-04-28 22:00',
             title: 'v2.0 正式版 - 实时对话同步 + 全面优化',

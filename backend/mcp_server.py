@@ -271,13 +271,13 @@ def _get_tools():
         },
         {
             "name": "install_plugin",
-            "description": "从 Git 仓库安装插件",
+            "description": "安装插件（name=内置插件名 或 source=Git仓库URL）",
             "inputSchema": {
                 "type": "object",
                 "properties": {
+                    "name": {"type": "string", "description": "内置插件名称（如 code-analyzer）"},
                     "source": {"type": "string", "description": "Git 仓库 URL"}
-                },
-                "required": ["source"]
+                }
             }
         },
         {
@@ -484,7 +484,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '2.0.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '2.1.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -565,7 +565,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 
     elif name == "update_config":
         import yaml
-        from backend.config import get_hermes_home
+        from backend.config import get_hermes_home, reload_config
         hermes_home = get_hermes_home()
         config_path = hermes_home / "config.yaml"
         existing = {}
@@ -577,6 +577,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         existing.update(arguments)
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(yaml.dump(existing, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+        reload_config()  # 清除缓存，使 get_config 读取最新配置
         return f"配置已更新: {', '.join(arguments.keys())}"
 
     # ---- 插件管理 ----
@@ -590,10 +591,16 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 
     elif name == "install_plugin":
         from backend.services.plugin_service import plugin_service
+        plugin_name = arguments.get("name", "")
         source = arguments.get("source", "")
-        if not source:
-            return "错误: 请提供 source 参数（Git 仓库 URL）"
-        result = plugin_service.install_plugin(source)
+        if plugin_name:
+            # 按名称安装内置插件
+            result = plugin_service.install_builtin(plugin_name)
+        elif source:
+            # 按 Git URL 安装
+            result = plugin_service.install_plugin(source)
+        else:
+            return "错误: 请提供 name（内置插件名）或 source（Git 仓库 URL）参数"
         return result.get("message", "安装完成")
 
     elif name == "uninstall_plugin":
