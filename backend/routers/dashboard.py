@@ -45,8 +45,14 @@ async def get_dashboard():
 
     uptime_seconds = int(time.time() - _start_time)
     days, remainder = divmod(uptime_seconds, 86400)
-    hours, _ = divmod(remainder, 3600)
-    uptime_str = f"{days}天 {hours}小时" if days > 0 else f"{hours}小时"
+    hours, remainder = divmod(remainder, 3600)
+    minutes, _ = divmod(remainder, 60)
+    if days > 0:
+        uptime_str = f"{days}天 {hours}小时 {minutes}分钟"
+    elif hours > 0:
+        uptime_str = f"{hours}小时 {minutes}分钟"
+    else:
+        uptime_str = f"{minutes}分钟"
 
     mem_usage, cpu_usage = _get_system_resources()
 

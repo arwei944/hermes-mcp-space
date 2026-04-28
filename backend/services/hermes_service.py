@@ -320,7 +320,7 @@ class HermesService:
                     },
                     "required": ["query"],
                 },
-                "status": "inactive",
+                "status": "active",
             },
         ]
 
