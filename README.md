@@ -12,289 +12,214 @@ pinned: false
 
 # Hermes Agent MCP Space
 
-> **GitHub**: [arwei944/hermes-mcp-space](https://github.com/arwei944/hermes-mcp-space) | **魔搭**: [arwei944/hermes-mcp-space](https://www.modelscope.cn/arwei944/hermes-mcp-space)
+> **GitHub**: [arwei944/hermes-mcp-space](https://github.com/arwei944/hermes-mcp-space) | **HF Spaces**: [arwei944/hermes-mcp-space](https://huggingface.co/spaces/arwei944/hermes-mcp-space)
 
-基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的 MCP（Model Context Protocol）集成服务，部署为 ModelScope Gradio SDK Space，供 Trae、Cursor 等 MCP 客户端连接使用。
+Hermes Agent 的 MCP（Model Context Protocol）集成服务 + Web 管理面板。部署在 HF Spaces，供 Trae、Claude Desktop、Cursor 等 MCP 客户端连接使用。
 
-## 项目简介
+## 功能概览
 
-本项目将 Hermes Agent 的全部能力通过 MCP 协议暴露给外部 IDE 和工具，同时提供 Web 管理面板。支持两种部署模式：
-
-- **Gradio SDK 模式**：部署到魔搭社区（ModelScope），通过 SSE 传输协议供远程客户端连接
-- **本地 stdio 模式**：直接在本地运行，通过标准输入/输出供 IDE 集成
-
-## 功能特性
-
-### MCP 工具（24 个）
+### MCP 工具（16 个）
 
 | 类别 | 工具 | 说明 |
 |------|------|------|
-| **网络** | `hermes_web_search` | 网页搜索 |
-| | `hermes_web_extract` | 网页内容提取 |
-| **文件** | `hermes_read_file` | 读取文件 |
-| | `hermes_write_file` | 写入文件 |
-| | `hermes_patch_file` | 补丁修改文件 |
-| | `hermes_search_files` | 搜索文件内容 |
-| **执行** | `hermes_terminal` | 终端命令执行 |
-| | `hermes_execute_code` | 执行 Python 代码 |
-| **图片** | `hermes_vision_analyze` | 图片分析 |
-| | `hermes_image_generate` | 图片生成 |
-| **记忆** | `hermes_memory_read` | 读取记忆 |
-| | `hermes_memory_write` | 写入记忆 |
-| **技能** | `hermes_skills_list` | 列出技能 |
-| | `hermes_skill_view` | 查看技能 |
-| **会话** | `hermes_session_search` | 搜索历史会话 |
-| **任务** | `hermes_delegate_task` | 委托子任务 |
-| | `hermes_todo` | 任务规划 |
-| | `hermes_cronjob_manage` | 定时任务管理 |
-| **通信** | `hermes_send_message` | 发送消息 |
-| **浏览器** | `hermes_browser_navigate` | 浏览器导航 |
-| | `hermes_browser_click` | 浏览器点击 |
-| | `hermes_browser_type` | 浏览器输入 |
-| | `hermes_browser_screenshot` | 浏览器截图 |
-| **语音** | `hermes_text_to_speech` | 文字转语音 |
+| **会话** | `list_sessions` | 列出最近会话 |
+| | `search_sessions` | 按关键词搜索会话 |
+| | `get_session_messages` | 获取会话消息历史 |
+| | `delete_session` | 删除会话 |
+| **工具** | `list_tools` | 列出所有可用工具 |
+| **技能** | `list_skills` | 列出所有技能 |
+| | `get_skill_content` | 获取技能详细内容 |
+| | `create_skill` | 创建新技能 |
+| **记忆** | `read_memory` | 读取 Agent 长期记忆 |
+| | `read_user_profile` | 读取用户画像 |
+| | `write_memory` | 写入/更新记忆 |
+| | `write_user_profile` | 写入/更新用户画像 |
+| **定时任务** | `list_cron_jobs` | 列出定时任务 |
+| | `create_cron_job` | 创建定时任务 |
+| **系统** | `get_system_status` | 获取系统状态 |
+| | `get_dashboard_summary` | 获取仪表盘摘要 |
 
-### 管理面板
+### Web 管理面板（12 个页面）
 
-- 会话管理（查看、搜索、删除）
-- 工具和技能管理
-- 记忆管理
-- 定时任务管理
-- 子 Agent 管理
-- MCP 服务状态监控
+| 页面 | 功能 |
+|------|------|
+| 仪表盘 | 统计卡片 + 5 种 SVG 图表（环形图/柱状图/折线图/仪表盘） |
+| 会话管理 | 会话列表、搜索、删除 |
+| 会话对话 | 左右分栏，查看消息详情，支持搜索 |
+| 工具管理 | 工具列表、启用/禁用切换 |
+| 技能系统 | 在线编辑器 + Markdown 实时预览 + 模板插入 |
+| 记忆管理 | MEMORY.md / USER.md 编辑器，实时预览 |
+| 定时任务 | 完整 CRUD + 手动触发 + 弹窗表单 |
+| 子 Agent | Agent 列表、状态监控、终止 |
+| MCP 服务 | 状态监控、工具列表、Trae 配置一键复制 |
+| 操作日志 | 所有 API 操作记录，按级别/来源过滤 |
+| 系统配置 | 温度、日志级别等配置项 |
+| API 文档 | Swagger UI（/docs）+ ReDoc（/redoc） |
 
-## 部署到魔搭社区
+### 其他特性
 
-### 前置条件
+- **深色模式** — 自动跟随系统，手动切换，localStorage 持久化
+- **SSE 实时推送** — 写操作自动通知，仪表盘/日志自动刷新
+- **数据持久化** — 会话/记忆/技能/配置全部真实文件存储
+- **API 文档** — 自动生成 OpenAPI 3.0，99+ 端点
+- **CI/CD** — GitHub push → 自动部署到 HF Spaces
 
-1. 注册 [魔搭社区](https://modelscope.cn/) 账号
-2. 创建一个新的 Gradio SDK Space
+## 快速开始
 
-### 部署步骤
+### 1. Trae 接入 MCP
 
-1. **上传项目文件**
-
-   将以下文件上传到 Space 根目录：
-
-   ```
-   hermes-mcp-space/
-   ├── app.py                  # Gradio 入口（必须）
-   ├── mcp_server.py           # MCP 服务端
-   ├── requirements.txt        # Python 依赖（必须）
-   ├── config.yaml.example     # 配置示例
-   ├── Dockerfile              # Docker 构建文件
-   ├── backend/                # 管理面板后端
-   │   ├── __init__.py
-   │   ├── main.py
-   │   ├── config.py
-   │   ├── routers/
-   │   │   ├── __init__.py
-   │   │   ├── sessions.py
-   │   │   ├── tools.py
-   │   │   ├── skills.py
-   │   │   ├── memory.py
-   │   │   ├── cron.py
-   │   │   ├── agents.py
-   │   │   ├── config_api.py
-   │   │   └── mcp.py
-   │   └── services/
-   │       ├── __init__.py
-   │       ├── hermes_service.py
-   │       └── file_service.py
-   └── frontend/               # 管理面板前端
-       ├── index.html
-       ├── css/
-       │   └── style.css
-       └── js/
-           ├── app.js
-           ├── api.js
-           ├── components.js
-           └── pages/
-               ├── dashboard.js
-               ├── sessions.js
-               ├── tools.js
-               ├── skills.js
-               ├── memory.js
-               ├── cron.js
-               ├── agents.js
-               ├── config.js
-               └── mcp.js
-   ```
-
-2. **配置环境变量**（可选）
-
-   在 Space 设置中添加以下环境变量：
-
-   | 变量名 | 默认值 | 说明 |
-   |--------|--------|------|
-   | `PANEL_PORT` | `7860` | 管理面板端口 |
-   | `MCP_SSE_PORT` | `8765` | MCP SSE 端口 |
-   | `ENABLE_MCP_SSE` | `true` | 是否启用 MCP SSE |
-   | `HERMES_HOME` | `~/.hermes` | Hermes 数据目录 |
-   | `LOG_LEVEL` | `INFO` | 日志级别 |
-
-3. **等待部署完成**
-
-   Space 会自动安装依赖并启动服务。启动成功后，Gradio 界面和管理面板均可通过 Space URL 访问。
-
-## Trae 连接 MCP 配置
-
-### 远程 SSE 模式（连接部署在魔搭的 Space）
-
-1. 打开 Trae 设置 -> MCP 配置
-2. 添加以下配置：
+打开 Trae → 设置 → MCP → 添加配置：
 
 ```json
 {
   "mcpServers": {
     "hermes": {
-      "url": "https://your-space-url.modelscope.cn/sse"
+      "url": "https://arwei944-hermes-mcp-space.hf.space/mcp"
     }
   }
 }
 ```
 
-> 将 `your-space-url` 替换为你的 Space 实际地址。SSE 端点路径为 `/sse`，端口为 `8765`。如果 Space 使用了自定义域名，请相应调整。
+连接后即可在 Trae 中调用 16 个 Hermes 工具。
 
-### 本地 stdio 模式
+### 2. Claude Desktop 接入
 
-1. 克隆项目到本地
-2. 安装依赖：`pip install -r requirements.txt`
-3. 在 Trae MCP 配置中添加：
+编辑 `~/Library/Application Support/Claude/claude_desktop_config.json`：
 
 ```json
 {
   "mcpServers": {
     "hermes": {
-      "command": "python",
-      "args": ["/path/to/hermes-mcp-space/mcp_server.py"]
+      "url": "https://arwei944-hermes-mcp-space.hf.space/mcp"
     }
   }
 }
 ```
 
-### Cursor 配置
+### 3. 访问管理面板
 
-与 Trae 配置方式相同，在 Cursor 的 MCP 设置中添加相同的 JSON 配置即可。
+打开 https://arwei944-hermes-mcp-space.hf.space 即可查看 Web 管理面板。
 
-## 本地开发指南
-
-### 环境要求
-
-- Python 3.10+
-- pip
-
-### 安装
+## 本地开发
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-repo/hermes-mcp-space.git
+git clone https://github.com/arwei944/hermes-mcp-space.git
 cd hermes-mcp-space
 
 # 安装依赖
 pip install -r requirements.txt
 
-# 复制配置文件（可选）
-cp config.yaml.example ~/.hermes/config.yaml
-```
-
-### 运行 MCP Server（stdio 模式）
-
-```bash
-python mcp_server.py
-```
-
-### 运行 MCP Server（SSE 模式）
-
-```bash
-python mcp_server.py --transport sse --port 8765
-```
-
-### 运行完整服务（Gradio + 管理面板 + MCP SSE）
-
-```bash
+# 启动服务（Gradio + API + MCP）
 python app.py
 ```
 
-访问 http://localhost:7860 查看 Gradio 界面和管理面板。
+访问 http://localhost:7860 查看管理面板。
 
-### 命令行参数
+### 环境变量
 
-```
-python mcp_server.py [OPTIONS]
-
-选项:
-  --transport {stdio,sse}  传输方式（默认: stdio）
-  --host HOST              SSE 模式监听地址（默认: 0.0.0.0）
-  --port PORT              SSE 模式监听端口（默认: 8765）
-  --verbose                启用详细日志输出
-```
-
-### Docker 构建
-
-```bash
-# 构建镜像
-docker build -t hermes-mcp-space .
-
-# 运行容器
-docker run -d \
-  -p 7860:7860 \
-  -p 8765:8765 \
-  -v ~/.hermes:/root/.hermes \
-  --name hermes-mcp \
-  hermes-mcp-space
-```
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `HERMES_API_URL` | 空 | 远程 Hermes API 地址（配置后使用真实数据） |
+| `APP_VERSION` | `1.0.0` | 应用版本号 |
+| `HERMES_HOME` | `~/.hermes` | 数据存储目录 |
 
 ## 项目结构
 
 ```
 hermes-mcp-space/
-├── app.py                  # Gradio SDK 入口（Space 启动文件）
-├── mcp_server.py           # MCP 服务端（FastMCP 实现）
-├── requirements.txt        # Python 依赖
-├── Dockerfile              # Docker 构建文件
-├── config.yaml.example     # 配置示例
-├── backend/                # 管理面板后端（FastAPI）
-│   ├── __init__.py
-│   ├── main.py             # FastAPI 应用入口
-│   ├── config.py           # 配置管理
-│   ├── routers/            # API 路由
-│   │   ├── sessions.py     # 会话管理 API
-│   │   ├── tools.py        # 工具管理 API
-│   │   ├── skills.py       # 技能管理 API
-│   │   ├── memory.py       # 记忆管理 API
-│   │   ├── cron.py         # 定时任务 API
-│   │   ├── agents.py       # 子 Agent API
-│   │   ├── config_api.py   # 配置管理 API
-│   │   └── mcp.py          # MCP 状态 API
-│   └── services/           # 业务逻辑
-│       ├── hermes_service.py
-│       └── file_service.py
-└── frontend/               # 管理面板前端
-    ├── index.html
-    ├── css/style.css
+├── app.py                      # 入口（Gradio + FastAPI + MCP）
+├── mcp_server.py               # MCP 服务（Streamable HTTP + SSE）
+├── requirements.txt            # Python 依赖
+├── .github/workflows/
+│   └── deploy-hf.yml           # GitHub → HF Spaces 自动部署
+├── backend/
+│   ├── config.py               # 配置管理
+│   ├── middleware/
+│   │   └── events.py           # SSE 事件 + 操作日志中间件
+│   ├── routers/
+│   │   ├── sessions.py         # 会话 API
+│   │   ├── tools.py            # 工具 API
+│   │   ├── skills.py           # 技能 API
+│   │   ├── memory.py           # 记忆 API
+│   │   ├── cron.py             # 定时任务 API
+│   │   ├── agents.py           # 子 Agent API
+│   │   ├── mcp.py              # MCP 状态 API
+│   │   ├── config_api.py       # 配置 API
+│   │   ├── dashboard.py        # 仪表盘 API
+│   │   ├── events.py           # SSE 事件流
+│   │   └── logs.py             # 操作日志 API
+│   └── services/
+│       └── hermes_service.py   # 核心业务逻辑
+└── frontend/
+    ├── index.html              # 主页面
+    ├── css/style.css           # 样式（含深色模式）
     └── js/
-        ├── app.js
-        ├── api.js
-        ├── components.js
+        ├── api.js              # API 封装
+        ├── components.js       # 公共组件
+        ├── app.js              # 路由 + SSE 监听 + 主题
         └── pages/
+            ├── dashboard.js    # 仪表盘（含 SVG 图表）
+            ├── sessions.js     # 会话管理
+            ├── chat.js         # 会话对话
+            ├── tools.js        # 工具管理
+            ├── skills.js       # 技能编辑器
+            ├── memory.js       # 记忆管理
+            ├── cron.js         # 定时任务
+            ├── agents.js       # 子 Agent
+            ├── mcp.js          # MCP 服务
+            ├── logs.js         # 操作日志
+            └── config.js       # 系统配置
 ```
 
-## 降级模式
+## API 端点
 
-当 Hermes 核心模块未安装时，MCP Server 会自动进入降级模式：
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/health` | 健康检查 |
+| GET | `/api/status` | 系统状态 |
+| GET | `/api/dashboard` | 仪表盘数据 |
+| GET/POST | `/api/sessions` | 会话列表/创建 |
+| GET/DELETE | `/api/sessions/{id}` | 会话详情/删除 |
+| GET | `/api/sessions/{id}/messages` | 会话消息 |
+| GET | `/api/tools` | 工具列表 |
+| GET | `/api/toolsets` | 工具集列表 |
+| PUT | `/api/tools/{name}` | 切换工具状态 |
+| GET/POST | `/api/skills` | 技能列表/创建 |
+| PUT/DELETE | `/api/skills/{name}` | 更新/删除技能 |
+| GET/PUT | `/api/memory` | 读取/更新记忆 |
+| GET/POST | `/api/cron/jobs` | 定时任务列表/创建 |
+| PUT/DELETE | `/api/cron/jobs/{id}` | 更新/删除任务 |
+| POST | `/api/cron/jobs/{id}/trigger` | 手动触发任务 |
+| GET | `/api/agents` | Agent 列表 |
+| DELETE | `/api/agents/{id}` | 终止 Agent |
+| GET | `/api/mcp` | MCP 状态 |
+| GET/PUT | `/api/config` | 读取/更新配置 |
+| POST | `/api/config/reset` | 重置配置 |
+| GET/DELETE | `/api/logs` | 操作日志 |
+| GET | `/api/logs/stats` | 日志统计 |
+| GET | `/api/events` | SSE 事件流 |
+| GET | `/docs` | Swagger UI |
+| GET | `/redoc` | ReDoc |
+| POST | `/mcp` | MCP Streamable HTTP |
 
-- **可用工具**：文件读写、终端执行、代码执行、网页搜索/提取、记忆读写、技能查看、任务规划、定时任务管理
-- **不可用工具**：图片分析/生成、浏览器控制、语音合成、消息发送、子任务委托（这些工具需要 Hermes 原生支持）
+## 数据存储
 
-降级模式下，不可用的工具会返回友好的错误提示，不会导致服务崩溃。
+所有数据存储在 HF Spaces 持久化目录中：
 
-## 截图
-
-<!-- TODO: 添加截图 -->
-<!-- - Gradio 界面截图 -->
-<!-- - 管理面板截图 -->
-<!-- - Trae MCP 连接截图 -->
+```
+~/.hermes/
+├── data/
+│   ├── sessions.json      # 会话数据（JSON 持久化）
+│   ├── cron_jobs.json     # 定时任务
+│   └── sessions.db        # SQLite（如果本地有 Hermes）
+├── memories/
+│   ├── MEMORY.md          # Agent 长期记忆
+│   └── USER.md            # 用户画像
+├── skills/                # 技能文件
+│   └── {skill_name}.md
+└── config.yaml            # 系统配置
+```
 
 ## 许可证
 

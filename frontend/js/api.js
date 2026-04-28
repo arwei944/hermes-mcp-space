@@ -103,7 +103,7 @@ const API = (() => {
         list(params) { return get('/api/tools', params); },
         get(name) { return get(`/api/tools/${encodeURIComponent(name)}`); },
         toolsets() { return get('/api/toolsets'); },
-        toggle(name, enabled) { return put(`/api/tools/${encodeURIComponent(name)}`, { enabled }); },
+        toggle(name, enabled) { return post(`/api/tools/${encodeURIComponent(name)}/toggle`, { enabled }); },
     };
 
     // ==========================================
