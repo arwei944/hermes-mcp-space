@@ -38,6 +38,15 @@ async def list_cron_jobs() -> List[Dict[str, Any]]:
     return hermes_service.list_cron_jobs()
 
 
+@router.get("/jobs/{job_id}", summary="获取定时任务详情")
+async def get_cron_job(job_id: str) -> Dict[str, Any]:
+    """获取指定定时任务的详细信息"""
+    job = hermes_service.get_cron_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"任务 {job_id} 不存在")
+    return job
+
+
 @router.post("/jobs", summary="创建定时任务")
 async def create_cron_job(request: CronJobCreateRequest) -> Dict[str, Any]:
     """创建一个新的定时任务"""
@@ -77,3 +86,12 @@ async def get_cron_job_output(job_id: str) -> Dict[str, Any]:
     if not output:
         raise HTTPException(status_code=404, detail=f"任务 {job_id} 的输出不存在")
     return output
+
+
+@router.post("/jobs/{job_id}/trigger", summary="手动触发定时任务")
+async def trigger_cron_job(job_id: str) -> Dict[str, Any]:
+    """手动触发执行指定的定时任务"""
+    result = hermes_service.trigger_cron_job(job_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "触发失败"))
+    return result

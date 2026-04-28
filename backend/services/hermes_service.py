@@ -221,6 +221,20 @@ class HermesService:
                 return tool
         return None
 
+    def toggle_tool(self, name: str, enabled: bool = True) -> Dict[str, Any]:
+        """切换工具启用/禁用"""
+        if not self.hermes_available:
+            return {"success": False, "message": "Hermes Agent 未安装，无法切换工具状态"}
+        try:
+            import hermes  # type: ignore
+            if hasattr(hermes, "ToolRegistry"):
+                registry = hermes.ToolRegistry()
+                registry.set_enabled(name, enabled)
+                return {"success": True, "message": f"工具 {name} 已{'启用' if enabled else '禁用'}"}
+        except Exception as e:
+            return {"success": False, "message": f"操作失败: {str(e)}"}
+        return {"success": False, "message": f"工具 {name} 不存在"}
+
     def list_toolsets(self) -> List[Dict[str, Any]]:
         """列出所有工具集"""
         if not self.hermes_available:
@@ -484,6 +498,14 @@ class HermesService:
         """列出所有定时任务"""
         return self._load_jobs()
 
+    def get_cron_job(self, job_id: str) -> Optional[Dict[str, Any]]:
+        """获取单个定时任务"""
+        jobs = self._load_jobs()
+        for job in jobs:
+            if job.get("id") == job_id:
+                return job
+        return None
+
     def create_cron_job(self, job: Dict[str, Any]) -> Dict[str, Any]:
         """创建定时任务"""
         jobs = self._load_jobs()
@@ -535,6 +557,17 @@ class HermesService:
         except Exception:
             return None
 
+    def trigger_cron_job(self, job_id: str) -> Dict[str, Any]:
+        """手动触发定时任务"""
+        jobs = self._load_jobs()
+        for job in jobs:
+            if job.get("id") == job_id:
+                job["last_triggered"] = datetime.now().isoformat()
+                if self._save_jobs(jobs):
+                    return {"success": True, "message": f"任务 {job_id} 已触发", "job": job}
+                return {"success": False, "message": "保存任务失败"}
+        return {"success": False, "message": f"任务 {job_id} 不存在"}
+
     # ==================== 子 Agent 管理 ====================
 
     def list_agents(self) -> List[Dict[str, Any]]:
@@ -574,6 +607,20 @@ class HermesService:
             if agent["id"] == agent_id:
                 return agent
         return None
+
+    def terminate_agent(self, agent_id: str) -> Dict[str, Any]:
+        """终止子 Agent"""
+        if not self.hermes_available:
+            return {"success": False, "message": "Hermes Agent 未安装，无法终止 Agent"}
+        try:
+            import hermes  # type: ignore
+            if hasattr(hermes, "AgentManager"):
+                manager = hermes.AgentManager()
+                manager.terminate(agent_id)
+                return {"success": True, "message": f"Agent {agent_id} 已终止"}
+        except Exception as e:
+            return {"success": False, "message": f"终止失败: {str(e)}"}
+        return {"success": False, "message": f"Agent {agent_id} 不存在"}
 
     # ==================== MCP 服务状态 ====================
 

@@ -32,3 +32,13 @@ async def get_tool(tool_name: str) -> Dict[str, Any]:
 async def list_toolsets() -> List[Dict[str, Any]]:
     """获取所有工具集列表"""
     return hermes_service.list_toolsets()
+
+
+@router.put("/api/tools/{tool_name}", summary="切换工具启用/禁用")
+async def toggle_tool(tool_name: str, body: Dict[str, Any]) -> Dict[str, Any]:
+    """启用或禁用指定工具"""
+    enabled = body.get("enabled", True)
+    result = hermes_service.toggle_tool(tool_name, enabled)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("message", "操作失败"))
+    return result

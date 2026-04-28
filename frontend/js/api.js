@@ -86,7 +86,7 @@ const API = (() => {
     const del = (path) => request(path, { method: 'DELETE' });
 
     // ==========================================
-    // 会话管理 API
+    // 会话管理 API（已对齐）
     // ==========================================
     const sessions = {
         list(params) { return get('/api/sessions', params); },
@@ -97,53 +97,55 @@ const API = (() => {
     };
 
     // ==========================================
-    // 工具管理 API
+    // 工具管理 API（已对齐）
     // ==========================================
     const tools = {
         list(params) { return get('/api/tools', params); },
         get(name) { return get(`/api/tools/${encodeURIComponent(name)}`); },
-        toolsets() { return get('/api/tools/toolsets'); },
+        toolsets() { return get('/api/toolsets'); },
         toggle(name, enabled) { return put(`/api/tools/${encodeURIComponent(name)}`, { enabled }); },
     };
 
     // ==========================================
-    // 技能系统 API
+    // 技能系统 API（已对齐）
     // ==========================================
     const skills = {
         list(params) { return get('/api/skills', params); },
         get(name) { return get(`/api/skills/${encodeURIComponent(name)}`); },
-        content(name) { return get(`/api/skills/${encodeURIComponent(name)}/content`); },
+        content(name) { return get(`/api/skills/${encodeURIComponent(name)}`); },
         create(data) { return post('/api/skills', data); },
         update(name, data) { return put(`/api/skills/${encodeURIComponent(name)}`, data); },
         delete(name) { return del(`/api/skills/${encodeURIComponent(name)}`); },
     };
 
     // ==========================================
-    // 记忆管理 API
+    // 记忆管理 API（已对齐）
+    // 后端 PUT /api/memory 接受 { memory, user }
     // ==========================================
     const memory = {
         getMemory() { return get('/api/memory'); },
-        saveMemory(content) { return put('/api/memory', { content }); },
-        getUser() { return get('/api/memory/user'); },
-        saveUser(content) { return put('/api/memory/user', { content }); },
-        stats() { return get('/api/memory/stats'); },
+        saveMemory(content) { return put('/api/memory', { memory: content }); },
+        getUser() { return get('/api/memory'); },
+        saveUser(content) { return put('/api/memory', { user: content }); },
+        stats() { return get('/api/memory'); },
     };
 
     // ==========================================
-    // 定时任务 API
+    // 定时任务 API（已对齐）
+    // 后端路径: /api/cron/jobs
     // ==========================================
     const cron = {
-        list() { return get('/api/cron'); },
-        get(id) { return get(`/api/cron/${id}`); },
-        create(data) { return post('/api/cron', data); },
-        update(id, data) { return put(`/api/cron/${id}`, data); },
-        delete(id) { return del(`/api/cron/${id}`); },
-        trigger(id) { return post(`/api/cron/${id}/trigger`); },
-        history(id, params) { return get(`/api/cron/${id}/history`, params); },
+        list() { return get('/api/cron/jobs'); },
+        get(id) { return get(`/api/cron/jobs/${id}`); },
+        create(data) { return post('/api/cron/jobs', data); },
+        update(id, data) { return put(`/api/cron/jobs/${id}`, data); },
+        delete(id) { return del(`/api/cron/jobs/${id}`); },
+        trigger(id) { return post(`/api/cron/jobs/${id}/trigger`); },
+        history(id, params) { return get(`/api/cron/jobs/${id}/output`, params); },
     };
 
     // ==========================================
-    // 子 Agent API
+    // 子 Agent API（已对齐）
     // ==========================================
     const agents = {
         list() { return get('/api/agents'); },
@@ -152,17 +154,17 @@ const API = (() => {
     };
 
     // ==========================================
-    // MCP 服务 API
+    // MCP 服务 API（已对齐）
     // ==========================================
     const mcp = {
         status() { return get('/api/mcp'); },
         tools() { return get('/api/mcp/tools'); },
         restart() { return post('/api/mcp/restart'); },
-        connectionInfo() { return get('/api/mcp/connection'); },
+        connectionInfo() { return get('/api/mcp'); },
     };
 
     // ==========================================
-    // 系统配置 API
+    // 系统配置 API（已对齐）
     // ==========================================
     const config = {
         get() { return get('/api/config'); },
@@ -171,7 +173,7 @@ const API = (() => {
     };
 
     // ==========================================
-    // 系统 API
+    // 系统 API（已对齐）
     // ==========================================
     const system = {
         status() { return get('/api/status'); },

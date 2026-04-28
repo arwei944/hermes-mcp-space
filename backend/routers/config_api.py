@@ -87,3 +87,39 @@ async def update_config(body: Dict[str, Any]) -> Dict[str, Any]:
         "message": "配置已更新",
         "updated_keys": list(body.keys()),
     }
+
+
+@router.post("/reset", summary="重置配置为默认值")
+async def reset_config() -> Dict[str, Any]:
+    """重置所有配置为默认值"""
+    from backend.config import get_hermes_home
+    from pathlib import Path
+    import shutil
+
+    hermes_home = get_hermes_home()
+    config_yaml_path = hermes_home / "config.yaml"
+    backup_path = hermes_home / "config.yaml.bak"
+
+    # 备份当前配置
+    if config_yaml_path.exists():
+        shutil.copy2(str(config_yaml_path), str(backup_path))
+
+    # 写入默认配置
+    default_config = {
+        "model": "gpt-4o",
+        "temperature": 0.7,
+        "log_level": "info",
+        "mcp_enabled": True,
+        "mcp_port": 8765,
+    }
+
+    import yaml
+    config_yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    config_yaml_path.write_text(
+        yaml.dump(default_config, allow_unicode=True, default_flow_style=False),
+        encoding="utf-8",
+    )
+
+    reload_config()
+
+    return {"success": True, "message": "配置已重置为默认值"}
