@@ -128,6 +128,14 @@ def _patched_create_app(blocks, **kwargs):
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")
 
+    # Mount MCP server (manual implementation - Streamable HTTP + SSE)
+    try:
+        from backend.mcp_server import router as mcp_router
+        app.include_router(mcp_router)
+        logger.info("MCP server routes mounted (/mcp + /sse)")
+    except Exception as e:
+        logger.warning(f"Failed to mount MCP server: {e}")
+
     logger.info("Custom routes injected into Gradio app")
     return app
 

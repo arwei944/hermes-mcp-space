@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "hermes": {
-      "url": "https://arwei944-hermes-mcp-space.hf.space/sse"
+      "url": "https://arwei944-hermes-mcp-space.hf.space/mcp"
     }
   }
 }
