@@ -1,3 +1,15 @@
+---
+title: Hermes Agent MCP Space
+emoji: ☤
+colorFrom: indigo
+colorTo: purple
+sdk: gradio
+sdk_version: "5.49.1"
+python_version: "3.11"
+app_file: app.py
+pinned: false
+---
+
 # Hermes Agent MCP Space
 
 > **GitHub**: [arwei944/hermes-mcp-space](https://github.com/arwei944/hermes-mcp-space) | **魔搭**: [arwei944/hermes-mcp-space](https://www.modelscope.cn/arwei944/hermes-mcp-space)
