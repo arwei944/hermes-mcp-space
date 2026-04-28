@@ -1,7 +1,6 @@
 /**
- * 会话页面 (Mac 极简风格)
- * 融合会话管理 + 会话对话：左侧列表，右侧对话
- * 无感操作：新建/删除不刷新整个页面
+ * 会话页面 - 智能体与用户对话实时记录器
+ * 只读模式：会话由智能体通过 MCP 自动创建，消息实时推送展示
  */
 
 const SessionsPage = (() => {
@@ -66,7 +65,11 @@ const SessionsPage = (() => {
         const activeCount = _sessions.filter(s => s.status === 'active').length;
 
         const listHtml = filtered.length === 0
-            ? `<div style="padding:20px;text-align:center;color:var(--text-tertiary)">暂无会话</div>`
+            ? `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)">
+                <div style="font-size:32px;margin-bottom:12px">📡</div>
+                <div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div>
+                <div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div>
+              </div>`
             : filtered.map(s => {
                 const id = s.id || s.session_id;
                 const isActive = id === _currentId;
@@ -76,7 +79,6 @@ const SessionsPage = (() => {
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
                             ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
-                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">✕</button>
                         </div>
                     </div>
                     <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
@@ -96,19 +98,20 @@ const SessionsPage = (() => {
                 </div>
                 <div style="display:flex;gap:8px;align-items:center">
                     <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
-                    <button type="button" class="btn btn-sm btn-ghost" data-action="compressSession" data-id="${_currentId}">压缩</button>
-                    <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
                 </div>
             </div>` : '';
 
         const messagesHtml = !_currentId
             ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">💬</div>
-                <div style="font-size:14px;margin-bottom:8px">选择或创建一个会话</div>
-                <button type="button" class="btn btn-primary" data-action="showCreate">创建新会话</button>
+                <div style="font-size:32px;margin-bottom:12px">📡</div>
+                <div style="font-size:14px;margin-bottom:4px">选择左侧会话查看对话记录</div>
+                <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
               </div>`
             : _messages.length === 0
-            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">暂无消息，发送第一条消息吧</div>`
+            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
+                <div style="font-size:24px;margin-bottom:8px">📝</div>
+                <div>等待消息...</div>
+              </div>`
             : `<div class="chat-messages" id="chatMessages">
                 ${_messages.map(m => {
                     const isUser = m.role === 'user';
@@ -124,17 +127,11 @@ const SessionsPage = (() => {
                 }).join('')}
             </div>`;
 
-        const inputHtml = _currentId ? `
-            <div class="chat-input-bar">
-                <input type="text" class="form-input" id="chatInput" placeholder="输入消息..." style="flex:1">
-                <button type="button" class="btn btn-primary" data-action="sendMessage" style="padding:8px 16px">发送</button>
-            </div>` : '';
-
         return `<div class="chat-layout">
             <div class="chat-sidebar">
                 <div class="chat-sidebar-header">
-                    <h3>会话</h3>
-                    <button type="button" class="btn btn-sm btn-primary" data-action="showCreate">+ 新建</button>
+                    <h3>对话记录</h3>
+                    <span style="font-size:11px;color:var(--text-tertiary)">实时同步</span>
                 </div>
                 <div class="chat-sidebar-search">
                     <input type="text" id="sessionSearch" placeholder="搜索会话..." value="${Components.escapeHtml(_searchTerm)}">
@@ -151,7 +148,6 @@ const SessionsPage = (() => {
             <div class="chat-main">
                 ${headerHtml}
                 ${messagesHtml}
-                ${inputHtml}
             </div>
         </div>`;
     }
@@ -164,7 +160,7 @@ const SessionsPage = (() => {
         const activeCount = _sessions.filter(s => s.status === 'active').length;
 
         if (filtered.length === 0) {
-            listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-tertiary)">暂无会话</div>';
+            listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">📡</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
         } else {
             listEl.innerHTML = filtered.map(s => {
                 const id = s.id || s.session_id;
@@ -175,7 +171,6 @@ const SessionsPage = (() => {
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
                             ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
-                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">✕</button>
                         </div>
                     </div>
                     <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
@@ -212,19 +207,20 @@ const SessionsPage = (() => {
                 </div>
                 <div style="display:flex;gap:8px;align-items:center">
                     <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
-                    <button type="button" class="btn btn-sm btn-ghost" data-action="compressSession" data-id="${_currentId}">压缩</button>
-                    <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
                 </div>
             </div>` : '';
 
         const messagesHtml = !_currentId
             ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">💬</div>
-                <div style="font-size:14px;margin-bottom:8px">选择或创建一个会话</div>
-                <button type="button" class="btn btn-primary" data-action="showCreate">创建新会话</button>
+                <div style="font-size:32px;margin-bottom:12px">📡</div>
+                <div style="font-size:14px;margin-bottom:4px">选择左侧会话查看对话记录</div>
+                <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
               </div>`
             : _messages.length === 0
-            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">暂无消息，发送第一条消息吧</div>`
+            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
+                <div style="font-size:24px;margin-bottom:8px">📝</div>
+                <div>等待消息...</div>
+              </div>`
             : `<div class="chat-messages" id="chatMessages">
                 ${_messages.map(m => {
                     const isUser = m.role === 'user';
@@ -240,42 +236,16 @@ const SessionsPage = (() => {
                 }).join('')}
             </div>`;
 
-        const inputHtml = _currentId ? `
-            <div class="chat-input-bar">
-                <input type="text" class="form-input" id="chatInput" placeholder="输入消息..." style="flex:1">
-                <button type="button" class="btn btn-primary" data-action="sendMessage" style="padding:8px 16px">发送</button>
-            </div>` : '';
-
-        mainEl.innerHTML = headerHtml + messagesHtml + inputHtml;
+        mainEl.innerHTML = headerHtml + messagesHtml;
         scrollToBottom();
     }
 
     async function select(id) {
         await loadMessages(id);
-        // 只更新列表高亮 + 右侧内容，不重建整个页面
         document.querySelectorAll('.session-item').forEach(el => {
             el.classList.toggle('active', el.dataset.id === id);
         });
         refreshMain();
-    }
-
-    async function sendMessage() {
-        const input = document.getElementById('chatInput');
-        if (!input || !_currentId) return;
-        const content = input.value.trim();
-        if (!content) return;
-        input.value = '';
-
-        const msg = { role: 'user', content, timestamp: new Date().toISOString() };
-        _messages.push(msg);
-        appendMessage(msg);
-        scrollToBottom();
-
-        try {
-            await API.sessions.addMessage(_currentId, 'user', content);
-        } catch (err) {
-            Components.Toast.error(`发送失败: ${err.message}`);
-        }
     }
 
     function appendMessage(msg) {
@@ -301,95 +271,14 @@ const SessionsPage = (() => {
         }, 50);
     }
 
-    // ---- 无感新建：创建后直接切换，不刷新页面 ----
-    async function showCreate() {
-        try {
-            const result = await API.sessions.create({ title: `会话 ${new Date().toLocaleString('zh-CN')}`, source: 'web' });
-            const newSession = result.session || result;
-            const newId = newSession.id || newSession.session_id;
-
-            // 更新本地数据
-            _sessions.unshift(newSession);
-            _currentId = newId;
-            _messages = [];
-
-            // 局部更新
-            refreshSidebar();
-            refreshMain();
-            Components.Toast.success('会话已创建');
-        } catch (err) {
-            Components.Toast.error(`创建失败: ${err.message}`);
-        }
-    }
-
-    // ---- 无感删除：删除后局部更新，不刷新页面 ----
-    async function deleteSession(id) {
-        try {
-            await API.sessions.delete(id);
-
-            // 更新本地数据
-            _sessions = _sessions.filter(s => (s.id || s.session_id) !== id);
-
-            if (_currentId === id) {
-                // 删除的是当前会话，切换到下一个
-                _currentId = null;
-                _messages = [];
-                if (_sessions.length > 0) {
-                    const nextId = _sessions[0].id || _sessions[0].session_id;
-                    await loadMessages(nextId);
-                }
-            }
-
-            // 局部更新
-            refreshSidebar();
-            refreshMain();
-            Components.Toast.success('会话已删除');
-        } catch (err) {
-            Components.Toast.error(`删除失败: ${err.message}`);
-        }
-    }
-
-    async function compressSession(id) {
-        try {
-            Components.Toast.info('正在压缩...');
-            await API.sessions.compress(id);
-            Components.Toast.success('压缩完成');
-        } catch (err) {
-            Components.Toast.error(`压缩失败: ${err.message}`);
-        }
-    }
-
     function bindEvents() {
         const container = document.getElementById('contentBody');
         if (!container) return;
 
-        // 事件委托：所有 data-action 按钮
+        // 只保留 select 事件
         container.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn) return;
-
-            // 如果点击的是删除按钮，阻止冒泡到 session-item 的 select
-            if (btn.dataset.action === 'deleteSession') {
-                e.stopPropagation();
-            }
-
-            const action = btn.dataset.action;
-            const id = btn.dataset.id;
-
-            switch (action) {
-                case 'showCreate': showCreate(); break;
-                case 'select': select(id); break;
-                case 'deleteSession': deleteSession(id); break;
-                case 'compressSession': compressSession(id); break;
-                case 'sendMessage': sendMessage(); break;
-            }
-        });
-
-        // Enter 发送消息
-        container.addEventListener('keydown', (e) => {
-            if (e.target.id === 'chatInput' && e.key === 'Enter') {
-                sendMessage();
-            }
+            const item = e.target.closest('[data-action="select"]');
+            if (item) select(item.dataset.id);
         });
 
         // 搜索
@@ -426,14 +315,10 @@ const SessionsPage = (() => {
                 _messages.push(msg);
                 appendMessage(msg);
                 scrollToBottom();
-                // 更新消息计数
-                const countEl = document.querySelector('.chat-main-header span:last-of-type');
-                // 不需要额外操作，appendMessage 已处理
             } else {
-                // 其他会话有新消息 → 更新侧边栏（如果有新会话则刷新列表）
+                // 其他会话有新消息 → 刷新侧边栏
                 const exists = _sessions.some(s => (s.id || s.session_id) === sid);
                 if (!exists) {
-                    // 新会话被创建（通过 MCP），刷新整个列表
                     API.sessions.list().then(list => {
                         _sessions = list;
                         refreshSidebar();
@@ -443,7 +328,6 @@ const SessionsPage = (() => {
         }
 
         if (type === 'session.updated' || type === 'session.deleted') {
-            // 会话列表变化 → 刷新侧边栏
             API.sessions.list().then(list => {
                 _sessions = list;
                 refreshSidebar();
@@ -451,5 +335,5 @@ const SessionsPage = (() => {
         }
     }
 
-    return { render, select, sendMessage, showCreate, deleteSession, compressSession, onSSEEvent };
+    return { render, select, onSSEEvent };
 })();
