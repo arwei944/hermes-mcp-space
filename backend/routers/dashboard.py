@@ -81,10 +81,13 @@ async def get_dashboard():
 async def get_status():
     """System status overview"""
     mcp = hermes_service.get_mcp_status()
+    remote_url = os.environ.get("HERMES_API_URL", "")
     return {
         "status": "ok",
         "version": os.environ.get("APP_VERSION", "1.0.0"),
         "uptime": int(time.time() - _start_time),
         "mcp": mcp.get("status", "unknown"),
         "hermes_available": hermes_service.hermes_available,
+        "hermes_remote_url": remote_url if remote_url else None,
+        "data_source": "远程 API" if remote_url else ("本地" if hermes_service.hermes_available else "降级数据"),
     }

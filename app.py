@@ -114,7 +114,7 @@ def _patched_create_app(blocks, **kwargs):
     # Mount all backend API routers
     try:
         from backend.routers import (
-            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard, logs
+            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard, logs, events
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -126,6 +126,7 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(config_api.router)
         app.include_router(dashboard.router)
         app.include_router(logs.router)
+        app.include_router(events.router)
         logger.info("Backend API routers mounted successfully")
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")
@@ -170,6 +171,15 @@ def _patched_create_app(blocks, **kwargs):
         logger.warning(f"Failed to mount API docs: {e}")
 
     logger.info("Custom routes injected into Gradio app")
+
+    # Add SSE event emit middleware
+    try:
+        from backend.middleware.events import EventEmitMiddleware
+        app.add_middleware(EventEmitMiddleware)
+        logger.info("Event emit middleware added")
+    except Exception as e:
+        logger.warning(f"Failed to add event middleware: {e}")
+
     return app
 
 App.create_app = staticmethod(_patched_create_app)

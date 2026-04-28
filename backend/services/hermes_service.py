@@ -35,18 +35,38 @@ class HermesService:
     def __init__(self):
         self._hermes_available: Optional[bool] = None
         self._session_db_path: Optional[Path] = None
+        self._remote_url = os.environ.get("HERMES_API_URL", "").rstrip("/")
+        self._remote_cache: Dict[str, Any] = {}
+        self._cache_time: float = 0
 
     @property
     def hermes_available(self) -> bool:
-        """检测 Hermes Agent 是否可用"""
+        """检测 Hermes Agent 是否可用（本地模块或远程 API）"""
         if self._hermes_available is None:
-            try:
-                # 尝试导入 Hermes 核心模块
-                import hermes  # type: ignore
+            if self._remote_url:
                 self._hermes_available = True
-            except ImportError:
-                self._hermes_available = False
+            else:
+                try:
+                    import hermes  # type: ignore
+                    self._hermes_available = True
+                except ImportError:
+                    self._hermes_available = False
         return self._hermes_available
+
+    async def _fetch_remote(self, path: str) -> Optional[Any]:
+        """从远程 Hermes API 获取数据"""
+        import time
+        if not self._remote_url:
+            return None
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(f"{self._remote_url}{path}")
+                if resp.status_code == 200:
+                    return resp.json()
+        except Exception:
+            pass
+        return None
 
     def _get_session_db_path(self) -> Optional[Path]:
         """获取会话数据库路径"""

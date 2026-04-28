@@ -33,6 +33,7 @@ const App = (() => {
     };
 
     let _currentPage = null;
+    let _sseConnection = null;
 
     function init() {
         Components.Toast.init();
@@ -46,6 +47,9 @@ const App = (() => {
 
         // 检测后端连接状态
         checkBackendStatus();
+
+        // 启动 SSE 实时事件监听
+        connectSSE();
 
         // 初始路由
         handleRoute();
@@ -80,6 +84,68 @@ const App = (() => {
         } catch (err) {
             if (dot) dot.style.background = '#f59e0b';
             if (text) text.textContent = '降级模式';
+        }
+    }
+
+    // --- SSE 实时事件 ---
+
+    function connectSSE() {
+        if (_sseConnection) {
+            _sseConnection.close();
+        }
+
+        try {
+            _sseConnection = new EventSource('/api/events');
+
+            _sseConnection.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleSSEEvent(data);
+                } catch (err) {
+                    // 忽略解析错误
+                }
+            };
+
+            _sseConnection.onerror = () => {
+                // 5 秒后自动重连
+                setTimeout(connectSSE, 5000);
+            };
+        } catch (err) {
+            // SSE 不可用时静默降级
+            setTimeout(connectSSE, 10000);
+        }
+    }
+
+    function handleSSEEvent(event) {
+        const type = event.type || '';
+        const data = event.data || {};
+
+        // 事件类型 → 通知消息映射
+        const messages = {
+            'memory.updated': '📝 记忆已更新',
+            'skill.created': '⚡ 新技能已创建',
+            'skill.updated': '⚡ 技能已更新',
+            'skill.deleted': '⚡ 技能已删除',
+            'tool.toggled': '🔧 工具状态已变更',
+            'cron.created': '⏰ 定时任务已创建',
+            'cron.updated': '⏰ 定时任务已更新',
+            'cron.deleted': '⏰ 定时任务已删除',
+            'cron.triggered': '▶️ 定时任务已触发',
+            'session.deleted': '💬 会话已删除',
+            'session.compressed': '💬 会话已压缩',
+            'config.updated': '⚙️ 配置已更新',
+            'mcp.restarted': '🔌 MCP 服务已重启',
+        };
+
+        const msg = messages[type];
+        if (msg) {
+            Components.Toast.info(msg);
+        }
+
+        // 如果当前在仪表盘或日志页面，自动刷新
+        if (_currentPage === 'dashboard' || _currentPage === 'logs') {
+            clearTimeout(App._refreshTimer);
+            App._refreshTimer = setTimeout(() => refresh(), 1000);
         }
     }
 
