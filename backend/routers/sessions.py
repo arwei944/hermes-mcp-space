@@ -49,6 +49,14 @@ async def get_session_messages(session_id: str) -> List[Dict[str, Any]]:
     return hermes_service.get_session_messages(session_id)
 
 
+@router.post("/{session_id}/messages", summary="添加消息到会话")
+async def add_session_message(session_id: str, body: Dict[str, str]) -> Dict[str, Any]:
+    """向指定会话添加一条消息"""
+    role = body.get("role", "user")
+    content = body.get("content", "")
+    return hermes_service.add_session_message(session_id, role, content)
+
+
 @router.delete("/{session_id}", summary="删除会话")
 async def delete_session(session_id: str) -> Dict[str, Any]:
     """删除指定会话及其所有消息"""

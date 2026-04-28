@@ -60,6 +60,8 @@ const MemoryPage = (() => {
                         <h3>编辑器</h3>
                         <div style="display:flex;gap:6px">
                             <button class="btn btn-sm btn-ghost" onclick="MemoryPage.formatContent()">格式化</button>
+                            <button class="btn btn-sm btn-ghost" onclick="MemoryPage.exportContent()">导出</button>
+                            <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="MemoryPage.resetContent()">重置</button>
                             <button class="btn btn-sm btn-primary" onclick="MemoryPage.saveContent()">保存</button>
                         </div>
                     </div>
@@ -117,5 +119,32 @@ const MemoryPage = (() => {
         });
     }
 
-    return { render, switchTab, updatePreview, formatContent, saveContent };
+    return { render, switchTab, updatePreview, formatContent, saveContent, exportContent, resetContent };
+
+    function exportContent() {
+        const editor = document.getElementById('memoryEditor');
+        if (!editor) return;
+        const blob = new Blob([editor.value], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${_currentTab === 'memory' ? 'MEMORY' : 'USER'}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+        Components.Toast.success('已导出');
+    }
+
+    function resetContent() {
+        if (!confirm('确定要重置为默认内容吗？当前编辑器中的内容将丢失。')) return;
+        const defaults = {
+            memory: '# Agent 长期记忆\n\n## 用户偏好\n\n## 项目上下文\n\n## 重要记录\n',
+            user: '# 用户画像\n\n## 基本信息\n\n## 技术栈\n\n## 偏好\n',
+        };
+        const editor = document.getElementById('memoryEditor');
+        if (editor) {
+            editor.value = defaults[_currentTab] || '';
+            updatePreview();
+            Components.Toast.info('已重置为默认内容（未保存）');
+        }
+    }
 })();

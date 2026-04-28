@@ -7,6 +7,9 @@ const LogsPage = (() => {
     let _stats = null;
     let _filterLevel = '全部';
     let _filterSource = '全部';
+    let _searchKeyword = '';
+    let _autoRefresh = false;
+    let _refreshTimer = null;
 
     async function render() {
         const container = document.getElementById('contentBody');
@@ -45,6 +48,10 @@ const LogsPage = (() => {
         const filtered = _logs.filter(l => {
             if (_filterLevel !== '全部' && l.level !== _filterLevel) return false;
             if (_filterSource !== '全部' && l.source !== _filterSource) return false;
+            if (_searchKeyword) {
+                const kw = _searchKeyword.toLowerCase();
+                if (!(l.action || '').toLowerCase().includes(kw) && !(l.detail || '').toLowerCase().includes(kw) && !(l.target || '').toLowerCase().includes(kw)) return false;
+            }
             return true;
         });
 
@@ -58,12 +65,16 @@ const LogsPage = (() => {
         </div>`;
 
         // 过滤器
-        const filterHtml = `<div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+        const filterHtml = `<div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="logSearchInput" placeholder="搜索操作/详情..." value="${Components.escapeHtml(_searchKeyword || '')}" style="flex:1;min-width:150px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none" oninput="LogsPage.search(this.value)">
             <span style="font-size:12px;color:var(--text-tertiary)">级别:</span>
             ${levelOptions.map(l => `<button class="btn btn-sm ${_filterLevel === l ? 'btn-primary' : 'btn-ghost'}" onclick="LogsPage.setFilterLevel('${l}')">${l}</button>`).join('')}
-            <span style="margin-left:12px;font-size:12px;color:var(--text-tertiary)">来源:</span>
+            <span style="font-size:12px;color:var(--text-tertiary)">来源:</span>
             ${sourceOptions.map(s => `<button class="btn btn-sm ${_filterSource === s ? 'btn-primary' : 'btn-ghost'}" onclick="LogsPage.setFilterSource('${s}')">${s}</button>`).join('')}
-            <div style="flex:1"></div>
+            <label style="font-size:12px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px">
+                <input type="checkbox" id="autoRefresh" ${_autoRefresh ? 'checked' : ''} onchange="LogsPage.toggleAutoRefresh(this.checked)" style="accent-color:var(--accent)">
+                自动刷新
+            </label>
             <button class="btn btn-sm btn-ghost" onclick="LogsPage.refresh()">刷新</button>
             <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="LogsPage.clearLogs()">清空</button>
         </div>`;
@@ -125,5 +136,22 @@ const LogsPage = (() => {
 
     function bindEvents() {}
 
-    return { render, setFilterLevel, setFilterSource, refresh, clearLogs };
+    return { render, setFilterLevel, setFilterSource, refresh, clearLogs, search, toggleAutoRefresh };
+
+    function search(keyword) {
+        _searchKeyword = keyword;
+        document.getElementById('contentBody').innerHTML = buildPage();
+        bindEvents();
+    }
+
+    function toggleAutoRefresh(enabled) {
+        _autoRefresh = enabled;
+        if (_refreshTimer) clearInterval(_refreshTimer);
+        if (_autoRefresh) {
+            _refreshTimer = setInterval(refresh, 5000);
+            Components.Toast.info('已开启自动刷新（5秒）');
+        } else {
+            Components.Toast.info('已关闭自动刷新');
+        }
+    }
 })();

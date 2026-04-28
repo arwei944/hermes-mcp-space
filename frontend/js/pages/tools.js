@@ -71,13 +71,19 @@ const ToolsPage = (() => {
         const toolsHtml = filtered.length === 0
             ? Components.createEmptyState('🔧', '暂无工具', '没有匹配的工具', '')
             : `<div class="tool-grid">${filtered.map(tool => `
-                <div class="tool-card" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')">
-                    <div class="tool-card-header">
+                <div class="tool-card">
+                    <div class="tool-card-header" style="cursor:pointer" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')">
                         <span class="tool-name">${Components.escapeHtml(tool.name)}</span>
-                        ${tool.enabled ? Components.renderBadge('已启用', 'green') : Components.renderBadge('已禁用', 'orange')}
+                        <label style="cursor:pointer;margin:0" onclick="event.stopPropagation()">
+                            <input type="checkbox" ${tool.enabled ? 'checked' : ''} onchange="ToolsPage.toggleTool('${Components.escapeHtml(tool.name)}', this.checked)" style="margin-right:4px;accent-color:var(--accent)">
+                            <span style="font-size:11px;color:var(--text-tertiary)">${tool.enabled ? '启用' : '禁用'}</span>
+                        </label>
                     </div>
-                    <div class="tool-desc">${Components.escapeHtml(tool.description)}</div>
-                    <div class="tool-card-meta">${Components.renderBadge(tool.toolset || 'default', 'blue')}</div>
+                    <div class="tool-desc" style="cursor:pointer" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')">${Components.escapeHtml(tool.description || '无描述')}</div>
+                    <div class="tool-card-meta">
+                        ${Components.renderBadge(tool.toolset || 'default', 'blue')}
+                        <button class="btn btn-sm btn-ghost" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')" style="margin-left:auto">详情</button>
+                    </div>
                 </div>
             `).join('')}</div>`;
 

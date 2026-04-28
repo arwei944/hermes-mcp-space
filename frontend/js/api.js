@@ -90,8 +90,10 @@ const API = (() => {
     // ==========================================
     const sessions = {
         list(params) { return get('/api/sessions', params); },
+        create(data) { return post('/api/sessions', data); },
         get(id) { return get(`/api/sessions/${id}`); },
         messages(id, params) { return get(`/api/sessions/${id}/messages`, params); },
+        addMessage(id, role, content) { return post(`/api/sessions/${id}/messages`, { role, content }); },
         delete(id) { return del(`/api/sessions/${id}`); },
         compress(id) { return post(`/api/sessions/${id}/compress`); },
     };
