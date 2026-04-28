@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Hermes Agent MCP Space - 部署入口
-Gradio 托管 Obsidian 风格前端管理面板
+Gradio 托管 Mac 极简风格前端管理面板
+支持版本管理和热更新
 """
 
 import logging
@@ -15,17 +16,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
+# ==================== 版本管理 ====================
+APP_VERSION = os.environ.get("APP_VERSION", "1.0.0")
+BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
+
 
 def build_frontend_html() -> str:
-    """构建完整的 Obsidian 风格前端 HTML（内联 CSS 和 JS）"""
+    """构建完整的 Mac 极简风格前端 HTML（内联 CSS 和 JS）"""
     frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 
+    # 读取 CSS
     try:
         with open(os.path.join(frontend_dir, "css", "style.css"), "r", encoding="utf-8") as f:
             css_content = f.read()
     except Exception:
-        css_content = "body{font-family:sans-serif;padding:20px;background:#1e1e2e;color:#e0e0e0;}"
+        css_content = "body{font-family:sans-serif;padding:20px;background:#f5f5f7;color:#1d1d1f;}"
 
+    # 读取 JS 模块（按依赖顺序）
     js_modules = [
         "js/api.js", "js/components.js",
         "js/pages/dashboard.js", "js/pages/sessions.js", "js/pages/tools.js",
@@ -52,26 +59,58 @@ def build_frontend_html() -> str:
 </style>
 </head>
 <body>
-<aside class="sidebar">
-    <div class="sidebar-header"><span class="logo">🤖 Hermes</span></div>
-    <div class="sidebar-search"><input type="text" placeholder="搜索... (Ctrl+K)" id="globalSearch"></div>
-    <nav class="sidebar-nav">
-        <a href="#dashboard" class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> 仪表盘</a>
-        <a href="#sessions" class="nav-item" data-page="sessions"><span class="nav-icon">💬</span> 会话管理</a>
-        <a href="#tools" class="nav-item" data-page="tools"><span class="nav-icon">🔧</span> 工具管理</a>
-        <a href="#skills" class="nav-item" data-page="skills"><span class="nav-icon">⚡</span> 技能系统</a>
-        <a href="#memory" class="nav-item" data-page="memory"><span class="nav-icon">🧠</span> 记忆管理</a>
-        <a href="#cron" class="nav-item" data-page="cron"><span class="nav-icon">⏰</span> 定时任务</a>
-        <a href="#agents" class="nav-item" data-page="agents"><span class="nav-icon">🤖</span> 子 Agent</a>
-        <a href="#mcp" class="nav-item" data-page="mcp"><span class="nav-icon">🔌</span> MCP 服务</a>
-        <a href="#config" class="nav-item" data-page="config"><span class="nav-icon">⚙️</span> 系统配置</a>
-    </nav>
-    <div class="sidebar-footer"><div class="status-indicator"><span class="status-dot"></span><span class="status-text">已连接</span></div></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="icon">H</div>
+    <span>Hermes</span>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" placeholder="搜索..." id="globalSearch">
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">概览</div>
+      <a class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span>仪表盘</a>
+      <a class="nav-item" data-page="sessions"><span class="nav-icon">💬</span>会话</a>
+      <a class="nav-item" data-page="tools"><span class="nav-icon">🔧</span>工具</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">管理</div>
+      <a class="nav-item" data-page="skills"><span class="nav-icon">⚡</span>技能</a>
+      <a class="nav-item" data-page="memory"><span class="nav-icon">🧠</span>记忆</a>
+      <a class="nav-item" data-page="cron"><span class="nav-icon">⏰</span>定时任务</a>
+      <a class="nav-item" data-page="agents"><span class="nav-icon">🤖</span>子 Agent</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统</div>
+      <a class="nav-item" data-page="mcp"><span class="nav-icon">🔌</span>MCP 服务</a>
+      <a class="nav-item" data-page="config"><span class="nav-icon">⚙️</span>配置</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="status"><span class="status-dot"></span>运行中 · v{APP_VERSION}</div>
+  </div>
 </aside>
-<main class="main-content">
-    <header class="content-header"><h1 id="pageTitle">仪表盘</h1><div class="header-actions"><button class="btn btn-primary" id="refreshBtn">🔄 刷新</button></div></header>
-    <div class="content-body" id="contentBody"><p>加载中...</p></div>
-</main>
+<div class="main">
+  <header class="header">
+    <span class="header-title" id="pageTitle">仪表盘</span>
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="refreshBtn">↻ 刷新</button>
+      <button class="btn btn-primary">＋ 新建</button>
+    </div>
+  </header>
+  <div class="content" id="contentArea">
+    <div class="page active" id="page-dashboard"><p>加载中...</p></div>
+    <div class="page" id="page-sessions"></div>
+    <div class="page" id="page-tools"></div>
+    <div class="page" id="page-skills"></div>
+    <div class="page" id="page-memory"></div>
+    <div class="page" id="page-cron"></div>
+    <div class="page" id="page-agents"></div>
+    <div class="page" id="page-mcp"></div>
+    <div class="page" id="page-config"></div>
+  </div>
+</div>
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modal"><div class="modal-header"><h2 id="modalTitle"></h2><button class="modal-close" id="modalClose">✕</button></div><div class="modal-body" id="modalBody"></div></div></div>
 <div class="toast-container" id="toastContainer"></div>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -81,6 +120,8 @@ def build_frontend_html() -> str:
 </body>
 </html>"""
 
+
+# ==================== 创建 Gradio 应用 ====================
 
 logger.info("正在初始化 Hermes Agent MCP Space...")
 
@@ -94,7 +135,16 @@ with gr.Blocks(
 ) as demo:
     gr.HTML(frontend_html)
 
-logger.info("Hermes Agent MCP Space 初始化完成")
+# 版本管理端点 - 挂载到 Gradio 内部 FastAPI
+@demo.app.get("/api/version")
+async def get_version():
+    return {"version": APP_VERSION, "build_time": BUILD_TIME}
+
+@demo.app.get("/api/health")
+async def health():
+    return {"status": "ok", "service": "hermes-mcp-space", "version": APP_VERSION}
+
+logger.info(f"Hermes Agent MCP Space v{APP_VERSION} 初始化完成")
 
 # HF Spaces Gradio SDK 需要显式启动
 demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)

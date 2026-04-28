@@ -3,12 +3,13 @@
  * 统一处理所有 API 请求、错误处理、响应解析
  */
 
+const APP_VERSION = '1.0.0';
+
 const API = (() => {
     const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'
         : '';
 
-    // 默认请求超时
     const TIMEOUT = 15000;
 
     /**
@@ -28,7 +29,6 @@ const API = (() => {
             ...options,
         };
 
-        // 不设置 body 的请求方法
         if (['GET', 'HEAD'].includes(config.method?.toUpperCase())) {
             delete config.body;
         }
@@ -45,7 +45,6 @@ const API = (() => {
                 throw error;
             }
 
-            // 204 No Content
             if (response.status === 204) {
                 return { success: true };
             }
@@ -67,7 +66,6 @@ const API = (() => {
         }
     }
 
-    // 便捷方法
     const get = (path, params) => {
         let url = path;
         if (params) {
@@ -91,220 +89,137 @@ const API = (() => {
     // 会话管理 API
     // ==========================================
     const sessions = {
-        /** 获取会话列表 */
-        list(params) {
-            return get('/api/sessions', params);
-        },
-        /** 获取单个会话详情 */
-        get(id) {
-            return get(`/api/sessions/${id}`);
-        },
-        /** 获取会话消息历史 */
-        messages(id, params) {
-            return get(`/api/sessions/${id}/messages`, params);
-        },
-        /** 删除会话 */
-        delete(id) {
-            return del(`/api/sessions/${id}`);
-        },
-        /** 压缩会话上下文 */
-        compress(id) {
-            return post(`/api/sessions/${id}/compress`);
-        },
+        list(params) { return get('/api/sessions', params); },
+        get(id) { return get(`/api/sessions/${id}`); },
+        messages(id, params) { return get(`/api/sessions/${id}/messages`, params); },
+        delete(id) { return del(`/api/sessions/${id}`); },
+        compress(id) { return post(`/api/sessions/${id}/compress`); },
     };
 
     // ==========================================
     // 工具管理 API
     // ==========================================
     const tools = {
-        /** 获取所有工具 */
-        list(params) {
-            return get('/api/tools', params);
-        },
-        /** 获取单个工具详情 */
-        get(name) {
-            return get(`/api/tools/${encodeURIComponent(name)}`);
-        },
-        /** 获取工具集列表 */
-        toolsets() {
-            return get('/api/tools/toolsets');
-        },
-        /** 启用/禁用工具 */
-        toggle(name, enabled) {
-            return put(`/api/tools/${encodeURIComponent(name)}`, { enabled });
-        },
+        list(params) { return get('/api/tools', params); },
+        get(name) { return get(`/api/tools/${encodeURIComponent(name)}`); },
+        toolsets() { return get('/api/tools/toolsets'); },
+        toggle(name, enabled) { return put(`/api/tools/${encodeURIComponent(name)}`, { enabled }); },
     };
 
     // ==========================================
     // 技能系统 API
     // ==========================================
     const skills = {
-        /** 获取技能列表 */
-        list(params) {
-            return get('/api/skills', params);
-        },
-        /** 获取技能详情 */
-        get(name) {
-            return get(`/api/skills/${encodeURIComponent(name)}`);
-        },
-        /** 获取技能的 SKILL.md 内容 */
-        content(name) {
-            return get(`/api/skills/${encodeURIComponent(name)}/content`);
-        },
-        /** 创建技能 */
-        create(data) {
-            return post('/api/skills', data);
-        },
-        /** 更新技能 */
-        update(name, data) {
-            return put(`/api/skills/${encodeURIComponent(name)}`, data);
-        },
-        /** 删除技能 */
-        delete(name) {
-            return del(`/api/skills/${encodeURIComponent(name)}`);
-        },
+        list(params) { return get('/api/skills', params); },
+        get(name) { return get(`/api/skills/${encodeURIComponent(name)}`); },
+        content(name) { return get(`/api/skills/${encodeURIComponent(name)}/content`); },
+        create(data) { return post('/api/skills', data); },
+        update(name, data) { return put(`/api/skills/${encodeURIComponent(name)}`, data); },
+        delete(name) { return del(`/api/skills/${encodeURIComponent(name)}`); },
     };
 
     // ==========================================
     // 记忆管理 API
     // ==========================================
     const memory = {
-        /** 获取 MEMORY.md 内容 */
-        getMemory() {
-            return get('/api/memory');
-        },
-        /** 保存 MEMORY.md */
-        saveMemory(content) {
-            return put('/api/memory', { content });
-        },
-        /** 获取 USER.md 内容 */
-        getUser() {
-            return get('/api/memory/user');
-        },
-        /** 保存 USER.md */
-        saveUser(content) {
-            return put('/api/memory/user', { content });
-        },
-        /** 获取记忆统计 */
-        stats() {
-            return get('/api/memory/stats');
-        },
+        getMemory() { return get('/api/memory'); },
+        saveMemory(content) { return put('/api/memory', { content }); },
+        getUser() { return get('/api/memory/user'); },
+        saveUser(content) { return put('/api/memory/user', { content }); },
+        stats() { return get('/api/memory/stats'); },
     };
 
     // ==========================================
     // 定时任务 API
     // ==========================================
     const cron = {
-        /** 获取定时任务列表 */
-        list() {
-            return get('/api/cron');
-        },
-        /** 获取单个任务详情 */
-        get(id) {
-            return get(`/api/cron/${id}`);
-        },
-        /** 创建定时任务 */
-        create(data) {
-            return post('/api/cron', data);
-        },
-        /** 更新定时任务 */
-        update(id, data) {
-            return put(`/api/cron/${id}`, data);
-        },
-        /** 删除定时任务 */
-        delete(id) {
-            return del(`/api/cron/${id}`);
-        },
-        /** 手动触发任务 */
-        trigger(id) {
-            return post(`/api/cron/${id}/trigger`);
-        },
-        /** 获取任务执行历史 */
-        history(id, params) {
-            return get(`/api/cron/${id}/history`, params);
-        },
+        list() { return get('/api/cron'); },
+        get(id) { return get(`/api/cron/${id}`); },
+        create(data) { return post('/api/cron', data); },
+        update(id, data) { return put(`/api/cron/${id}`, data); },
+        delete(id) { return del(`/api/cron/${id}`); },
+        trigger(id) { return post(`/api/cron/${id}/trigger`); },
+        history(id, params) { return get(`/api/cron/${id}/history`, params); },
     };
 
     // ==========================================
     // 子 Agent API
     // ==========================================
     const agents = {
-        /** 获取活跃子 Agent 列表 */
-        list() {
-            return get('/api/agents');
-        },
-        /** 获取单个 Agent 状态 */
-        get(id) {
-            return get(`/api/agents/${id}`);
-        },
-        /** 终止 Agent */
-        terminate(id) {
-            return del(`/api/agents/${id}`);
-        },
+        list() { return get('/api/agents'); },
+        get(id) { return get(`/api/agents/${id}`); },
+        terminate(id) { return del(`/api/agents/${id}`); },
     };
 
     // ==========================================
     // MCP 服务 API
     // ==========================================
     const mcp = {
-        /** 获取 MCP 状态 */
-        status() {
-            return get('/api/mcp');
-        },
-        /** 获取 MCP 暴露的工具 */
-        tools() {
-            return get('/api/mcp/tools');
-        },
-        /** 重启 MCP 服务 */
-        restart() {
-            return post('/api/mcp/restart');
-        },
-        /** 获取连接信息 */
-        connectionInfo() {
-            return get('/api/mcp/connection');
-        },
+        status() { return get('/api/mcp'); },
+        tools() { return get('/api/mcp/tools'); },
+        restart() { return post('/api/mcp/restart'); },
+        connectionInfo() { return get('/api/mcp/connection'); },
     };
 
     // ==========================================
     // 系统配置 API
     // ==========================================
     const config = {
-        /** 获取配置 */
-        get() {
-            return get('/api/config');
-        },
-        /** 保存配置 */
-        save(data) {
-            return put('/api/config', data);
-        },
-        /** 重置配置 */
-        reset() {
-            return post('/api/config/reset');
-        },
+        get() { return get('/api/config'); },
+        save(data) { return put('/api/config', data); },
+        reset() { return post('/api/config/reset'); },
     };
 
     // ==========================================
     // 系统 API
     // ==========================================
     const system = {
-        /** 获取系统状态 */
-        status() {
-            return get('/api/status');
-        },
-        /** 获取仪表盘统计数据 */
-        dashboard() {
-            return get('/api/dashboard');
-        },
-        /** 健康检查 */
-        health() {
-            return get('/api/health');
-        },
+        status() { return get('/api/status'); },
+        dashboard() { return get('/api/dashboard'); },
+        health() { return get('/api/health'); },
     };
+
+    // ==========================================
+    // 热更新检查
+    // ==========================================
+    let _currentServerVersion = null;
+    let _updateCheckTimer = null;
+
+    async function checkForUpdate() {
+        try {
+            const data = await get('/api/version');
+            const serverVersion = data.version || data;
+
+            if (_currentServerVersion === null) {
+                _currentServerVersion = serverVersion;
+                return;
+            }
+
+            if (serverVersion && serverVersion !== _currentServerVersion) {
+                _currentServerVersion = serverVersion;
+                if (typeof showToast === 'function') {
+                    showToast(`检测到新版本 (${serverVersion})，5 秒后自动刷新...`);
+                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 5000);
+            }
+        } catch (err) {
+            // 静默失败，不影响用户体验
+        }
+    }
+
+    function startUpdateCheck(intervalMs = 30000) {
+        if (_updateCheckTimer) clearInterval(_updateCheckTimer);
+        _updateCheckTimer = setInterval(checkForUpdate, intervalMs);
+    }
 
     return {
         request, get, post, put, del,
         sessions, tools, skills, memory,
         cron, agents, mcp, config, system,
         BASE_URL,
+        checkForUpdate,
+        startUpdateCheck,
     };
 })();

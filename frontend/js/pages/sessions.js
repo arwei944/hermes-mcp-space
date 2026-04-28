@@ -1,6 +1,5 @@
 /**
- * 会话管理页面
- * 会话列表、消息历史查看、搜索过滤、删除、压缩上下文
+ * 会话管理页面 (Mac 极简风格)
  */
 
 const SessionsPage = (() => {
@@ -25,12 +24,12 @@ const SessionsPage = (() => {
 
     function getMockSessions() {
         return [
-            { id: 'sess_001', source: 'cli', model: 'gpt-4o', messages: 24, createdAt: new Date(Date.now() - 300000).toISOString(), status: 'active' },
-            { id: 'sess_002', source: 'api', model: 'gpt-4o', messages: 12, createdAt: new Date(Date.now() - 1800000).toISOString(), status: 'active' },
-            { id: 'sess_003', source: 'web', model: 'claude-3-opus', messages: 8, createdAt: new Date(Date.now() - 7200000).toISOString(), status: 'completed' },
-            { id: 'sess_004', source: 'cli', model: 'gpt-4o-mini', messages: 56, createdAt: new Date(Date.now() - 86400000).toISOString(), status: 'completed' },
-            { id: 'sess_005', source: 'api', model: 'claude-3-sonnet', messages: 3, createdAt: new Date(Date.now() - 172800000).toISOString(), status: 'completed' },
-            { id: 'sess_006', source: 'cli', model: 'gpt-4o', messages: 15, createdAt: new Date(Date.now() - 259200000).toISOString(), status: 'completed' },
+            { id: 'sess_001', source: 'Trae', model: 'qwen3-coder', messages: 24, createdAt: new Date(Date.now() - 300000).toISOString(), status: 'active' },
+            { id: 'sess_002', source: 'Web', model: 'claude-4', messages: 56, createdAt: new Date(Date.now() - 1800000).toISOString(), status: 'active' },
+            { id: 'sess_003', source: 'CLI', model: 'gpt-4o', messages: 12, createdAt: new Date(Date.now() - 7200000).toISOString(), status: 'completed' },
+            { id: 'sess_004', source: 'API', model: 'qwen3-coder', messages: 8, createdAt: new Date(Date.now() - 86400000).toISOString(), status: 'completed' },
+            { id: 'sess_005', source: 'Trae', model: 'claude-4', messages: 42, createdAt: new Date(Date.now() - 172800000).toISOString(), status: 'completed' },
+            { id: 'sess_006', source: 'CLI', model: 'gpt-4o', messages: 15, createdAt: new Date(Date.now() - 259200000).toISOString(), status: 'completed' },
         ];
     }
 
@@ -48,60 +47,37 @@ const SessionsPage = (() => {
     function buildPage() {
         const filtered = getFilteredSessions();
 
-        const tableHtml = Components.createTable({
-            columns: [
-                {
-                    key: 'id', label: '会话 ID',
-                    render: (v) => `<span style="font-family:monospace;font-size:0.8rem;color:var(--accent-secondary)">${Components.truncate(v, 16)}</span>`
-                },
-                {
-                    key: 'source', label: '来源',
-                    render: (v) => Components.badge(v, v === 'cli' ? 'primary' : v === 'api' ? 'info' : 'muted')
-                },
-                { key: 'model', label: '模型' },
-                { key: 'messages', label: '消息数', render: (v) => `${v} 条` },
-                { key: 'createdAt', label: '创建时间', render: (v) => Components.formatTime(v) },
-                {
-                    key: 'status', label: '状态',
-                    render: (v) => Components.badge(
-                        v === 'active' ? '活跃' : v === 'completed' ? '已完成' : v,
-                        v === 'active' ? 'success' : 'muted'
-                    )
-                },
-            ],
-            rows: filtered,
-            actions: (row) => `
-                <button class="btn btn-sm btn-ghost" onclick="SessionsPage.viewMessages('${row.id}')" title="查看消息">📜</button>
-                <button class="btn btn-sm btn-ghost" onclick="SessionsPage.compressSession('${row.id}')" title="压缩上下文">📦</button>
-                <button class="btn btn-sm btn-danger" onclick="SessionsPage.deleteSession('${row.id}')" title="删除">🗑</button>
-            `,
-            emptyText: _searchTerm ? '没有匹配的会话' : '暂无会话记录',
-            toolbar: {
-                search: {
-                    placeholder: '搜索会话 ID、来源、模型...',
-                    id: 'sessionSearch',
-                },
-                actions: `
-                    <span style="font-size:0.8rem;color:var(--text-muted)">共 ${filtered.length} 个会话</span>
-                `,
-            },
-        });
-
-        return `
-            <div class="page-enter">
-                ${tableHtml}
-                <div id="messageThreadContainer"></div>
+        return Components.renderSection(`会话列表`, `
+            <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+                <input type="text" id="sessionSearch" placeholder="搜索会话 ID、来源、模型..." style="width:300px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none" value="${Components.escapeHtml(_searchTerm)}">
+                <span style="font-size:12px;color:var(--text-tertiary)">共 ${filtered.length} 个会话</span>
             </div>
-        `;
+            <table class="table">
+                <thead><tr><th>ID</th><th>来源</th><th>模型</th><th>消息数</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+                <tbody>
+                    ${filtered.length === 0 ? `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-tertiary)">${_searchTerm ? '没有匹配的会话' : '暂无会话记录'}</td></tr>` :
+                    filtered.map(s => `<tr>
+                        <td class="mono">${Components.truncate(s.id, 16)}</td>
+                        <td>${Components.renderBadge(s.source, s.source === 'Trae' ? 'purple' : s.source === 'Web' ? 'blue' : s.source === 'CLI' ? 'green' : 'orange')}</td>
+                        <td class="mono">${s.model}</td>
+                        <td>${s.messages} 条</td>
+                        <td>${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}</td>
+                        <td>${Components.formatTime(s.createdAt)}</td>
+                        <td class="table-actions-cell">
+                            <button class="btn btn-sm btn-ghost" onclick="SessionsPage.viewMessages('${s.id}')" title="查看消息">详情</button>
+                            <button class="btn btn-sm btn-ghost" onclick="SessionsPage.compressSession('${s.id}')" title="压缩">压缩</button>
+                            <button class="btn btn-sm btn-danger" onclick="SessionsPage.deleteSession('${s.id}')" title="删除">删除</button>
+                        </td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+            <div id="messageThreadContainer"></div>
+        `);
     }
 
     async function viewMessages(id) {
         const container = document.getElementById('messageThreadContainer');
-        if (_expandedId === id) {
-            _expandedId = null;
-            container.innerHTML = '';
-            return;
-        }
+        if (_expandedId === id) { _expandedId = null; container.innerHTML = ''; return; }
         _expandedId = id;
         container.innerHTML = Components.createLoading();
 
@@ -110,40 +86,32 @@ const SessionsPage = (() => {
             const messages = data.messages || data || [];
             renderMessageThread(messages);
         } catch (err) {
-            container.innerHTML = Components.createEmptyState(
-                '📜', '消息历史', '无法加载消息历史', ''
-            );
+            container.innerHTML = Components.createEmptyState('\uD83D\uDCDC', '消息历史', '无法加载消息历史', '');
         }
     }
 
     function renderMessageThread(messages) {
         const container = document.getElementById('messageThreadContainer');
         if (!messages || messages.length === 0) {
-            container.innerHTML = Components.createEmptyState('📜', '暂无消息', '该会话没有消息记录', '');
+            container.innerHTML = Components.createEmptyState('\uD83D\uDCDC', '暂无消息', '该会话没有消息记录', '');
             return;
         }
-
-        const messagesHtml = messages.map(msg => `
-            <div class="message-item">
-                <div class="message-role ${msg.role || 'user'}">${msg.role || 'user'}</div>
-                <div class="message-content">${Components.truncate(msg.content || JSON.stringify(msg), 500)}</div>
+        container.innerHTML = `<div style="margin-top:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span style="font-size:13px;font-weight:600">消息历史 (${messages.length} 条)</span>
+                <button class="btn btn-sm btn-ghost" onclick="SessionsPage.closeMessages()">收起</button>
             </div>
-        `).join('');
-
-        container.innerHTML = `
-            <div style="margin-top:16px">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                    <span style="font-size:0.85rem;font-weight:600;color:var(--text-heading)">消息历史 (${messages.length} 条)</span>
-                    <button class="btn btn-sm btn-ghost" onclick="SessionsPage.closeMessages()">收起</button>
+            <div class="message-thread">${messages.map(msg => `
+                <div class="message-item">
+                    <div class="message-role ${msg.role || 'user'}">${msg.role || 'user'}</div>
+                    <div class="message-content">${Components.truncate(msg.content || JSON.stringify(msg), 500)}</div>
                 </div>
-                <div class="message-thread">${messagesHtml}</div>
-            </div>
-        `;
+            `).join('')}</div>
+        </div>`;
     }
 
     async function deleteSession(id) {
         if (!confirm('确定要删除该会话吗？此操作不可撤销。')) return;
-
         try {
             await API.sessions.delete(id);
             Components.Toast.success('会话已删除');
@@ -175,18 +143,13 @@ const SessionsPage = (() => {
     function bindEvents() {
         const searchInput = document.getElementById('sessionSearch');
         if (searchInput) {
-            searchInput.value = _searchTerm;
             searchInput.addEventListener('input', Components.debounce((e) => {
                 _searchTerm = e.target.value;
-                const filtered = getFilteredSessions();
-                // 只更新表格部分
                 document.getElementById('contentBody').innerHTML = buildPage();
                 bindEvents();
             }, 300));
         }
     }
 
-    function init() {}
-
-    return { render, init, viewMessages, deleteSession, compressSession, closeMessages };
+    return { render, viewMessages, deleteSession, compressSession, closeMessages };
 })();

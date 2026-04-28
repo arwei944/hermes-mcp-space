@@ -1,6 +1,5 @@
 /**
- * MCP 服务页面
- * 连接状态、暴露的工具列表、连接信息、重启服务
+ * MCP 服务页面 (Mac 极简风格)
  */
 
 const McpPage = (() => {
@@ -14,9 +13,7 @@ const McpPage = (() => {
 
         try {
             const [statusData, toolsData, connData] = await Promise.all([
-                API.mcp.status(),
-                API.mcp.tools(),
-                API.mcp.connectionInfo(),
+                API.mcp.status(), API.mcp.tools(), API.mcp.connectionInfo(),
             ]);
             _status = statusData;
             _tools = toolsData.tools || toolsData || [];
@@ -32,13 +29,7 @@ const McpPage = (() => {
     }
 
     function getMockStatus() {
-        return {
-            running: true,
-            uptime: '2天 5小时',
-            port: 3000,
-            protocol: 'stdio',
-            connections: 1,
-        };
+        return { running: true, uptime: '2天 5小时', port: 3000, protocol: 'stdio', connections: 1 };
     }
 
     function getMockTools() {
@@ -54,129 +45,84 @@ const McpPage = (() => {
 
     function getMockConnection() {
         return {
-            transport: 'stdio',
-            command: 'node',
-            args: ['/path/to/hermes-mcp/index.js'],
-            env: {
-                HERMES_PORT: '3000',
-                HERMES_HOST: 'localhost',
-            },
-            traeConfig: {
-                mcpServers: {
-                    hermes: {
-                        command: 'node',
-                        args: ['/path/to/hermes-mcp/index.js'],
-                        env: {
-                            HERMES_PORT: '3000',
-                        },
-                    },
-                },
-            },
+            transport: 'stdio', command: 'node', args: ['/path/to/hermes-mcp/index.js'],
+            env: { HERMES_PORT: '3000', HERMES_HOST: 'localhost' },
+            traeConfig: { mcpServers: { hermes: { command: 'node', args: ['/path/to/hermes-mcp/index.js'], env: { HERMES_PORT: '3000' } } } },
         };
     }
 
     function buildPage() {
         const s = _status || {};
 
-        // 状态卡片
-        const statusCards = Components.createStatsGrid([
-            {
-                icon: '🔌',
-                value: s.running ? '运行中' : '已停止',
-                label: 'MCP 服务状态',
-                change: s.uptime || '',
-                changeType: s.running ? 'positive' : 'negative',
-            },
-            { icon: '🌐', value: s.port || '-', label: '端口' },
-            { icon: '📡', value: s.protocol || '-', label: '协议' },
-            { icon: '🔗', value: s.connections || 0, label: '活跃连接' },
-        ]);
+        // 统计卡片
+        const statsHtml = `<div class="stats">
+            ${Components.renderStatCard('MCP 服务', s.running ? '运行中' : '已停止', s.uptime || '', '\uD83D\uDD0C', s.running ? 'green' : 'red')}
+            ${Components.renderStatCard('端口', s.port || '-', '', '\uD83C\uDF10', 'blue')}
+            ${Components.renderStatCard('协议', s.protocol || '-', '', '\uD83D\uDCE1', 'purple')}
+            ${Components.renderStatCard('活跃连接', s.connections || 0, '', '\uD83D\uDD17', 'orange')}
+        </div>`;
+
+        // 操作按钮
+        const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">
+            <button class="btn btn-secondary" onclick="McpPage.restartService()">重启 MCP 服务</button>
+        </div>`;
 
         // 暴露的工具
-        const toolsHtml = _tools.length > 0
-            ? Components.createTable({
-                columns: [
-                    {
-                        key: 'name', label: '工具名称',
-                        render: (v) => `<span style="font-family:monospace;color:var(--accent-secondary)">${Components.escapeHtml(v)}</span>`
-                    },
-                    { key: 'description', label: '描述' },
-                    {
-                        key: 'category', label: '分类',
-                        render: (v) => Components.badge(v || 'default', 'primary')
-                    },
-                ],
-                rows: _tools,
-                emptyText: '没有暴露的工具',
-            })
-            : Components.createEmptyState('🔌', '暂无工具', 'MCP 服务没有暴露任何工具', '');
+        const toolsHtml = Components.renderSection('暴露的工具', `
+            <table class="table">
+                <thead><tr><th>工具名称</th><th>描述</th><th>分类</th></tr></thead>
+                <tbody>
+                    ${_tools.length === 0 ? `<tr><td colspan="3" style="text-align:center;padding:40px;color:var(--text-tertiary)">没有暴露的工具</td></tr>` :
+                    _tools.map(t => `<tr>
+                        <td class="mono" style="color:var(--accent)">${Components.escapeHtml(t.name)}</td>
+                        <td>${Components.escapeHtml(t.description)}</td>
+                        <td>${Components.renderBadge(t.category || 'default', 'blue')}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        `);
 
-        // 连接信息
+        // 两栏布局
         const connInfo = _connectionInfo || {};
-        const connHtml = `
-            <div class="connection-info">
-                <div><span class="info-label">传输方式:</span><span class="info-value">${connInfo.transport || '-'}</span></div>
-                <div><span class="info-label">命令:</span><span class="info-value">${connInfo.command || '-'}</span></div>
-                <div><span class="info-label">参数:</span><span class="info-value">${(connInfo.args || []).join(' ')}</span></div>
-            </div>
-        `;
-
-        // Trae 配置
         const traeConfig = connInfo.traeConfig || {};
         const traeJson = JSON.stringify(traeConfig, null, 2);
 
-        return `
-            <div class="page-enter">
-                ${statusCards}
-
-                <div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">
-                    <button class="btn btn-secondary" onclick="McpPage.restartService()">重启 MCP 服务</button>
+        const twoColHtml = `<div class="two-col">
+            ${Components.renderSection('连接信息', `
+                <div class="connection-info">
+                    <div><span class="info-label">传输方式:</span><span class="info-value">${connInfo.transport || '-'}</span></div>
+                    <div><span class="info-label">命令:</span><span class="info-value">${connInfo.command || '-'}</span></div>
+                    <div><span class="info-label">参数:</span><span class="info-value">${(connInfo.args || []).join(' ')}</span></div>
                 </div>
-
-                ${Components.sectionTitle('暴露的工具')}
-                ${toolsHtml}
-
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px">
-                    <div>
-                        ${Components.sectionTitle('连接信息')}
-                        ${Components.createCard({ content: connHtml })}
-                    </div>
-                    <div>
-                        ${Components.sectionTitle('Trae 配置')}
-                        <div class="card">
-                            <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-                                <button class="btn btn-sm btn-ghost" onclick="McpPage.copyConfig()" title="复制配置">📋 复制</button>
-                            </div>
-                            <div class="schema-display" id="traeConfigDisplay">${Components.escapeHtml(traeJson)}</div>
-                        </div>
-                    </div>
+            `)}
+            ${Components.renderSection('Trae 配置', `
+                <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+                    <button class="btn btn-sm btn-ghost" onclick="McpPage.copyConfig()">复制配置</button>
                 </div>
-            </div>
-        `;
+                <div class="schema-display" id="traeConfigDisplay">${Components.escapeHtml(traeJson)}</div>
+            `)}
+        </div>`;
+
+        return `${statsHtml}${actionsHtml}${toolsHtml}${twoColHtml}`;
     }
 
     async function restartService() {
         if (!confirm('确定要重启 MCP 服务吗？')) return;
-
         try {
             Components.Toast.info('正在重启 MCP 服务...');
             await API.mcp.restart();
             Components.Toast.success('MCP 服务已重启');
             render();
-        } catch (err) {
-            Components.Toast.error(`重启失败: ${err.message}`);
-        }
+        } catch (err) { Components.Toast.error(`重启失败: ${err.message}`); }
     }
 
     function copyConfig() {
         const el = document.getElementById('traeConfigDisplay');
         if (!el) return;
-
         const text = el.textContent;
         navigator.clipboard.writeText(text).then(() => {
             Components.Toast.success('配置已复制到剪贴板');
         }).catch(() => {
-            // Fallback
             const textarea = document.createElement('textarea');
             textarea.value = text;
             document.body.appendChild(textarea);
@@ -189,7 +135,5 @@ const McpPage = (() => {
 
     function bindEvents() {}
 
-    function init() {}
-
-    return { render, init, restartService, copyConfig };
+    return { render, restartService, copyConfig };
 })();

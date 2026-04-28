@@ -1,6 +1,5 @@
 /**
- * 工具管理页面
- * 工具卡片网格、按工具集分组/过滤、查看 schema、启用/禁用
+ * 工具管理页面 (Mac 极简风格)
  */
 
 const ToolsPage = (() => {
@@ -13,10 +12,7 @@ const ToolsPage = (() => {
         container.innerHTML = Components.createLoading();
 
         try {
-            const [toolsData, toolsetsData] = await Promise.all([
-                API.tools.list(),
-                API.tools.toolsets(),
-            ]);
+            const [toolsData, toolsetsData] = await Promise.all([API.tools.list(), API.tools.toolsets()]);
             _tools = toolsData.tools || toolsData || [];
             _toolsets = toolsetsData.toolsets || toolsetsData || [];
         } catch (err) {
@@ -51,7 +47,7 @@ const ToolsPage = (() => {
                 { name: 'mcp_call', description: '调用 MCP 服务', toolset: 'mcp', enabled: true },
                 { name: 'code_execute', description: '执行代码片段', toolset: 'system', enabled: true },
             ],
-            toolsets: ['全部', 'filesystem', 'system', 'web', 'creative', 'memory', 'skills', 'mcp'],
+            toolsets: ['filesystem', 'system', 'web', 'creative', 'memory', 'skills', 'mcp'],
         };
     }
 
@@ -63,71 +59,47 @@ const ToolsPage = (() => {
     function buildPage() {
         const filtered = getFilteredTools();
         const filterTags = ['全部', ..._toolsets.filter(t => t !== '全部')];
-
         const filterHtml = Components.createFilterGroup(filterTags, _activeFilter, 'ToolsPage.setFilter');
 
         const toolsHtml = filtered.length === 0
-            ? Components.createEmptyState('🔧', '暂无工具', '没有匹配的工具', '')
-            : `<div class="card-grid">${filtered.map(tool => renderToolCard(tool)).join('')}</div>`;
-
-        return `
-            <div class="page-enter">
-                ${filterHtml}
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-                    <span style="font-size:0.82rem;color:var(--text-muted)">共 ${filtered.length} 个工具</span>
+            ? Components.createEmptyState('\uD83D\uDD27', '暂无工具', '没有匹配的工具', '')
+            : `<div class="tool-grid">${filtered.map(tool => `
+                <div class="tool-card" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')">
+                    <div class="tool-card-header">
+                        <span class="tool-name">${Components.escapeHtml(tool.name)}</span>
+                        ${tool.enabled ? Components.renderBadge('已启用', 'green') : Components.renderBadge('已禁用', 'orange')}
+                    </div>
+                    <div class="tool-desc">${Components.escapeHtml(tool.description)}</div>
+                    <div class="tool-card-meta">${Components.renderBadge(tool.toolset || 'default', 'blue')}</div>
                 </div>
-                ${toolsHtml}
+            `).join('')}</div>`;
+
+        return `${filterHtml}
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:12px;color:var(--text-tertiary)">共 ${filtered.length} 个工具</span>
             </div>
-        `;
-    }
-
-    function renderToolCard(tool) {
-        const statusBadge = tool.enabled
-            ? Components.badge('已启用', 'success')
-            : Components.badge('已禁用', 'muted');
-
-        return `
-            <div class="tool-card" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')">
-                <div class="tool-card-header">
-                    <span class="tool-card-name">${Components.escapeHtml(tool.name)}</span>
-                    ${statusBadge}
-                </div>
-                <div class="tool-card-desc">${Components.escapeHtml(tool.description)}</div>
-                <div class="tool-card-meta">
-                    ${Components.badge(tool.toolset || 'default', 'primary')}
-                </div>
-            </div>
-        `;
+            ${toolsHtml}`;
     }
 
     async function viewTool(name) {
-        Components.Modal.open({
-            title: `工具详情: ${name}`,
-            size: 'lg',
-            content: Components.createLoading(),
-        });
-
+        Components.Modal.open({ title: `工具详情: ${name}`, size: 'lg', content: Components.createLoading() });
         try {
             const data = await API.tools.get(name);
             const tool = data.tool || data;
-            const body = document.getElementById('modalBody');
-
-            body.innerHTML = `
+            document.getElementById('modalBody').innerHTML = `
                 <div style="margin-bottom:16px">
-                    <h3 style="font-size:1rem;color:var(--text-heading);margin-bottom:8px">${Components.escapeHtml(tool.name)}</h3>
-                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px">${Components.escapeHtml(tool.description)}</p>
-                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
-                        ${Components.badge(tool.toolset || 'default', 'primary')}
-                        ${tool.enabled ? Components.badge('已启用', 'success') : Components.badge('已禁用', 'muted')}
+                    <h3 style="font-size:15px;font-weight:600;margin-bottom:8px">${Components.escapeHtml(tool.name)}</h3>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">${Components.escapeHtml(tool.description)}</p>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        ${Components.renderBadge(tool.toolset || 'default', 'blue')}
+                        ${tool.enabled ? Components.renderBadge('已启用', 'green') : Components.renderBadge('已禁用', 'orange')}
                     </div>
                 </div>
                 ${Components.sectionTitle('Schema')}
                 ${Components.renderJson(tool.schema || tool.inputSchema || tool.parameters || {})}
             `;
         } catch (err) {
-            document.getElementById('modalBody').innerHTML = Components.createEmptyState(
-                '🔧', '加载失败', err.message, ''
-            );
+            document.getElementById('modalBody').innerHTML = Components.createEmptyState('\uD83D\uDD27', '加载失败', err.message, '');
         }
     }
 
@@ -152,7 +124,5 @@ const ToolsPage = (() => {
 
     function bindEvents() {}
 
-    function init() {}
-
-    return { render, init, viewTool, toggleTool, setFilter };
+    return { render, viewTool, toggleTool, setFilter };
 })();
