@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Hermes Agent - 事件发射中间件
+"""Hermes Agent - 事件发射 + 操作日志中间件
 
-在关键 API 操作后自动发射 SSE 事件
+在关键 API 操作后自动发射 SSE 事件并记录操作日志
 """
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -10,9 +10,9 @@ from starlette.responses import Response
 
 
 class EventEmitMiddleware(BaseHTTPMiddleware):
-    """拦截 API 请求，在写操作后发射 SSE 事件"""
+    """拦截 API 请求，在写操作后发射 SSE 事件 + 记录操作日志"""
 
-    # 需要发射事件的路径模式
+    # 需要处理的路径模式
     WRITE_PATTERNS = {
         "PUT": ["memory", "skills", "tools", "config", "cron"],
         "POST": ["skills", "cron", "sessions", "mcp"],
@@ -22,7 +22,6 @@ class EventEmitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         response = await call_next(request)
 
-        # 只处理 API 路径的写操作
         path = request.url.path
         method = request.method
 
@@ -33,21 +32,33 @@ class EventEmitMiddleware(BaseHTTPMiddleware):
         if any(p in path for p in patterns):
             try:
                 from backend.routers.events import emit_event
+                from backend.routers.logs import add_log
 
-                # 提取事件类型
                 event_type = self._get_event_type(method, path)
+                detail = self._get_detail(method, path)
+
+                # 发射 SSE 事件
                 emit_event(
                     event_type=event_type,
                     data={"path": path, "method": method, "status": response.status_code},
                     source="api",
                 )
+
+                # 记录操作日志
+                level = "success" if response.status_code < 400 else "error"
+                add_log(
+                    action=detail,
+                    target=path,
+                    detail=f"{method} {path} → {response.status_code}",
+                    level=level,
+                    source="user",
+                )
             except Exception:
-                pass  # 事件发射失败不影响主流程
+                pass
 
         return response
 
     def _get_event_type(self, method: str, path: str) -> str:
-        """根据方法和路径推断事件类型"""
         if "memory" in path:
             return "memory.updated"
         elif "skills" in path:
@@ -77,3 +88,32 @@ class EventEmitMiddleware(BaseHTTPMiddleware):
         elif "mcp" in path:
             return "mcp.restarted"
         return "api.call"
+
+    def _get_detail(self, method: str, path: str) -> str:
+        if "memory" in path:
+            return "更新记忆"
+        elif "skills" in path:
+            actions = {"POST": "创建技能", "PUT": "更新技能", "DELETE": "删除技能"}
+            return actions.get(method, "操作技能")
+        elif "tools" in path:
+            return "切换工具状态"
+        elif "cron" in path:
+            if "trigger" in path:
+                return "触发定时任务"
+            actions = {"POST": "创建定时任务", "PUT": "更新定时任务", "DELETE": "删除定时任务"}
+            return actions.get(method, "操作定时任务")
+        elif "sessions" in path:
+            if method == "DELETE":
+                return "删除会话"
+            elif "compress" in path:
+                return "压缩会话"
+            return "操作会话"
+        elif "config" in path:
+            if "reset" in path:
+                return "重置配置"
+            return "更新配置"
+        elif "mcp" in path:
+            return "重启 MCP 服务"
+        elif "agents" in path:
+            return "终止 Agent"
+        return "API 调用"

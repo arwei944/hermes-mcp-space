@@ -19,6 +19,17 @@ async def list_sessions() -> List[Dict[str, Any]]:
     return hermes_service.list_sessions()
 
 
+@router.post("", summary="创建会话")
+async def create_session(body: Dict[str, str] = None) -> Dict[str, Any]:
+    """创建新会话"""
+    body = body or {}
+    return hermes_service.create_session(
+        title=body.get("title", ""),
+        model=body.get("model", ""),
+        source=body.get("source", "api"),
+    )
+
+
 @router.get("/{session_id}", summary="获取会话详情")
 async def get_session(session_id: str) -> Dict[str, Any]:
     """根据 ID 获取会话详情"""

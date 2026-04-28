@@ -92,41 +92,59 @@ class HermesService:
         except Exception:
             return []
 
-    # ==================== 会话管理 ====================
+    # ==================== 会话管理（JSON 持久化） ====================
+
+    def _get_sessions_path(self) -> Path:
+        """获取会话 JSON 存储路径"""
+        sessions_dir = get_hermes_home() / "data"
+        sessions_dir.mkdir(parents=True, exist_ok=True)
+        return sessions_dir / "sessions.json"
+
+    def _load_sessions_data(self) -> Dict[str, Any]:
+        """加载会话数据"""
+        path = self._get_sessions_path()
+        if path.exists():
+            try:
+                return json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+        return {"sessions": [], "messages": {}}
+
+    def _save_sessions_data(self, data: Dict[str, Any]) -> bool:
+        """保存会话数据"""
+        path = self._get_sessions_path()
+        try:
+            path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            return True
+        except Exception:
+            return False
 
     def list_sessions(self) -> List[Dict[str, Any]]:
         """列出所有会话"""
+        # 优先从 SQLite 读取
         rows = self._query_session_db(
             "SELECT id, title, created_at, updated_at, model FROM sessions ORDER BY updated_at DESC"
         )
-        if not rows and not self.hermes_available:
-            # 返回模拟数据
-            return [
-                {
-                    "id": "demo-session-1",
-                    "title": "示例会话 1",
-                    "created_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().isoformat(),
-                    "model": "demo-model",
-                    "message_count": 5,
-                },
-                {
-                    "id": "demo-session-2",
-                    "title": "示例会话 2",
-                    "created_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().isoformat(),
-                    "model": "demo-model",
-                    "message_count": 3,
-                },
-            ]
-        # 为每个会话附加消息数量
-        for session in rows:
-            count_rows = self._query_session_db(
-                "SELECT COUNT(*) as cnt FROM messages WHERE session_id = ?",
-                (session["id"],),
-            )
-            session["message_count"] = count_rows[0]["cnt"] if count_rows else 0
-        return rows
+        if rows:
+            for session in rows:
+                count_rows = self._query_session_db(
+                    "SELECT COUNT(*) as cnt FROM messages WHERE session_id = ?",
+                    (session["id"],),
+                )
+                session["message_count"] = count_rows[0]["cnt"] if count_rows else 0
+            return rows
+
+        # 从 JSON 文件读取
+        data = self._load_sessions_data()
+        sessions = data.get("sessions", [])
+        if sessions:
+            for s in sessions:
+                msgs = data.get("messages", {}).get(s["id"], [])
+                s["message_count"] = len(msgs)
+            return sessions
+
+        # 无数据时返回空列表（不再返回 demo 数据）
+        return []
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """获取会话详情"""
@@ -135,15 +153,11 @@ class HermesService:
         )
         if rows:
             return rows[0]
-        if not self.hermes_available:
-            return {
-                "id": session_id,
-                "title": "示例会话",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat(),
-                "model": "demo-model",
-                "system_prompt": "这是一个示例会话，Hermes Agent 未安装。",
-            }
+
+        data = self._load_sessions_data()
+        for s in data.get("sessions", []):
+            if s["id"] == session_id:
+                return s
         return None
 
     def get_session_messages(self, session_id: str) -> List[Dict[str, Any]]:
@@ -152,40 +166,55 @@ class HermesService:
             "SELECT * FROM messages WHERE session_id = ? ORDER BY created_at ASC",
             (session_id,),
         )
-        if not rows and not self.hermes_available:
-            return [
-                {
-                    "id": "msg-1",
-                    "session_id": session_id,
-                    "role": "user",
-                    "content": "你好，Hermes！",
-                    "created_at": datetime.now().isoformat(),
-                },
-                {
-                    "id": "msg-2",
-                    "session_id": session_id,
-                    "role": "assistant",
-                    "content": "你好！我是 Hermes Agent，有什么可以帮你的吗？",
-                    "created_at": datetime.now().isoformat(),
-                },
-            ]
-        return rows
+        if rows:
+            return rows
+
+        data = self._load_sessions_data()
+        return data.get("messages", {}).get(session_id, [])
+
+    def create_session(self, title: str = "", model: str = "", source: str = "mcp") -> Dict[str, Any]:
+        """创建新会话"""
+        session_id = f"sess_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+        session = {
+            "id": session_id,
+            "title": title or f"会话 {session_id}",
+            "model": model or "unknown",
+            "source": source,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+            "status": "active",
+        }
+        data = self._load_sessions_data()
+        data["sessions"].insert(0, session)
+        data["messages"][session_id] = []
+        self._save_sessions_data(data)
+        return {"success": True, "session": session}
+
+    def add_session_message(self, session_id: str, role: str, content: str) -> Dict[str, Any]:
+        """向会话添加消息"""
+        data = self._load_sessions_data()
+        if session_id not in data.get("messages", {}):
+            data.setdefault("messages", {})[session_id] = []
+        msg = {
+            "role": role,
+            "content": content,
+            "timestamp": datetime.now().isoformat(),
+        }
+        data["messages"][session_id].append(msg)
+        # 更新会话的 updated_at
+        for s in data.get("sessions", []):
+            if s["id"] == session_id:
+                s["updated_at"] = datetime.now().isoformat()
+                break
+        self._save_sessions_data(data)
+        return {"success": True, "message": msg}
 
     def delete_session(self, session_id: str) -> bool:
-        """删除会话及其消息"""
-        db_path = self._get_session_db_path()
-        if not db_path:
-            return False
-        try:
-            conn = sqlite3.connect(str(db_path))
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
-            cursor.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
-            conn.commit()
-            conn.close()
-            return True
-        except Exception:
-            return False
+        """删除会话"""
+        data = self._load_sessions_data()
+        data["sessions"] = [s for s in data.get("sessions", []) if s["id"] != session_id]
+        data.get("messages", {}).pop(session_id, None)
+        return self._save_sessions_data(data)
 
     def compress_session(self, session_id: str) -> Dict[str, Any]:
         """压缩会话上下文"""
