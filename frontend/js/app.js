@@ -7,6 +7,7 @@ const App = (() => {
     const pages = {
         dashboard: DashboardPage,
         sessions: SessionsPage,
+        marketplace: MarketplacePage,
         tools: ToolsPage,
         skills: SkillsPage,
         memory: MemoryPage,
@@ -23,6 +24,7 @@ const App = (() => {
     const pageTitles = {
         dashboard: '仪表盘',
         sessions: '会话',
+        marketplace: '扩展管理',
         tools: '工具管理',
         skills: '技能系统',
         memory: '记忆管理',
