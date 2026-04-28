@@ -151,6 +151,8 @@ const ConfigPage = (() => {
 
     async function resetConfig() {
         try {
+            const ok = await Components.confirm('确认重置', '重置后将丢失当前配置，是否继续？');
+            if (!ok) return;
             await API.config.reset();
             Components.Toast.success('配置已重置');
             render();
@@ -161,6 +163,8 @@ const ConfigPage = (() => {
         const version = _versions[index];
         if (!version) return;
         try {
+            const ok = await Components.confirm('确认回滚', '回滚到历史版本后当前配置将丢失，是否继续？');
+            if (!ok) return;
             await API.config.rollback(index);
             Components.Toast.success('已回滚');
             render();

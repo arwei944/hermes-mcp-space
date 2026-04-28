@@ -150,6 +150,8 @@ const CronPage = (() => {
 
     async function deleteJob(id) {
         try {
+            const ok = await Components.confirm('确认删除', '删除定时任务后无法恢复，是否继续？');
+            if (!ok) return;
             await API.cron.delete(id);
             Components.Toast.success('任务已删除');
             await render();

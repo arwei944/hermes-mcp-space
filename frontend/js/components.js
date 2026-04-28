@@ -393,8 +393,29 @@ const Components = (() => {
         return `<svg${cls} width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
     }
 
+    // 确认对话框
+    function confirm(title, message) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.style.zIndex = '10000';
+            overlay.innerHTML = `<div class="modal" style="max-width:400px;width:90%" onclick="event.stopPropagation()">
+                <div class="modal-header"><h3>${title}</h3></div>
+                <div class="modal-body"><p style="font-size:14px;color:var(--text-secondary)">${message}</p></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" id="confirmCancel">取消</button>
+                    <button type="button" class="btn btn-primary" style="background:var(--red);border-color:var(--red)" id="confirmOk">确认</button>
+                </div>
+            </div>`;
+            document.body.appendChild(overlay);
+            overlay.querySelector('#confirmCancel').onclick = () => { document.body.removeChild(overlay); resolve(false); };
+            overlay.querySelector('#confirmOk').onclick = () => { document.body.removeChild(overlay); resolve(true); };
+            overlay.onclick = () => { document.body.removeChild(overlay); resolve(false); };
+        });
+    }
+
     return {
-        Toast, Modal,
+        Toast, Modal, confirm,
         createLoading, createSkeleton, createEmptyState,
         createStatCard, createStatsGrid, renderStatCard,
         createTable, createCard: renderSection, createCardGrid: () => '',

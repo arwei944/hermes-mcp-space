@@ -7,6 +7,7 @@ const MemoryPage = (() => {
     let _userContent = '';
     let _activeTab = 'memory';
     let _stats = null;
+    let _globalKeyHandler = null;
 
     async function render() {
         const container = document.getElementById('contentBody');
@@ -114,9 +115,11 @@ const MemoryPage = (() => {
     function bindEvents() {
         const editor = document.getElementById('memoryEditor');
         if (editor) editor.addEventListener('input', Components.debounce(updatePreview, 300));
-        document.addEventListener('keydown', function handler(e) {
+        if (_globalKeyHandler) document.removeEventListener('keydown', _globalKeyHandler);
+        _globalKeyHandler = function handler(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveContent(); }
-        });
+        };
+        document.addEventListener('keydown', _globalKeyHandler);
     }
 
     return { render, switchTab, updatePreview, formatContent, saveContent, exportContent, resetContent };
@@ -128,20 +131,22 @@ const MemoryPage = (() => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${_currentTab === 'memory' ? 'MEMORY' : 'USER'}.md`;
+        a.download = `${_activeTab === 'memory' ? 'MEMORY' : 'USER'}.md`;
         a.click();
         URL.revokeObjectURL(url);
         Components.Toast.success('已导出');
     }
 
-    function resetContent() {
+    async function resetContent() {
+        const ok = await Components.confirm('确认重置', '重置后将丢失当前编辑内容，是否继续？');
+        if (!ok) return;
         const defaults = {
             memory: '# Agent 长期记忆\n\n## 用户偏好\n\n## 项目上下文\n\n## 重要记录\n',
             user: '# 用户画像\n\n## 基本信息\n\n## 技术栈\n\n## 偏好\n',
         };
         const editor = document.getElementById('memoryEditor');
         if (editor) {
-            editor.value = defaults[_currentTab] || '';
+            editor.value = defaults[_activeTab] || '';
             updatePreview();
             Components.Toast.info('已重置为默认内容（未保存）');
         }

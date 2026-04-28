@@ -157,6 +157,8 @@ const PluginsPage = (() => {
 
     async function uninstall(name) {
         try {
+            const ok = await Components.confirm('确认卸载', '卸载插件后需要重新安装，是否继续？');
+            if (!ok) return;
             await API.request('DELETE', `/api/plugins/${name}`);
             Components.Toast.success(`插件「${name}」已卸载`);
             await render();

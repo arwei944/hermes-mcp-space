@@ -83,6 +83,8 @@ const AgentsPage = (() => {
 
     async function terminate(id) {
         try {
+            const ok = await Components.confirm('确认终止', '终止 Agent 后将无法恢复，是否继续？');
+            if (!ok) return;
             await API.agents.terminate(id);
             Components.Toast.success('Agent 已终止');
             await loadAgents();

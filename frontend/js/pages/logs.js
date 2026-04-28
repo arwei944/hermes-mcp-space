@@ -12,6 +12,8 @@ const LogsPage = (() => {
     let _refreshTimer = null;
 
     async function render() {
+        if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; _autoRefresh = false; }
+
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
@@ -121,6 +123,9 @@ const LogsPage = (() => {
     }
 
     async function clearLogs() {
+        const ok = await Components.confirm('确认清空', '清空后日志将无法恢复，是否继续？');
+        if (!ok) return;
+
         try {
             await API.request('/api/logs', { method: 'DELETE' });
             _logs = [];
