@@ -23,39 +23,13 @@ const ToolsPage = (() => {
             const rawToolsets = toolsetsData.toolsets || toolsetsData || [];
             _toolsets = rawToolsets.map(ts => typeof ts === 'string' ? ts : ts.name).filter(Boolean);
         } catch (err) {
-            const mock = getMockTools();
+            const mock = { tools: [], toolsets: [] };
             _tools = mock.tools;
             _toolsets = mock.toolsets;
         }
 
         container.innerHTML = buildPage();
         bindEvents();
-    }
-
-    function getMockTools() {
-        return {
-            tools: [
-                { name: 'read_file', description: '读取文件内容，支持文本和图片文件', toolset: 'filesystem', enabled: true },
-                { name: 'write_file', description: '写入文件到本地文件系统', toolset: 'filesystem', enabled: true },
-                { name: 'edit_file', description: '使用搜索替换方式编辑文件', toolset: 'filesystem', enabled: true },
-                { name: 'delete_file', description: '删除指定文件', toolset: 'filesystem', enabled: true },
-                { name: 'list_directory', description: '列出目录中的文件和子目录', toolset: 'filesystem', enabled: true },
-                { name: 'search_files', description: '使用 glob 模式搜索文件', toolset: 'filesystem', enabled: true },
-                { name: 'grep_search', description: '使用正则表达式搜索文件内容', toolset: 'filesystem', enabled: true },
-                { name: 'run_command', description: '执行 bash 命令', toolset: 'system', enabled: true },
-                { name: 'web_search', description: '搜索互联网获取最新信息', toolset: 'web', enabled: true },
-                { name: 'web_fetch', description: '获取指定 URL 的页面内容', toolset: 'web', enabled: true },
-                { name: 'generate_image', description: '使用 AI 生成图片', toolset: 'creative', enabled: false },
-                { name: 'create_document', description: '创建 Word/PDF/Excel 文档', toolset: 'creative', enabled: true },
-                { name: 'manage_cron', description: '管理定时任务', toolset: 'system', enabled: true },
-                { name: 'memory_read', description: '读取记忆文件内容', toolset: 'memory', enabled: true },
-                { name: 'memory_write', description: '写入记忆文件', toolset: 'memory', enabled: true },
-                { name: 'skill_execute', description: '执行指定技能', toolset: 'skills', enabled: true },
-                { name: 'mcp_call', description: '调用 MCP 服务', toolset: 'mcp', enabled: true },
-                { name: 'code_execute', description: '执行代码片段', toolset: 'system', enabled: true },
-            ],
-            toolsets: ['filesystem', 'system', 'web', 'creative', 'memory', 'skills', 'mcp'],
-        };
     }
 
     function getFilteredTools() {

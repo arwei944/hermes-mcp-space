@@ -25,22 +25,12 @@ const LogsPage = (() => {
             _logs = logsData || [];
             _stats = statsData;
         } catch (err) {
-            _logs = getMockLogs();
+            _logs = [];
             _stats = null;
         }
 
         container.innerHTML = buildPage();
         bindEvents();
-    }
-
-    function getMockLogs() {
-        const now = new Date();
-        return [
-            { id: '1', timestamp: new Date(now - 60000).toISOString(), action: '系统启动', target: 'Hermes Agent', detail: '服务启动成功', level: 'success', source: 'system' },
-            { id: '2', timestamp: new Date(now - 30000).toISOString(), action: 'API 调用', target: '/api/dashboard', detail: '获取仪表盘数据', level: 'info', source: 'user' },
-            { id: '3', timestamp: new Date(now - 10000).toISOString(), action: 'MCP 连接', target: 'initialize', detail: 'MCP 客户端初始化', level: 'info', source: 'mcp' },
-            { id: '4', timestamp: new Date(now - 5000).toISOString(), action: '记忆更新', target: 'MEMORY.md', detail: '写入记忆内容', level: 'success', source: 'user' },
-        ];
     }
 
     function buildPage() {

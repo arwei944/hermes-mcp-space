@@ -27,7 +27,7 @@ const AboutPage = (() => {
                 'MCP 工具描述更新（参数说明更准确）',
             ],
         },        {
-            version: '2.0.0',
+            version: '2.2.0',
             date: '2026-04-28 22:00',
             title: 'v2.0 正式版 - 实时对话同步 + 全面优化',
             changes: [
@@ -189,14 +189,14 @@ const AboutPage = (() => {
         try {
             const [status, toolsData] = await Promise.all([
                 API.system.health(),
-                API.request('GET', '/api/tools').catch(() => []),
+                API.request('/api/tools').catch(() => []),
             ]);
-            var version = status.version || '2.0.0';
+            var version = status.version || APP_VERSION;
             var totalUptime = status.total_uptime || status.uptime || 0;
             var firstDeploy = status.first_deploy || '';
             var mcpToolCount = Array.isArray(toolsData) ? toolsData.length : (toolsData.tools || []).length;
         } catch (err) {
-            var version = '2.0.0';
+            var version = APP_VERSION;
             var totalUptime = 0;
             var firstDeploy = '';
             var mcpToolCount = 0;

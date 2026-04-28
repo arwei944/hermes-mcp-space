@@ -21,34 +21,12 @@ const DashboardPage = (() => {
             _cronJobs = cronData.jobs || cronData || [];
             _useFallback = false;
         } catch (err) {
-            _data = getMockData();
-            _cronJobs = getMockCron();
+            _data = {};
+            _cronJobs = [];
             _useFallback = true;
         }
 
         container.innerHTML = buildPage();
-    }
-
-    function getMockData() {
-        return {
-            stats: { sessions: 128, activeSessions: 3, tools: 24, activeTools: 18, skills: 7, cronJobs: 4, activeCronJobs: 3, mcpConnected: true },
-            recentSessions: [
-                { id: 'sess_001', source: 'Trae', model: 'qwen3-coder', messages: 24, createdAt: new Date(Date.now() - 120000).toISOString(), status: 'active' },
-                { id: 'sess_002', source: 'Web', model: 'claude-4', messages: 56, createdAt: new Date(Date.now() - 900000).toISOString(), status: 'active' },
-                { id: 'sess_003', source: 'CLI', model: 'gpt-4o', messages: 12, createdAt: new Date(Date.now() - 3600000).toISOString(), status: 'completed' },
-                { id: 'sess_004', source: 'API', model: 'qwen3-coder', messages: 8, createdAt: new Date(Date.now() - 10800000).toISOString(), status: 'completed' },
-                { id: 'sess_005', source: 'Trae', model: 'claude-4', messages: 42, createdAt: new Date(Date.now() - 86400000).toISOString(), status: 'completed' },
-            ],
-            systemStatus: { uptime: '3天 12小时 30分钟', version: '2.0.0', memoryUsage: '256MB / 512MB', cpuUsage: '12%' },
-        };
-    }
-
-    function getMockCron() {
-        return [
-            { id: 'cron_001', name: '日报生成', schedule: '0 9 * * *', status: 'active' },
-            { id: 'cron_002', name: '缓存清理', schedule: '0 3 * * 0', status: 'active' },
-            { id: 'cron_003', name: '模型更新', schedule: '手动', status: 'paused' },
-        ];
     }
 
     // --- SVG 图表工具 ---
@@ -185,12 +163,11 @@ const DashboardPage = (() => {
         recentSessions.forEach(s => { modelMap[s.model || '未知'] = (modelMap[s.model || '未知'] || 0) + 1; });
         const modelData = Object.entries(modelMap).map(([k, v]) => ({ label: k.length > 10 ? k.slice(0, 10) : k, value: v }));
 
-        // 模拟 7 天会话趋势（折线图）
+        // 7 天会话趋势（折线图）
         const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-        const today = new Date().getDay();
-        const trendData = days.map((d, i) => ({
+        const trendData = days.map(d => ({
             label: d,
-            value: Math.floor(Math.random() * 20) + 5 + (i === (today === 0 ? 6 : today - 1) ? 10 : 0),
+            value: 0,
         }));
 
         // 系统资源仪表盘

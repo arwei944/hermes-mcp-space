@@ -16,11 +16,7 @@ const CronPage = (() => {
             const data = await API.cron.list();
             _jobs = data.jobs || data || [];
         } catch (err) {
-            _jobs = [
-                { id: 'cron_001', name: '日报生成', schedule: '0 9 * * *', command: '生成每日工作报告', status: 'active', last_run: '2026-04-28T09:00:00' },
-                { id: 'cron_002', name: '缓存清理', schedule: '0 3 * * 0', command: '清理过期缓存文件', status: 'active', last_run: '2026-04-27T03:00:00' },
-                { id: 'cron_003', name: '模型检查', schedule: '0 */6 * * *', command: '检查模型可用性', status: 'paused', last_run: null },
-            ];
+            _jobs = [];
         }
 
         container.innerHTML = buildPage();

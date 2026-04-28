@@ -20,16 +20,8 @@ const AgentsPage = (() => {
             const data = await API.agents.list();
             _agents = data.agents || data || [];
         } catch (err) {
-            _agents = getMockAgents();
+            _agents = [];
         }
-    }
-
-    function getMockAgents() {
-        return [
-            { id: 'agent_001', name: '代码审查 Agent', type: 'code-review', status: 'running', sessionId: 'sess_001', startTime: new Date(Date.now() - 300000).toISOString(), progress: 65, currentTask: '正在分析 src/api/routes.ts' },
-            { id: 'agent_002', name: '文档生成 Agent', type: 'doc-writer', status: 'running', sessionId: 'sess_002', startTime: new Date(Date.now() - 600000).toISOString(), progress: 30, currentTask: '正在生成 API 文档' },
-            { id: 'agent_003', name: '测试 Agent', type: 'test-runner', status: 'completed', sessionId: 'sess_003', startTime: new Date(Date.now() - 1800000).toISOString(), progress: 100, currentTask: '所有测试通过' },
-        ];
     }
 
     function buildPage() {

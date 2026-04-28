@@ -22,7 +22,7 @@ const McpPage = (() => {
             _status = statusData;
             _apiStatus = apiStatus;
         } catch (err) {
-            _status = getMockStatus();
+            _status = { status: 'unknown' };
             _apiStatus = { status: '降级模式', hermes_available: false };
         }
 
@@ -38,28 +38,11 @@ const McpPage = (() => {
                 _mcpTools = data.result?.tools || [];
             }
         } catch (err) {
-            _mcpTools = getMockTools();
+            _mcpTools = [];
         }
 
         container.innerHTML = buildPage();
         bindEvents();
-    }
-
-    function getMockStatus() {
-        return { status: 'unavailable', message: 'Hermes Agent 未安装', servers: [] };
-    }
-
-    function getMockTools() {
-        return [
-            { name: 'list_sessions', description: '列出最近的会话列表' },
-            { name: 'get_session_messages', description: '获取会话消息历史' },
-            { name: 'list_tools', description: '列出所有可用工具' },
-            { name: 'list_skills', description: '列出所有可用技能' },
-            { name: 'read_memory', description: '读取 Agent 长期记忆' },
-            { name: 'write_memory', description: '写入 Agent 长期记忆' },
-            { name: 'get_system_status', description: '获取系统状态' },
-            { name: 'get_dashboard_summary', description: '获取仪表盘摘要' },
-        ];
     }
 
     function getConfigs() {

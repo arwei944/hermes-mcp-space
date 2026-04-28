@@ -22,21 +22,13 @@ const MemoryPage = (() => {
             _userContent = typeof userData === 'string' ? userData : (userData.user || '');
             _stats = statsData;
         } catch (err) {
-            _memoryContent = getMockMemory();
-            _userContent = getMockUser();
+            _memoryContent = '';
+            _userContent = '';
             _stats = null;
         }
 
         container.innerHTML = buildPage();
         bindEvents();
-    }
-
-    function getMockMemory() {
-        return `# Agent 记忆\n\n## 项目信息\n- 项目名称: Hermes Agent\n- 版本: 2.0.0\n- 技术栈: Node.js, TypeScript, Express\n\n## 用户偏好\n- 用户喜欢简洁的代码风格\n- 优先使用 TypeScript\n- 测试覆盖率要求 > 80%\n\n## 重要决策\n1. 使用 Express 作为 Web 框架\n2. 采用 MCP 协议进行工具通信\n3. 记忆系统使用 Markdown 文件存储`;
-    }
-
-    function getMockUser() {
-        return `# 用户信息\n\n## 基本信息\n- 称呼: 开发者\n- 时区: Asia/Shanghai\n- 语言: 中文\n\n## 偏好设置\n- 代码风格: 简洁、有注释\n- 文档语言: 中文\n- 回复风格: 直接、专业`;
     }
 
     function buildPage() {
