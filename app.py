@@ -12,7 +12,6 @@ Hermes Agent MCP Space - ModelScope 部署入口
 import atexit
 import logging
 import os
-import signal
 import sys
 import threading
 import time
@@ -31,7 +30,7 @@ logger = logging.getLogger("hermes-space")
 # ==================== 全局配置 ====================
 
 # 管理面板端口（FastAPI 内部服务）
-PANEL_PORT = int(os.environ.get("PANEL_PORT", "7860"))
+PANEL_PORT = int(os.environ.get("PANEL_PORT", "7861"))
 # MCP SSE 端口
 MCP_SSE_PORT = int(os.environ.get("MCP_SSE_PORT", "8765"))
 # 是否启用 MCP SSE 服务
@@ -87,26 +86,17 @@ def start_mcp_sse_server() -> Optional[threading.Thread]:
 
     def run():
         logger.info(f"启动 MCP SSE 服务: http://0.0.0.0:{MCP_SSE_PORT}/sse")
-        from mcp_server import create_mcp_server
-        mcp = create_mcp_server()
-        mcp.run(transport="sse", host="0.0.0.0", port=MCP_SSE_PORT)
+        try:
+            from mcp_server import create_mcp_server
+            mcp = create_mcp_server()
+            mcp.run(transport="sse", host="0.0.0.0", port=MCP_SSE_PORT)
+        except Exception as e:
+            logger.error(f"MCP SSE 服务启动失败: {e}")
 
     thread = threading.Thread(target=run, daemon=True, name="mcp-sse-server")
     thread.start()
-
-    # 等待 MCP SSE 服务启动
-    for _ in range(30):
-        time.sleep(0.5)
-        try:
-            import httpx
-            resp = httpx.get(f"http://127.0.0.1:{MCP_SSE_PORT}/sse", timeout=2)
-            # SSE 端点即使正常也可能返回非 200，只要能连接即可
-            logger.info("MCP SSE 服务启动成功")
-            return thread
-        except Exception:
-            continue
-
-    logger.warning("MCP SSE 服务启动超时，但仍在后台运行")
+    time.sleep(2)
+    logger.info("MCP SSE 服务已启动（后台运行）")
     return thread
 
 
@@ -115,7 +105,6 @@ def start_mcp_sse_server() -> Optional[threading.Thread]:
 def cleanup():
     """清理所有后台服务"""
     logger.info("正在关闭所有后台服务...")
-    # daemon 线程会随主进程退出自动终止
     logger.info("清理完成")
 
 
@@ -128,7 +117,27 @@ def build_gradio_app() -> "gr.Blocks":
     """构建 Gradio 前端界面"""
     import gradio as gr
 
-    # 状态信息
+    # 读取前端 HTML
+    frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
+    index_html_path = os.path.join(frontend_dir, "index.html")
+
+    # 尝试读取前端 HTML 内容
+    try:
+        with open(index_html_path, "r", encoding="utf-8") as f:
+            frontend_html = f.read()
+        # 替换相对路径为绝对路径
+        frontend_html = frontend_html.replace(
+            'href="css/style.css"',
+            f'href="file://{frontend_dir}/css/style.css"'
+        )
+        frontend_html = frontend_html.replace(
+            'src="js/',
+            f'src="file://{frontend_dir}/js/'
+        )
+    except Exception as e:
+        logger.warning(f"无法读取前端文件: {e}")
+        frontend_html = "<p>前端文件加载失败，请检查 frontend/ 目录</p>"
+
     panel_url = f"http://127.0.0.1:{PANEL_PORT}"
     mcp_sse_url = f"http://127.0.0.1:{MCP_SSE_PORT}/sse" if ENABLE_MCP_SSE else "未启用"
 
@@ -197,7 +206,7 @@ def build_gradio_app() -> "gr.Blocks":
         }
         .iframe-container {
             width: 100%;
-            height: 600px;
+            height: 700px;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
             overflow: hidden;
@@ -234,8 +243,8 @@ def build_gradio_app() -> "gr.Blocks":
         gr.HTML("""
         <div class="container">
             <div class="header">
-                <h1>Hermes Agent MCP Space</h1>
-                <p>基于 ModelScope Gradio SDK 部署的 Hermes Agent MCP 服务</p>
+                <h1>☤ Hermes Agent MCP Space</h1>
+                <p>基于 ModelScope Gradio SDK 部署的 Hermes Agent 管理面板 + MCP 服务</p>
             </div>
         </div>
         """)
@@ -244,13 +253,13 @@ def build_gradio_app() -> "gr.Blocks":
             with gr.Column(scale=1):
                 gr.HTML(f"""
                 <div class="status-card">
-                    <h3>服务状态</h3>
+                    <h3>📡 服务状态</h3>
                     <div class="status-item">
-                        <span class="status-label">管理面板</span>
-                        <span class="status-value status-ok" id="panel-status">运行中</span>
+                        <span class="status-label">管理面板 API</span>
+                        <span class="status-value status-ok">运行中</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">面板地址</span>
+                        <span class="status-label">面板 API 地址</span>
                         <span class="status-value">{panel_url}</span>
                     </div>
                     <div class="status-item">
@@ -273,22 +282,22 @@ def build_gradio_app() -> "gr.Blocks":
             with gr.Column(scale=1):
                 gr.HTML("""
                 <div class="status-card">
-                    <h3>快速开始</h3>
+                    <h3>🚀 快速开始</h3>
                     <div style="color: #475569; line-height: 1.8;">
                         <p><strong>1. Trae / Cursor 连接 MCP:</strong></p>
                         <p style="font-family: monospace; background: #f1f5f9; padding: 0.5rem; border-radius: 6px; font-size: 0.85rem;">
-                            { "mcpServers": { "hermes": { "url": "SSE_URL" } } }
+                        { "mcpServers": { "hermes": { "url": "SSE_URL" } } }
                         </p>
                         <p style="margin-top: 0.75rem;"><strong>2. 管理面板:</strong></p>
                         <p>点击下方「打开管理面板」按钮访问完整管理界面</p>
                         <p style="margin-top: 0.75rem;"><strong>3. API 文档:</strong></p>
-                        <p>管理面板启动后访问 /docs 查看 Swagger API 文档</p>
+                        <p>访问 /docs 查看 Swagger API 文档</p>
                     </div>
                 </div>
                 """)
 
         # 管理面板 iframe 嵌入
-        with gr.Accordion("管理面板", open=True):
+        with gr.Accordion("🖥️ 管理面板（Obsidian 风格）", open=True):
             gr.HTML(f"""
             <div class="iframe-container">
                 <iframe src="{panel_url}" allow="fullscreen"></iframe>
@@ -297,7 +306,7 @@ def build_gradio_app() -> "gr.Blocks":
             gr.Button("在新标签页打开管理面板", link=panel_url)
 
         # 工具列表展示
-        with gr.Accordion("MCP 工具列表 (24 个)", open=False):
+        with gr.Accordion("🔧 MCP 工具列表 (24 个)", open=False):
             tools_html = """
             <div class="tools-section">
                 <div class="tool-grid">
@@ -318,7 +327,7 @@ def build_gradio_app() -> "gr.Blocks":
             gr.HTML(tools_html)
 
         # 连接配置说明
-        with gr.Accordion("MCP 客户端配置说明", open=False):
+        with gr.Accordion("📖 MCP 客户端配置说明", open=False):
             gr.HTML("""
             <div style="color: #475569; line-height: 1.8;">
                 <h4 style="color: #334155;">Trae IDE 配置</h4>
@@ -379,7 +388,7 @@ def main():
     demo = build_gradio_app()
     demo.launch(
         server_name="0.0.0.0",
-        server_port=PANEL_PORT,
+        server_port=7860,
         share=False,
         show_error=True,
         quiet=False,

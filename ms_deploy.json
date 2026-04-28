@@ -1,0 +1,26 @@
+{
+  "requirements": ["requirements.txt"],
+  "sdk": "gradio",
+  "python_version": "3.11",
+  "app_file": "app.py",
+  "models": [],
+  "resources": {
+    "cpu": 2,
+    "gpu": 0,
+    "memory": 8192
+  },
+  "secrets": {
+    "HERMES_HOME": {
+      "description": "Hermes Agent 主目录（可选，默认 ~/.hermes）",
+      "required": false
+    },
+    "ENABLE_MCP_SSE": {
+      "description": "是否启用 MCP SSE 服务（true/false，默认 true）",
+      "required": false
+    },
+    "PANEL_PORT": {
+      "description": "管理面板端口（默认 7860）",
+      "required": false
+    }
+  }
+}
