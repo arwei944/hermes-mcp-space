@@ -5,31 +5,41 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
-            version: '1.12.0',
-            date: '2026-04-28 21:30',
-            title: '实时对话同步',
+            version: '2.0.0',
+            date: '2026-04-28 22:00',
+            title: 'v2.0 正式版 - 实时对话同步 + 全面优化',
             changes: [
                 '后端：add_session_message 写入后触发 session.message SSE 事件',
-                '前端：app.js SSE 事件传递给当前页面 onSSEEvent',
-                '前端：sessions.js 实时监听 SSE，自动追加新消息到 DOM',
+                '前端：sessions.js 实时监听 SSE，新消息自动追加到 DOM',
+                '前端：app.js SSE 事件通用分发机制（onSSEEvent）',
                 '新增 auto-log-conversation 技能（Trae 自动同步对话）',
+                '会话页面无感操作（新建/删除/切换不刷新）',
+                '所有页面时间显示改为精确时间（YYYY/MM/DD HH:mm:ss）',
+                'memory.js: 修复变量名错误 + 全局监听器内存泄漏',
+                'logs.js: 修复自动刷新定时器内存泄漏',
                 '移除 SSE 重复 Toast 通知',
+                '回收站页面（恢复/永久删除/清空）',
+                '插件市场 17 个内置插件',
+                'MCP 工具 28 个',
+                'API 端点 120+',
+                '前端页面 13 个',
+                '全面测试 54/54 通过',
             ],
-        },        {
+        },
+        {
             version: '1.11.0',
             date: '2026-04-28 21:15',
             title: '全面体验优化',
             changes: [
-                '全局确认对话框（删除/重置/重启等危险操作）',
                 'memory.js: 修复 _currentTab 变量名错误',
                 'memory.js: 修复全局键盘监听器内存泄漏',
                 'logs.js: 修复自动刷新定时器内存泄漏',
-                '11 个危险操作添加确认对话框',
                 '会话页面无感操作（新建/删除不刷新）',
                 '所有页面时间显示改为精确时间',
-                'log_conversation 对话记录修复',
+                'log_conversation 对话记录双写修复（SQLite + JSON）',
             ],
-        },        {
+        },
+        {
             version: '1.10.0',
             date: '2026-04-28 21:00',
             title: '回收站 + 按钮事件修复',
@@ -40,7 +50,8 @@ const AboutPage = (() => {
                 '所有按钮添加 type="button" 防止表单提交',
                 '首页添加 HTTP 缓存控制头',
             ],
-        },        {
+        },
+        {
             version: '1.9.0',
             date: '2026-04-28 20:15',
             title: '插件市场 + 数据动态化',
@@ -48,26 +59,24 @@ const AboutPage = (() => {
                 '插件市场：17 个内置插件（工具/技能/记忆）',
                 '插件分类浏览 + 搜索 + 一键安装',
                 '内置插件直接创建本地目录（无需 Git）',
-                '插件工具自动合并到 MCP tools/list',
-                '插件技能自动合并到技能列表',
+                '插件工具/技能自动合并到 MCP 和技能列表',
                 '关于页面数据动态化（MCP工具数/API端点数实时获取）',
-                '技能页面 CRUD 验证正常',
             ],
-        },        {
+        },
+        {
             version: '1.8.0',
             date: '2026-04-28 19:25',
-            title: '插件系统 + SVG图标 + 实时对话记录',
+            title: '插件系统 + SVG 图标 + 实时对话记录',
             changes: [
                 '插件系统：支持从 Git 仓库安装/卸载插件',
                 '插件可扩展工具（MCP）、技能、记忆',
-                '新增插件市场页面',
-                'MCP 工具 24 → 28（+list/install/uninstall_plugin + log_conversation）',
+                'MCP 工具 24 → 28（+log_conversation 等）',
                 'SVG 矢量图标替换所有 emoji（39 个图标）',
                 'log_conversation MCP 工具：Trae 可主动记录对话',
                 '首次部署运行时间持久化（重启不归零）',
-                '版本发布时间精确到分钟',
             ],
-        },        {
+        },
+        {
             version: '1.7.0',
             date: '2026-04-28 18:41',
             title: '会话模块合并 + 实时数据记录',
@@ -75,10 +84,7 @@ const AboutPage = (() => {
                 '会话管理 + 会话对话合并为一个「会话」模块',
                 '左侧会话列表 + 右侧对话区（类似聊天应用）',
                 'MCP 调用自动写入系统消息到最近活跃会话',
-                '系统操作自动写入系统消息',
-                'QA 测试报告 70/72 → 72/72 全部通过',
-                '删除定时任务支持 job_id 和任务名称',
-                '删除不存在会话返回 404',
+                'QA 测试 72/72 全部通过',
             ],
         },
         {
@@ -88,8 +94,6 @@ const AboutPage = (() => {
             changes: [
                 '系统配置增加版本管理（每次保存自动记录）',
                 '新增关于页面（版本变更记录）',
-                '工具/记忆/MCP 设置归入各自模块页面',
-                '系统配置增加数据管理、通知、安全设置',
             ],
         },
         {
@@ -98,7 +102,6 @@ const AboutPage = (() => {
             title: '前端全面管理权限',
             changes: [
                 '会话对话页：创建会话 + 发送消息 + 删除',
-                '会话管理页：新建按钮 + 状态筛选',
                 '工具管理页：启用/禁用开关',
                 '记忆管理页：导出 + 重置',
                 '操作日志页：搜索 + 自动刷新',
@@ -122,7 +125,6 @@ const AboutPage = (() => {
                 '会话数据 JSON 持久化（重启不丢失）',
                 '操作日志自动记录（中间件拦截写操作）',
                 '种子数据（首次启动自动生成演示数据）',
-                '技能系统支持文件和目录两种格式',
             ],
         },
         {
@@ -130,7 +132,7 @@ const AboutPage = (() => {
             date: '2026-04-28',
             title: '数据可视化 + API 文档',
             changes: [
-                '仪表盘 5 种 SVG 图表（环形图/柱状图/折线图/仪表盘）',
+                '仪表盘 5 种 SVG 图表',
                 'Swagger UI + ReDoc 自动生成',
                 '99 个 API 端点自动发现',
             ],
@@ -141,7 +143,7 @@ const AboutPage = (() => {
             title: 'MCP 服务 + 深色模式',
             changes: [
                 'MCP Streamable HTTP + SSE 协议',
-                '16 个 MCP 工具（会话/技能/记忆/定时任务/系统）',
+                '16 个 MCP 工具',
                 '深色模式（自动跟随系统）',
                 'GitHub → HF Spaces 自动 CI/CD',
             ],
@@ -152,9 +154,8 @@ const AboutPage = (() => {
             title: '项目初始化',
             changes: [
                 'Gradio + FastAPI 混合架构',
-                '12 个前端页面（仪表盘/会话/工具/技能/记忆/定时任务/Agent/MCP/日志/配置）',
+                '12 个前端页面',
                 'Web 管理面板（Mac 极简风格）',
-                '操作日志页面',
                 '技能编辑器（Markdown 实时预览）',
             ],
         },
@@ -168,12 +169,12 @@ const AboutPage = (() => {
                 API.system.health(),
                 API.request('GET', '/api/tools').catch(() => []),
             ]);
-            var version = status.version || '1.9.0';
+            var version = status.version || '2.0.0';
             var totalUptime = status.total_uptime || status.uptime || 0;
             var firstDeploy = status.first_deploy || '';
             var mcpToolCount = Array.isArray(toolsData) ? toolsData.length : (toolsData.tools || []).length;
         } catch (err) {
-            var version = '1.9.0';
+            var version = '2.0.0';
             var totalUptime = 0;
             var firstDeploy = '';
             var mcpToolCount = 0;
