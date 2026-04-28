@@ -1,0 +1,106 @@
+# -*- coding: utf-8 -*-
+"""
+Hermes Agent 配置示例文件
+
+使用方法：
+  1. 复制此文件为 config.yaml
+  2. 根据实际环境修改配置项
+  3. 将 config.yaml 放置在 HERMES_HOME 目录下（默认 ~/.hermes/config.yaml）
+
+环境变量优先级高于配置文件。
+"""
+
+# ==================== 基础配置 ====================
+
+# Hermes 主目录（所有数据的根目录）
+hermes_home: ~/.hermes
+
+# 管理面板监听地址
+host: 0.0.0.0
+
+# 管理面板监听端口
+port: 8000
+
+# 调试模式（开启后 API 文档可访问，CORS 允许所有来源）
+debug: true
+
+# CORS 允许的来源（生产环境建议限制）
+cors_origins:
+  - "*"
+
+# ==================== 数据库配置 ====================
+
+# 会话数据库 URL（默认使用 SQLite）
+# database_url: sqlite:///$HOME/.hermes/data/sessions.db
+
+# ==================== 目录配置 ====================
+
+# 技能目录（存放 SKILL.md 文件）
+skills_dir: ~/.hermes/skills
+
+# 记忆目录（存放 MEMORY.md、USER.md 文件）
+memories_dir: ~/.hermes/memories
+
+# 定时任务目录（存放 jobs.json 文件）
+cron_dir: ~/.hermes/cron
+
+# 子 Agent 目录
+agents_dir: ~/.hermes/agents
+
+# ==================== MCP 服务配置 ====================
+
+# MCP SSE 服务端口
+mcp_sse_port: 8765
+
+# 是否启用 MCP SSE 服务
+enable_mcp_sse: true
+
+# MCP 服务日志级别
+mcp_log_level: WARNING
+
+# ==================== 模型配置 ====================
+
+# 默认使用的 LLM 模型
+# model: gpt-4o
+
+# API Key（建议通过环境变量 HERMES_API_KEY 设置）
+# api_key: your-api-key-here
+
+# API 基础 URL（用于自定义模型端点）
+# api_base: https://api.openai.com/v1
+
+# ==================== 工具配置 ====================
+
+# 终端命令执行超时时间（秒）
+terminal_timeout: 120
+
+# 代码执行超时时间（秒）
+code_timeout: 60
+
+# 网页搜索默认返回结果数
+search_num_results: 5
+
+# 文件读取默认行数限制
+file_read_limit: 2000
+
+# ==================== 浏览器配置 ====================
+
+# 浏览器类型（playwright / selenium）
+# browser_type: playwright
+
+# 是否启用无头模式
+# browser_headless: true
+
+# ==================== 安全配置 ====================
+
+# 允许执行的命令白名单（留空则允许所有命令）
+# allowed_commands:
+#   - ls
+#   - cat
+#   - python
+
+# 禁止访问的目录
+# forbidden_paths:
+#   - /etc
+#   - /var
+#   - /usr
