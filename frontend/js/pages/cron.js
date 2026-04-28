@@ -149,7 +149,6 @@ const CronPage = (() => {
     }
 
     async function deleteJob(id) {
-        if (!confirm('确定要删除这个定时任务吗？')) return;
         try {
             await API.cron.delete(id);
             Components.Toast.success('任务已删除');

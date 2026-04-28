@@ -8,7 +8,6 @@ const ChatPage = (() => {
     let _currentSession = null;
     let _messages = [];
     let _searchKeyword = '';
-    let _showCreateModal = false;
 
     async function render(sessionId) {
         const container = document.getElementById('contentBody');
@@ -100,25 +99,6 @@ const ChatPage = (() => {
                 <button class="btn btn-primary" onclick="ChatPage.sendMessage()" style="padding:8px 16px">发送</button>
             </div>` : '';
 
-        // 创建会话弹窗
-        const modalHtml = _showCreateModal ? `
-            <div class="modal-overlay" onclick="ChatPage.hideCreate()">
-                <div class="modal" onclick="event.stopPropagation()" style="max-width:400px">
-                    <div class="modal-header">
-                        <h3>创建新会话</h3>
-                        <button class="modal-close" onclick="ChatPage.hideCreate()">✕</button>
-                    </div>
-                    <div class="modal-body">
-                        ${Components.formGroup('会话标题', `<input class="form-input" id="newSessionTitle" placeholder="例如: 代码审查">`)}
-                        ${Components.formGroup('模型', `<input class="form-input" id="newSessionModel" placeholder="例如: claude-4-sonnet">`)}
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-ghost" onclick="ChatPage.hideCreate()">取消</button>
-                        <button class="btn btn-primary" onclick="ChatPage.createSession()">创建</button>
-                    </div>
-                </div>
-            </div>` : '';
-
         return `<div class="chat-layout">
             <div class="chat-sidebar">
                 <div class="chat-sidebar-header">
@@ -141,7 +121,7 @@ const ChatPage = (() => {
                 ${messagesHtml}
                 ${inputHtml}
             </div>
-        </div>${modalHtml}`;
+        </div>`;
     }
 
     function getCurrentTitle() {
@@ -150,13 +130,10 @@ const ChatPage = (() => {
         return s ? (s.title || s.id) : _currentSession;
     }
 
-    async function createSession() {
-        const title = document.getElementById('newSessionTitle')?.value.trim() || '';
-        const model = document.getElementById('newSessionModel')?.value.trim() || '';
+    async function showCreate() {
         try {
-            const result = await API.sessions.create({ title, model, source: 'web' });
+            const result = await API.sessions.create({ title: `会话 ${new Date().toLocaleString('zh-CN')}`, source: 'web' });
             Components.Toast.success('会话已创建');
-            _showCreateModal = false;
             const newId = result.session?.id;
             if (newId) {
                 await render(newId);
@@ -166,18 +143,6 @@ const ChatPage = (() => {
         } catch (err) {
             Components.Toast.error(`创建失败: ${err.message}`);
         }
-    }
-
-    function showCreate() {
-        _showCreateModal = true;
-        document.getElementById('contentBody').innerHTML = buildPage();
-        bindEvents();
-    }
-
-    function hideCreate() {
-        _showCreateModal = false;
-        document.getElementById('contentBody').innerHTML = buildPage();
-        bindEvents();
     }
 
     async function sendMessage() {
@@ -224,7 +189,6 @@ const ChatPage = (() => {
     }
 
     async function deleteSession(id) {
-        if (!confirm('确定要删除这个会话吗？')) return;
         try {
             await API.sessions.delete(id);
             Components.Toast.success('会话已删除');
@@ -271,5 +235,5 @@ const ChatPage = (() => {
 
     function bindEvents() {}
 
-    return { render, selectSession, search, showCreate, hideCreate, createSession, sendMessage, deleteSession };
+    return { render, selectSession, search, showCreate, sendMessage, deleteSession };
 })();

@@ -116,7 +116,6 @@ const SessionsPage = (() => {
     }
 
     async function deleteSession(id) {
-        if (!confirm('确定要删除该会话吗？此操作不可撤销。')) return;
         try {
             await API.sessions.delete(id);
             Components.Toast.success('会话已删除');
@@ -165,10 +164,8 @@ const SessionsPage = (() => {
     }
 
     async function showCreate() {
-        const title = prompt('会话标题:', '');
-        if (title === null) return;
         try {
-            await API.sessions.create({ title, source: 'web' });
+            await API.sessions.create({ title: `会话 ${new Date().toLocaleString('zh-CN')}`, source: 'web' });
             Components.Toast.success('会话已创建');
             await render();
         } catch (err) {

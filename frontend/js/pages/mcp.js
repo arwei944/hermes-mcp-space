@@ -169,7 +169,6 @@ const McpPage = (() => {
     }
 
     async function restartService() {
-        if (!confirm('确定要重启 MCP 服务吗？')) return;
         try {
             Components.Toast.info('正在重启 MCP 服务...');
             await API.mcp.restart();

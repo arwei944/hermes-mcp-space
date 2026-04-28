@@ -121,7 +121,6 @@ const LogsPage = (() => {
     }
 
     async function clearLogs() {
-        if (!confirm('确定要清空所有日志吗？')) return;
         try {
             await API.request('/api/logs', { method: 'DELETE' });
             _logs = [];

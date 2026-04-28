@@ -135,7 +135,6 @@ const MemoryPage = (() => {
     }
 
     function resetContent() {
-        if (!confirm('确定要重置为默认内容吗？当前编辑器中的内容将丢失。')) return;
         const defaults = {
             memory: '# Agent 长期记忆\n\n## 用户偏好\n\n## 项目上下文\n\n## 重要记录\n',
             user: '# 用户画像\n\n## 基本信息\n\n## 技术栈\n\n## 偏好\n',

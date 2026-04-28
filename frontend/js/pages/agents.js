@@ -82,7 +82,6 @@ const AgentsPage = (() => {
     }
 
     async function terminate(id) {
-        if (!confirm('确定要终止该 Agent 吗？')) return;
         try {
             await API.agents.terminate(id);
             Components.Toast.success('Agent 已终止');

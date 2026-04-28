@@ -202,7 +202,6 @@ const SkillsPage = (() => {
     }
 
     async function deleteSkill(name) {
-        if (!confirm(`确定要删除技能「${name}」吗？`)) return;
         try {
             await API.skills.delete(name);
             Components.Toast.success('技能已删除');

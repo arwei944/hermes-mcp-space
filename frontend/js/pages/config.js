@@ -150,7 +150,6 @@ const ConfigPage = (() => {
     }
 
     async function resetConfig() {
-        if (!confirm('确定要重置为默认配置吗？')) return;
         try {
             await API.config.reset();
             Components.Toast.success('配置已重置');
@@ -160,7 +159,7 @@ const ConfigPage = (() => {
 
     async function rollback(index) {
         const version = _versions[index];
-        if (!version || !confirm(`确定要回滚到版本 v${version.version || index + 1} 吗？`)) return;
+        if (!version) return;
         try {
             await API.config.rollback(index);
             Components.Toast.success('已回滚');
