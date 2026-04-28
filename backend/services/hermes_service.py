@@ -209,12 +209,17 @@ class HermesService:
         self._save_sessions_data(data)
         return {"success": True, "message": msg}
 
-    def delete_session(self, session_id: str) -> bool:
+    def delete_session(self, session_id: str) -> Dict[str, Any]:
         """删除会话"""
         data = self._load_sessions_data()
-        data["sessions"] = [s for s in data.get("sessions", []) if s["id"] != session_id]
+        sessions = data.get("sessions", [])
+        exists = any(s.get("id") == session_id for s in sessions)
+        if not exists:
+            return {"success": False, "message": f"会话 {session_id} 不存在"}
+        data["sessions"] = [s for s in sessions if s["id"] != session_id]
         data.get("messages", {}).pop(session_id, None)
-        return self._save_sessions_data(data)
+        self._save_sessions_data(data)
+        return {"success": True, "message": "会话已删除"}
 
     def compress_session(self, session_id: str) -> Dict[str, Any]:
         """压缩会话上下文"""
@@ -579,9 +584,9 @@ class HermesService:
         return {"success": False, "message": f"任务 {job_id} 不存在"}
 
     def delete_cron_job(self, job_id: str) -> Dict[str, Any]:
-        """删除定时任务"""
+        """删除定时任务（支持 job_id 或任务名称）"""
         jobs = self._load_jobs()
-        new_jobs = [j for j in jobs if j.get("id") != job_id]
+        new_jobs = [j for j in jobs if j.get("id") != job_id and j.get("name") != job_id]
         if len(new_jobs) == len(jobs):
             return {"success": False, "message": f"任务 {job_id} 不存在"}
         if self._save_jobs(new_jobs):

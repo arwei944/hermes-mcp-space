@@ -458,7 +458,9 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             model=arguments.get("model", ""),
             source=arguments.get("source", "mcp"),
         )
-        return result.get("message", "操作完成")
+        session = result.get("session", {})
+        session_id = session.get("id", "")
+        return f"会话创建成功\nID: {session_id}\n标题: {session.get('title', '')}\n来源: {session.get('source', '')}"
 
     elif name == "add_message":
         result = hermes_service.add_session_message(

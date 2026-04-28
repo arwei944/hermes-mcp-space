@@ -60,10 +60,10 @@ async def add_session_message(session_id: str, body: Dict[str, str]) -> Dict[str
 @router.delete("/{session_id}", summary="删除会话")
 async def delete_session(session_id: str) -> Dict[str, Any]:
     """删除指定会话及其所有消息"""
-    success = hermes_service.delete_session(session_id)
-    if not success:
-        raise HTTPException(status_code=404, detail=f"会话 {session_id} 不存在或删除失败")
-    return {"success": True, "message": f"会话 {session_id} 已删除"}
+    result = hermes_service.delete_session(session_id)
+    if not result.get("success"):
+        raise HTTPException(status_code=404, detail=result.get("message", f"会话 {session_id} 不存在或删除失败"))
+    return result
 
 
 @router.post("/{session_id}/compress", summary="压缩会话上下文")

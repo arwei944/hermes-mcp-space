@@ -238,7 +238,18 @@ def init_seed_data():
 
     # 4. 定时任务数据
     cron_file = data_dir / "cron_jobs.json"
+    cron_needs_seed = False
     if not cron_file.exists():
+        cron_needs_seed = True
+    else:
+        try:
+            existing = json.loads(cron_file.read_text(encoding="utf-8"))
+            if not existing or (isinstance(existing, list) and len(existing) == 0):
+                cron_needs_seed = True
+        except Exception:
+            cron_needs_seed = True
+
+    if cron_needs_seed:
         cron_data = [
             {
                 "id": "cron_001",
