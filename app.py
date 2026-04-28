@@ -26,6 +26,7 @@ BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
 logger.info("正在初始化 Hermes Agent MCP Space...")
 
 import gradio as gr
+from starlette.staticfiles import StaticFiles
 
 # 获取前端目录
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
@@ -44,15 +45,22 @@ with gr.Blocks(
     title="Hermes Agent MCP Space",
     css=".gradio-container{max-width:100%!important;padding:0!important;}",
 ) as demo:
-    # 只放 HTML 骨架，JS/CSS 通过相对路径加载
     gr.HTML(index_html)
 
-# 挂载前端静态文件目录到 Gradio
-demo.app.mount("/frontend", gradio.mount_utils.StaticFiles(directory=str(FRONTEND_DIR)), name="frontend")
+# 挂载前端静态文件目录（使用 starlette StaticFiles）
+css_dir = str(FRONTEND_DIR / "css")
+js_dir = str(FRONTEND_DIR / "js")
+frontend_dir = str(FRONTEND_DIR)
 
-# 挂载 CSS 和 JS 的快捷路径
-demo.app.mount("/css", gradio.mount_utils.StaticFiles(directory=str(FRONTEND_DIR / "css")), name="css")
-demo.app.mount("/js", gradio.mount_utils.StaticFiles(directory=str(FRONTEND_DIR / "js")), name="js")
+if os.path.isdir(css_dir):
+    demo.app.mount("/css", StaticFiles(directory=css_dir), name="css")
+    logger.info("CSS 静态文件挂载成功: /css/")
+if os.path.isdir(js_dir):
+    demo.app.mount("/js", StaticFiles(directory=js_dir), name="js")
+    logger.info("JS 静态文件挂载成功: /js/")
+if os.path.isdir(frontend_dir):
+    demo.app.mount("/frontend", StaticFiles(directory=frontend_dir), name="frontend")
+    logger.info("前端静态文件挂载成功: /frontend/")
 
 # 版本管理端点
 @demo.app.get("/api/version")
