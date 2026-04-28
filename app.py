@@ -1,24 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Hermes Agent MCP Space - ModelScope 部署入口
-同时启动：FastAPI 管理面板 + MCP SSE 服务
-
-部署到魔搭社区（ModelScope）时，Gradio SDK 会自动：
-1. 安装 requirements.txt 中的依赖
-2. 运行此文件作为入口
-3. 将 Gradio 界面暴露为 Web 服务
+Hermes Agent MCP Space - 部署入口
+使用 Gradio 托管前端 + FastAPI 提供后端 API，共用 7860 端口
 """
 
-import atexit
 import logging
 import os
-import sys
-import threading
-import time
-from typing import Optional
 
 # ==================== 日志配置 ====================
-
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
@@ -27,385 +16,111 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-# ==================== 全局配置 ====================
-
-# 管理面板端口（FastAPI 内部服务）
-PANEL_PORT = int(os.environ.get("PANEL_PORT", "7861"))
-# MCP SSE 端口
-MCP_SSE_PORT = int(os.environ.get("MCP_SSE_PORT", "8765"))
-# 是否启用 MCP SSE 服务
-ENABLE_MCP_SSE = os.environ.get("ENABLE_MCP_SSE", "true").lower() in ("true", "1", "yes")
-# Hermes 主目录
 HERMES_HOME = os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))
 
-# 后台线程引用（用于优雅关闭）
-_panel_server: Optional[object] = None
-_mcp_server: Optional[object] = None
 
+# ==================== 构建前端 HTML ====================
 
-# ==================== 后台服务启动 ====================
-
-def start_panel_server() -> Optional[threading.Thread]:
-    """在后台线程启动 FastAPI 管理面板"""
-    import uvicorn
-    from backend.main import app as panel_app
-
-    def run():
-        logger.info(f"启动管理面板: http://0.0.0.0:{PANEL_PORT}")
-        uvicorn.run(
-            panel_app,
-            host="0.0.0.0",
-            port=PANEL_PORT,
-            log_level="warning",
-        )
-
-    thread = threading.Thread(target=run, daemon=True, name="panel-server")
-    thread.start()
-
-    # 等待管理面板启动
-    for _ in range(30):
-        time.sleep(0.5)
-        try:
-            import httpx
-            resp = httpx.get(f"http://127.0.0.1:{PANEL_PORT}/api/health", timeout=2)
-            if resp.status_code == 200:
-                logger.info("管理面板启动成功")
-                return thread
-        except Exception:
-            continue
-
-    logger.warning("管理面板启动超时，但仍在后台运行")
-    return thread
-
-
-def start_mcp_sse_server() -> Optional[threading.Thread]:
-    """在后台线程启动 MCP SSE 服务"""
-    if not ENABLE_MCP_SSE:
-        logger.info("MCP SSE 服务已禁用 (ENABLE_MCP_SSE != true)")
-        return None
-
-    def run():
-        logger.info(f"启动 MCP SSE 服务: http://0.0.0.0:{MCP_SSE_PORT}/sse")
-        try:
-            from mcp_server import create_mcp_server
-            mcp = create_mcp_server()
-            mcp.run(transport="sse", host="0.0.0.0", port=MCP_SSE_PORT)
-        except Exception as e:
-            logger.error(f"MCP SSE 服务启动失败: {e}")
-
-    thread = threading.Thread(target=run, daemon=True, name="mcp-sse-server")
-    thread.start()
-    time.sleep(2)
-    logger.info("MCP SSE 服务已启动（后台运行）")
-    return thread
-
-
-# ==================== 优雅关闭 ====================
-
-def cleanup():
-    """清理所有后台服务"""
-    logger.info("正在关闭所有后台服务...")
-    logger.info("清理完成")
-
-
-atexit.register(cleanup)
-
-
-# ==================== Gradio 界面 ====================
-
-def build_gradio_app() -> "gr.Blocks":
-    """构建 Gradio 前端界面"""
-    import gradio as gr
-
-    # 读取前端 HTML
+def build_frontend_html() -> str:
+    """构建完整的 Obsidian 风格前端 HTML（内联 CSS 和 JS）"""
     frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
-    index_html_path = os.path.join(frontend_dir, "index.html")
 
-    # 尝试读取前端 HTML 内容
+    # 读取 CSS
     try:
-        with open(index_html_path, "r", encoding="utf-8") as f:
-            frontend_html = f.read()
-        # 替换相对路径为绝对路径
-        frontend_html = frontend_html.replace(
-            'href="css/style.css"',
-            f'href="file://{frontend_dir}/css/style.css"'
-        )
-        frontend_html = frontend_html.replace(
-            'src="js/',
-            f'src="file://{frontend_dir}/js/'
-        )
-    except Exception as e:
-        logger.warning(f"无法读取前端文件: {e}")
-        frontend_html = "<p>前端文件加载失败，请检查 frontend/ 目录</p>"
+        with open(os.path.join(frontend_dir, "css", "style.css"), "r", encoding="utf-8") as f:
+            css_content = f.read()
+    except Exception:
+        css_content = "body{font-family:sans-serif;padding:20px;background:#1e1e2e;color:#e0e0e0;}"
 
-    panel_url = f"http://127.0.0.1:{PANEL_PORT}"
-    mcp_sse_url = f"http://127.0.0.1:{MCP_SSE_PORT}/sse" if ENABLE_MCP_SSE else "未启用"
+    # 读取各 JS 模块
+    js_modules = [
+        "js/api.js", "js/components.js",
+        "js/pages/dashboard.js", "js/pages/sessions.js", "js/pages/tools.js",
+        "js/pages/skills.js", "js/pages/memory.js", "js/pages/cron.js",
+        "js/pages/agents.js", "js/pages/config.js", "js/pages/mcp.js",
+        "js/app.js",
+    ]
+    js_content = ""
+    for js_file in js_modules:
+        try:
+            with open(os.path.join(frontend_dir, js_file), "r", encoding="utf-8") as f:
+                js_content += f"\n// === {js_file} ===\n" + f.read() + "\n"
+        except Exception as e:
+            logger.warning(f"无法加载 {js_file}: {e}")
 
-    with gr.Blocks(
-        title="Hermes Agent MCP Space",
-        theme=gr.themes.Soft(
-            primary_hue="indigo",
-            secondary_hue="slate",
-        ),
-        css="""
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-        }
-        .header p {
-            color: #64748b;
-            font-size: 1.1rem;
-        }
-        .status-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .status-card h3 {
-            color: #334155;
-            margin-bottom: 0.75rem;
-            font-size: 1.1rem;
-        }
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .status-item:last-child {
-            border-bottom: none;
-        }
-        .status-label {
-            color: #64748b;
-            font-weight: 500;
-        }
-        .status-value {
-            color: #1e293b;
-            font-family: monospace;
-        }
-        .status-ok {
-            color: #16a34a;
-            font-weight: 600;
-        }
-        .status-warn {
-            color: #d97706;
-            font-weight: 600;
-        }
-        .iframe-container {
-            width: 100%;
-            height: 700px;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-top: 1rem;
-        }
-        .iframe-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .tools-section {
-            margin-top: 1.5rem;
-        }
-        .tools-section h3 {
-            color: #334155;
-            margin-bottom: 0.75rem;
-        }
-        .tool-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 0.5rem;
-        }
-        .tool-tag {
-            background: #eef2ff;
-            color: #4338ca;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-family: monospace;
-        }
-        """,
-    ) as demo:
-
-        gr.HTML("""
-        <div class="container">
-            <div class="header">
-                <h1>☤ Hermes Agent MCP Space</h1>
-                <p>基于 ModelScope Gradio SDK 部署的 Hermes Agent 管理面板 + MCP 服务</p>
-            </div>
-        </div>
-        """)
-
-        with gr.Row():
-            with gr.Column(scale=1):
-                gr.HTML(f"""
-                <div class="status-card">
-                    <h3>📡 服务状态</h3>
-                    <div class="status-item">
-                        <span class="status-label">管理面板 API</span>
-                        <span class="status-value status-ok">运行中</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">面板 API 地址</span>
-                        <span class="status-value">{panel_url}</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">MCP SSE</span>
-                        <span class="status-value {'status-ok' if ENABLE_MCP_SSE else 'status-warn'}">
-                            {'运行中' if ENABLE_MCP_SSE else '未启用'}
-                        </span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">SSE 端点</span>
-                        <span class="status-value">{mcp_sse_url}</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Hermes 主目录</span>
-                        <span class="status-value">{HERMES_HOME}</span>
-                    </div>
-                </div>
-                """)
-
-            with gr.Column(scale=1):
-                gr.HTML("""
-                <div class="status-card">
-                    <h3>🚀 快速开始</h3>
-                    <div style="color: #475569; line-height: 1.8;">
-                        <p><strong>1. Trae / Cursor 连接 MCP:</strong></p>
-                        <p style="font-family: monospace; background: #f1f5f9; padding: 0.5rem; border-radius: 6px; font-size: 0.85rem;">
-                        { "mcpServers": { "hermes": { "url": "SSE_URL" } } }
-                        </p>
-                        <p style="margin-top: 0.75rem;"><strong>2. 管理面板:</strong></p>
-                        <p>点击下方「打开管理面板」按钮访问完整管理界面</p>
-                        <p style="margin-top: 0.75rem;"><strong>3. API 文档:</strong></p>
-                        <p>访问 /docs 查看 Swagger API 文档</p>
-                    </div>
-                </div>
-                """)
-
-        # 管理面板 iframe 嵌入
-        with gr.Accordion("🖥️ 管理面板（Obsidian 风格）", open=True):
-            gr.HTML(f"""
-            <div class="iframe-container">
-                <iframe src="{panel_url}" allow="fullscreen"></iframe>
-            </div>
-            """)
-            gr.Button("在新标签页打开管理面板", link=panel_url)
-
-        # 工具列表展示
-        with gr.Accordion("🔧 MCP 工具列表 (24 个)", open=False):
-            tools_html = """
-            <div class="tools-section">
-                <div class="tool-grid">
-            """
-            tool_names = [
-                "hermes_web_search", "hermes_web_extract", "hermes_terminal",
-                "hermes_read_file", "hermes_write_file", "hermes_patch_file",
-                "hermes_search_files", "hermes_execute_code", "hermes_vision_analyze",
-                "hermes_image_generate", "hermes_memory_read", "hermes_memory_write",
-                "hermes_skills_list", "hermes_skill_view", "hermes_session_search",
-                "hermes_delegate_task", "hermes_todo", "hermes_cronjob_manage",
-                "hermes_send_message", "hermes_browser_navigate", "hermes_browser_click",
-                "hermes_browser_type", "hermes_browser_screenshot", "hermes_text_to_speech",
-            ]
-            for name in tool_names:
-                tools_html += f'<span class="tool-tag">{name}</span>\n'
-            tools_html += "</div></div>"
-            gr.HTML(tools_html)
-
-        # 连接配置说明
-        with gr.Accordion("📖 MCP 客户端配置说明", open=False):
-            gr.HTML("""
-            <div style="color: #475569; line-height: 1.8;">
-                <h4 style="color: #334155;">Trae IDE 配置</h4>
-                <p>在 Trae 的 MCP 设置中添加：</p>
-                <pre style="background: #f1f5f9; padding: 1rem; border-radius: 8px; overflow-x: auto;">
-{
-  "mcpServers": {
-    "hermes": {
-      "url": "http://YOUR_SPACE_URL/sse"
-    }
-  }
-}</pre>
-
-                <h4 style="color: #334155; margin-top: 1.5rem;">Cursor 配置</h4>
-                <p>在 Cursor 的 MCP 设置中添加相同的配置。</p>
-
-                <h4 style="color: #334155; margin-top: 1.5rem;">stdio 模式（本地开发）</h4>
-                <pre style="background: #f1f5f9; padding: 1rem; border-radius: 8px; overflow-x: auto;">
-{
-  "mcpServers": {
-    "hermes": {
-      "command": "python",
-      "args": ["/path/to/mcp_server.py"]
-    }
-  }
-}</pre>
-            </div>
-            """)
-
-    return demo
+    return f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent 管理面板</title>
+<style>
+{css_content}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+    <div class="sidebar-header"><span class="logo">🤖 Hermes</span></div>
+    <div class="sidebar-search"><input type="text" placeholder="搜索... (Ctrl+K)" id="globalSearch"></div>
+    <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> 仪表盘</a>
+        <a href="#sessions" class="nav-item" data-page="sessions"><span class="nav-icon">💬</span> 会话管理</a>
+        <a href="#tools" class="nav-item" data-page="tools"><span class="nav-icon">🔧</span> 工具管理</a>
+        <a href="#skills" class="nav-item" data-page="skills"><span class="nav-icon">⚡</span> 技能系统</a>
+        <a href="#memory" class="nav-item" data-page="memory"><span class="nav-icon">🧠</span> 记忆管理</a>
+        <a href="#cron" class="nav-item" data-page="cron"><span class="nav-icon">⏰</span> 定时任务</a>
+        <a href="#agents" class="nav-item" data-page="agents"><span class="nav-icon">🤖</span> 子 Agent</a>
+        <a href="#mcp" class="nav-item" data-page="mcp"><span class="nav-icon">🔌</span> MCP 服务</a>
+        <a href="#config" class="nav-item" data-page="config"><span class="nav-icon">⚙️</span> 系统配置</a>
+    </nav>
+    <div class="sidebar-footer"><div class="status-indicator"><span class="status-dot"></span><span class="status-text">已连接</span></div></div>
+</aside>
+<main class="main-content">
+    <header class="content-header"><h1 id="pageTitle">仪表盘</h1><div class="header-actions"><button class="btn btn-primary" id="refreshBtn">🔄 刷新</button></div></header>
+    <div class="content-body" id="contentBody"><p>加载中...</p></div>
+</main>
+<div class="modal-overlay" id="modalOverlay"><div class="modal" id="modal"><div class="modal-header"><h2 id="modalTitle"></h2><button class="modal-close" id="modalClose">✕</button></div><div class="modal-body" id="modalBody"></div></div></div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+{js_content}
+</script>
+</body>
+</html>"""
 
 
-# ==================== 主入口 ====================
+# ==================== 创建 Gradio 应用 ====================
 
-# 魔搭 Gradio SDK 会自动导入此模块并查找 demo / Blocks 对象
-# 所以我们在模块级别创建 demo 实例
 logger.info("正在初始化 Hermes Agent MCP Space...")
 
-# 启动后台服务
+import gradio as gr
+
+frontend_html = build_frontend_html()
+
+with gr.Blocks(
+    title="Hermes Agent MCP Space",
+    css=".gradio-container{max-width:100%!important;padding:0!important;}.gradio-container .prose{max-width:100%!important;}",
+) as demo:
+    gr.HTML(frontend_html)
+
+# 挂载 FastAPI 路由到 Gradio 内部的 FastAPI app
 try:
-    _panel_thread = start_panel_server()
-    _panel_server_ref = _panel_thread
+    from backend.routers import sessions, tools, skills, memory, cron, agents, config_api, mcp as mcp_router
+    demo.app.include_router(sessions.router, prefix="/api")
+    demo.app.include_router(tools.router, prefix="/api")
+    demo.app.include_router(skills.router, prefix="/api")
+    demo.app.include_router(memory.router, prefix="/api")
+    demo.app.include_router(cron.router, prefix="/api")
+    demo.app.include_router(agents.router, prefix="/api")
+    demo.app.include_router(config_api.router, prefix="/api")
+    demo.app.include_router(mcp_router.router, prefix="/api")
+    logger.info("后端 API 路由加载成功")
 except Exception as e:
-    logger.warning(f"管理面板启动失败（将在降级模式下运行）: {e}")
-    _panel_server_ref = None
+    logger.warning(f"后端 API 路由加载失败（降级模式）: {e}")
 
-if ENABLE_MCP_SSE:
-    try:
-        _mcp_thread = start_mcp_sse_server()
-        _mcp_server_ref = _mcp_thread
-    except Exception as e:
-        logger.warning(f"MCP SSE 服务启动失败: {e}")
-        _mcp_server_ref = None
-
-# 创建 Gradio demo（魔搭 SDK 会自动使用这个变量）
-demo = build_gradio_app()
+# 健康检查
+@demo.app.get("/api/health")
+async def health():
+    return {"status": "ok", "service": "hermes-mcp-space"}
 
 logger.info("Hermes Agent MCP Space 初始化完成")
-
-
-def main():
-    """主入口函数（本地开发用）"""
-    logger.info("=" * 60)
-    logger.info("  Hermes Agent MCP Space 启动中...")
-    logger.info(f"  管理面板端口: {PANEL_PORT}")
-    logger.info(f"  MCP SSE 端口: {MCP_SSE_PORT}")
-    logger.info(f"  MCP SSE 启用: {ENABLE_MCP_SSE}")
-    logger.info(f"  Hermes 主目录: {HERMES_HOME}")
-    logger.info("=" * 60)
-
-    demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=False,
-        show_error=True,
-        quiet=False,
-    )
-
-
-if __name__ == "__main__":
-    main()
