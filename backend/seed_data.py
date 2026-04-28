@@ -284,4 +284,31 @@ def init_seed_data():
         cron_file.write_text(json.dumps(cron_data, ensure_ascii=False, indent=2), encoding="utf-8")
         changed = True
 
+    # 5. 操作日志
+    log_file = data_dir / "logs.json"
+    if not log_file.exists():
+        now = datetime.now()
+        seed_logs = [
+            {"id": "log-seed-001", "timestamp": (now - timedelta(hours=48)).isoformat(), "action": "系统启动", "target": "Hermes Agent", "detail": "HF Space 首次启动，种子数据初始化", "level": "success", "source": "system"},
+            {"id": "log-seed-002", "timestamp": (now - timedelta(hours=48)).isoformat(), "action": "创建技能", "target": "code-review", "detail": "种子数据: 代码审查技能", "level": "success", "source": "system"},
+            {"id": "log-seed-003", "timestamp": (now - timedelta(hours=48)).isoformat(), "action": "创建技能", "target": "api-design", "detail": "种子数据: API 设计技能", "level": "success", "source": "system"},
+            {"id": "log-seed-004", "timestamp": (now - timedelta(hours=48)).isoformat(), "action": "创建技能", "target": "deployment", "detail": "种子数据: 部署管理技能", "level": "success", "source": "system"},
+            {"id": "log-seed-005", "timestamp": (now - timedelta(hours=48)).isoformat(), "action": "创建技能", "target": "data-analysis", "detail": "种子数据: 数据分析技能", "level": "success", "source": "system"},
+            {"id": "log-seed-006", "timestamp": (now - timedelta(hours=36)).isoformat(), "action": "创建会话", "target": "sess_20260428_001", "detail": "项目初始化讨论", "level": "info", "source": "user"},
+            {"id": "log-seed-007", "timestamp": (now - timedelta(hours=36)).isoformat(), "action": "MCP 调用: write_memory", "target": "MEMORY.md", "detail": "写入项目上下文和用户偏好", "level": "success", "source": "mcp"},
+            {"id": "log-seed-008", "timestamp": (now - timedelta(hours=24)).isoformat(), "action": "创建会话", "target": "sess_20260428_003", "detail": "前端页面开发", "level": "info", "source": "user"},
+            {"id": "log-seed-009", "timestamp": (now - timedelta(hours=24)).isoformat(), "action": "MCP 调用: create_skill", "target": "code-review", "detail": "通过 MCP 创建代码审查技能", "level": "success", "source": "mcp"},
+            {"id": "log-seed-010", "timestamp": (now - timedelta(hours=12)).isoformat(), "action": "更新配置", "target": "config.yaml", "detail": "更新日志级别为 INFO", "level": "info", "source": "user"},
+            {"id": "log-seed-011", "timestamp": (now - timedelta(hours=6)).isoformat(), "action": "MCP 调用: list_sessions", "target": "sessions", "detail": "查询最近 5 个会话", "level": "info", "source": "mcp"},
+            {"id": "log-seed-012", "timestamp": (now - timedelta(hours=6)).isoformat(), "action": "MCP 调用: read_memory", "target": "MEMORY.md", "detail": "读取 Agent 长期记忆", "level": "success", "source": "mcp"},
+            {"id": "log-seed-013", "timestamp": (now - timedelta(hours=2)).isoformat(), "action": "MCP 调用: get_dashboard_summary", "target": "dashboard", "detail": "获取仪表盘摘要数据", "level": "info", "source": "mcp"},
+            {"id": "log-seed-014", "timestamp": (now - timedelta(hours=1)).isoformat(), "action": "MCP 调用: update_skill", "target": "code-review", "detail": "更新代码审查技能内容", "level": "success", "source": "mcp"},
+            {"id": "log-seed-015", "timestamp": (now - timedelta(minutes=30)).isoformat(), "action": "创建定时任务", "target": "cron_003", "detail": "健康检查: 每 30 分钟检查系统状态", "level": "success", "source": "user"},
+            {"id": "log-seed-016", "timestamp": (now - timedelta(minutes=15)).isoformat(), "action": "触发定时任务", "target": "cron_003", "detail": "健康检查: 所有端点正常", "level": "success", "source": "cron"},
+            {"id": "log-seed-017", "timestamp": (now - timedelta(minutes=5)).isoformat(), "action": "MCP 调用: get_logs", "target": "logs", "detail": "查询最近 10 条操作日志", "level": "info", "source": "mcp"},
+            {"id": "log-seed-018", "timestamp": (now - timedelta(minutes=1)).isoformat(), "action": "系统启动", "target": "Hermes Agent", "detail": "服务启动完成，MCP 端点就绪", "level": "success", "source": "system"},
+        ]
+        log_file.write_text(json.dumps(seed_logs, ensure_ascii=False, indent=2), encoding="utf-8")
+        changed = True
+
     return changed

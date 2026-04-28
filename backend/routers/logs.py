@@ -1,18 +1,46 @@
 # -*- coding: utf-8 -*-
-"""Hermes Agent - 操作日志 API"""
+"""Hermes Agent - 操作日志 API（JSON 持久化）"""
 
+import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Query
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
-# 内存日志存储（最多保留 500 条）
-_log_store: List[Dict[str, Any]] = []
 _MAX_LOGS = 500
+
+
+def _get_log_path() -> Path:
+    """获取日志文件路径"""
+    home = os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))
+    log_dir = Path(home) / "data"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir / "logs.json"
+
+
+def _load_logs() -> List[Dict[str, Any]]:
+    """从文件加载日志"""
+    path = _get_log_path()
+    if path.exists():
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return []
+
+
+def _save_logs(logs: List[Dict[str, Any]]) -> None:
+    """保存日志到文件"""
+    path = _get_log_path()
+    try:
+        path.write_text(json.dumps(logs[:_MAX_LOGS], ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
 
 
 def add_log(
@@ -22,30 +50,31 @@ def add_log(
     level: str = "info",
     source: str = "system",
 ):
-    """添加一条操作日志"""
+    """添加一条操作日志（持久化到文件）"""
     entry = {
         "id": f"log-{int(time.time() * 1000)}",
         "timestamp": datetime.now().isoformat(),
         "action": action,
         "target": target,
         "detail": detail,
-        "level": level,  # info, warning, error, success
-        "source": source,  # system, user, mcp, cron
+        "level": level,
+        "source": source,
     }
-    _log_store.insert(0, entry)
-    # 限制数量
-    if len(_log_store) > _MAX_LOGS:
-        del _log_store[_MAX_LOGS:]
+    logs = _load_logs()
+    logs.insert(0, entry)
+    if len(logs) > _MAX_LOGS:
+        logs = logs[:_MAX_LOGS]
+    _save_logs(logs)
 
 
 @router.get("", summary="获取操作日志")
 async def get_logs(
-    limit: int = Query(default=50, le=200),
+    limit: int = Query(default=100, le=200),
     level: Optional[str] = Query(default=None),
     source: Optional[str] = Query(default=None),
 ):
     """获取操作日志列表，支持按级别和来源过滤"""
-    logs = _log_store
+    logs = _load_logs()
     if level:
         logs = [l for l in logs if l["level"] == level]
     if source:
@@ -56,8 +85,9 @@ async def get_logs(
 @router.delete("", summary="清空日志")
 async def clear_logs():
     """清空所有操作日志"""
-    count = len(_log_store)
-    _log_store.clear()
+    logs = _load_logs()
+    count = len(logs)
+    _save_logs([])
     return {"success": True, "message": f"已清空 {count} 条日志"}
 
 
@@ -65,11 +95,12 @@ async def clear_logs():
 async def get_log_stats():
     """获取日志统计信息"""
     from collections import Counter
-    levels = Counter(l["level"] for l in _log_store)
-    sources = Counter(l["source"] for l in _log_store)
-    actions = Counter(l["action"] for l in _log_store)
+    logs = _load_logs()
+    levels = Counter(l["level"] for l in logs)
+    sources = Counter(l["source"] for l in logs)
+    actions = Counter(l["action"] for l in logs)
     return {
-        "total": len(_log_store),
+        "total": len(logs),
         "byLevel": dict(levels),
         "bySource": dict(sources),
         "topActions": dict(actions.most_common(10)),
