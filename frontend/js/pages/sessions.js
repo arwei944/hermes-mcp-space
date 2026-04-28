@@ -79,6 +79,7 @@ const SessionsPage = (() => {
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
                             ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
+                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">✕</button>
                         </div>
                     </div>
                     <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
@@ -98,6 +99,7 @@ const SessionsPage = (() => {
                 </div>
                 <div style="display:flex;gap:8px;align-items:center">
                     <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
+                    <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
                 </div>
             </div>` : '';
 
@@ -171,6 +173,7 @@ const SessionsPage = (() => {
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
                             ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
+                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">✕</button>
                         </div>
                     </div>
                     <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
@@ -207,6 +210,7 @@ const SessionsPage = (() => {
                 </div>
                 <div style="display:flex;gap:8px;align-items:center">
                     <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
+                    <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
                 </div>
             </div>` : '';
 
@@ -271,14 +275,43 @@ const SessionsPage = (() => {
         }, 50);
     }
 
+    // ---- 删除会话 ----
+    async function deleteSession(id) {
+        try {
+            await API.sessions.delete(id);
+            _sessions = _sessions.filter(s => (s.id || s.session_id) !== id);
+            if (_currentId === id) {
+                _currentId = null;
+                _messages = [];
+                if (_sessions.length > 0) {
+                    const nextId = _sessions[0].id || _sessions[0].session_id;
+                    await loadMessages(nextId);
+                }
+            }
+            refreshSidebar();
+            refreshMain();
+            Components.Toast.success('会话已删除');
+        } catch (err) {
+            Components.Toast.error(`删除失败: ${err.message}`);
+        }
+    }
+
     function bindEvents() {
         const container = document.getElementById('contentBody');
         if (!container) return;
 
-        // 只保留 select 事件
+        // 只保留 select 和 deleteSession 事件
         container.addEventListener('click', (e) => {
-            const item = e.target.closest('[data-action="select"]');
-            if (item) select(item.dataset.id);
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            if (btn.dataset.action === 'deleteSession') {
+                e.stopPropagation();
+                deleteSession(btn.dataset.id);
+                return;
+            }
+            if (btn.dataset.action === 'select') {
+                select(btn.dataset.id);
+            }
         });
 
         // 搜索
