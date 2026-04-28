@@ -484,7 +484,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '2.1.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '2.2.0')}"
         )
 
     elif name == "get_dashboard_summary":

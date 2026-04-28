@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '2.2.0',
+            date: '2026-04-28 23:30',
+            title: '多平台连接配置 + System Prompt',
+            changes: [
+                'MCP 页面重构：4 平台配置（Trae/Claude/VS Code/Cursor）',
+                'System Prompt 模板一键复制',
+                '每个平台配置步骤说明',
+                '事件委托重构（移除所有 inline onclick）',
+                '会话页面添加删除按钮',
+                '端到端验证 6/6 通过',
+            ],
+        },        {
             version: '2.1.0',
             date: '2026-04-28 22:30',
             title: '第三方测试修复',

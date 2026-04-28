@@ -89,7 +89,7 @@ async def get_dashboard():
         "recentSessions": sessions[:5],
         "systemStatus": {
             "uptime": uptime_str,
-            "version": os.environ.get("APP_VERSION", "2.1.0"),
+            "version": os.environ.get("APP_VERSION", "2.2.0"),
             "memoryUsage": mem_usage,
             "cpuUsage": cpu_usage,
         },
@@ -105,7 +105,7 @@ async def get_status():
     total_uptime = int((datetime.now() - first_deploy).total_seconds())
     return {
         "status": "ok",
-        "version": os.environ.get("APP_VERSION", "2.1.0"),
+        "version": os.environ.get("APP_VERSION", "2.2.0"),
         "uptime": int(time.time() - _start_time),
         "total_uptime": total_uptime,
         "first_deploy": first_deploy.isoformat(),
