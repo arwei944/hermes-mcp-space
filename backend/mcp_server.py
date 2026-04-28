@@ -430,6 +430,47 @@ def _get_tools():
                 "required": ["content"]
             }
         },
+        # ---- Phase 3: MCP 网关管理 ----
+        {
+            "name": "add_mcp_server",
+            "description": "添加外部 MCP 服务器（自动发现工具并聚合）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "服务器名称（英文，如 github）"},
+                    "url": {"type": "string", "description": "MCP 服务器 URL（如 http://localhost:3001/mcp）"},
+                    "prefix": {"type": "string", "description": "工具名前缀（默认 mcp_{name}_）"}
+                },
+                "required": ["name", "url"]
+            }
+        },
+        {
+            "name": "remove_mcp_server",
+            "description": "移除外部 MCP 服务器",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "服务器名称"}
+                },
+                "required": ["name"]
+            }
+        },
+        {
+            "name": "list_mcp_servers",
+            "description": "列出所有已连接的外部 MCP 服务器",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+            }
+        },
+        {
+            "name": "refresh_mcp_servers",
+            "description": "刷新所有外部 MCP 服务器的工具列表",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+            }
+        },
     ]
 
     # 合并插件提供的工具
@@ -447,6 +488,16 @@ def _get_tools():
             })
     except Exception as e:
         logger.warning(f"加载插件工具失败: {e}")
+
+    # 合并外部 MCP 服务器的工具（网关模式）
+    try:
+        from backend.services.mcp_client_service import mcp_client_service
+        external_tools = mcp_client_service.get_external_tools()
+        tools.extend(external_tools)
+        if external_tools:
+            logger.info(f"聚合 {len(external_tools)} 个外部 MCP 工具")
+    except Exception as e:
+        logger.warning(f"加载外部 MCP 工具失败: {e}")
 
     return tools
 
@@ -484,6 +535,7 @@ def _get_resources():
 async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
     """Execute a tool and return the result as text."""
     from backend.services.hermes_service import hermes_service
+    from backend.services.mcp_client_service import mcp_client_service
 
     if name == "list_sessions":
         sessions = hermes_service.list_sessions()
@@ -609,7 +661,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '2.4.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '3.0.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -1007,6 +1059,59 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             return f"SOUL.md 已更新 ({len(content)} 字符)"
         except Exception as e:
             raise ValueError(f"写入 SOUL.md 失败: {e}")
+
+    # ---- Phase 3: MCP 网关管理 ----
+    elif name == "add_mcp_server":
+        server_name = arguments.get("name", "")
+        url = arguments.get("url", "")
+        prefix = arguments.get("prefix", "")
+        result = mcp_client_service.add_server(server_name, url, prefix)
+        if not result.get("success"):
+            raise ValueError(result.get("message", "添加失败"))
+        return f"已添加 MCP 服务器 '{server_name}'，发现 {result.get('tools_count', 0)} 个工具（前缀: {mcp_client_service._servers[server_name].get('prefix', '')}）"
+
+    elif name == "remove_mcp_server":
+        server_name = arguments.get("name", "")
+        result = mcp_client_service.remove_server(server_name)
+        if not result.get("success"):
+            raise ValueError(result.get("message", "移除失败"))
+        return f"已移除 MCP 服务器 '{server_name}'"
+
+    elif name == "list_mcp_servers":
+        servers = mcp_client_service.list_servers()
+        if not servers:
+            return "当前没有连接外部 MCP 服务器。使用 add_mcp_server 添加。"
+        output = [f"已连接 {len(servers)} 个外部 MCP 服务器\n{'='*50}"]
+        for s in servers:
+            output.append(f"  {s['name']} ({s['status']})")
+            output.append(f"    URL: {s['url']}")
+            output.append(f"    工具: {s['tools_count']} 个")
+            output.append(f"    前缀: {s['prefix']}")
+            if s.get("last_check"):
+                output.append(f"    最后检查: {s['last_check']}")
+        return "\n".join(output)
+
+    elif name == "refresh_mcp_servers":
+        result = mcp_client_service.refresh_all()
+        return result.get("message", "刷新完成")
+
+    # ---- Phase 3: 外部 MCP 工具路由 ----
+    elif mcp_client_service.is_external_tool(name):
+        try:
+            result = mcp_client_service.call_external_tool(name, arguments)
+            # 解析 MCP 响应
+            if isinstance(result, dict):
+                if "error" in result:
+                    raise ValueError(result["error"])
+                content_list = result.get("result", {}).get("content", [])
+                if content_list:
+                    return "\n".join(c.get("text", "") for c in content_list)
+                return json.dumps(result.get("result", {}), ensure_ascii=False, indent=2)
+            return str(result)
+        except ValueError:
+            raise
+        except Exception as e:
+            raise ValueError(f"调用外部工具 '{name}' 失败: {e}")
 
     else:
         raise ValueError(f"未知工具: {name}")

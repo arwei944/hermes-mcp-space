@@ -5,6 +5,20 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '3.0.0',
+            date: '2026-04-29 01:30',
+            title: 'MCP 网关 - 工具聚合器',
+            changes: [
+                'MCP 客户端服务: 连接外部 MCP 服务器',
+                '自动发现: 添加服务器时自动获取工具列表',
+                '工具路由: 本地工具 + 外部工具统一暴露',
+                '工具前缀: 外部工具自动加 mcp_{name}_ 前缀',
+                '网关管理: add_mcp_server / remove_mcp_server / list_mcp_servers / refresh_mcp_servers',
+                '配置持久化: mcp_servers.json 保存服务器配置',
+                'MCP 工具 40 → 44 个（+4 网关管理工具）',
+                '一个 MCP 入口访问所有 MCP 服务',
+            ],
+        },        {
             version: '2.4.0',
             date: '2026-04-29 01:00',
             title: '数据能力增强',

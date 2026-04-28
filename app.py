@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "2.4.0")
+APP_VERSION = os.environ.get("APP_VERSION", "3.0.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
 
 
@@ -177,7 +177,7 @@ def _patched_create_app(blocks, **kwargs):
         async def custom_openapi():
             return get_openapi(
                 title="Hermes Agent API",
-                version=os.environ.get("APP_VERSION", "2.4.0"),
+                version=os.environ.get("APP_VERSION", "3.0.0"),
                 routes=app.routes,
             )
         logger.info("API docs mounted (/docs + /redoc)")
@@ -203,6 +203,16 @@ def _patched_create_app(blocks, **kwargs):
         logger.info("Cron scheduler started")
     except Exception as e:
         logger.warning(f"Failed to start cron scheduler: {e}")
+
+    # Initialize MCP client service (gateway mode)
+    try:
+        from backend.services.mcp_client_service import mcp_client_service
+        from backend.config import get_hermes_home
+        mcp_config_path = get_hermes_home() / "mcp_servers.json"
+        mcp_client_service.init(mcp_config_path)
+        logger.info("MCP client service initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize MCP client service: {e}")
 
     # Add SSE event emit middleware
     try:
