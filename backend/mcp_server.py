@@ -178,6 +178,92 @@ def _get_tools():
             "description": "获取仪表盘摘要信息",
             "inputSchema": {"type": "object", "properties": {}}
         },
+        {
+            "name": "update_skill",
+            "description": "更新指定技能的内容",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "skill_name": {"type": "string", "description": "技能名称"},
+                    "content": {"type": "string", "description": "新的技能内容（Markdown 格式）"}
+                },
+                "required": ["skill_name", "content"]
+            }
+        },
+        {
+            "name": "delete_skill",
+            "description": "删除指定技能",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "skill_name": {"type": "string", "description": "要删除的技能名称"}
+                },
+                "required": ["skill_name"]
+            }
+        },
+        {
+            "name": "create_session",
+            "description": "创建一个新的会话",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string", "description": "会话标题"},
+                    "model": {"type": "string", "description": "使用的模型名称"},
+                    "source": {"type": "string", "default": "mcp", "description": "来源（mcp/api/web）"}
+                }
+            }
+        },
+        {
+            "name": "add_message",
+            "description": "向指定会话添加一条消息",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "会话 ID"},
+                    "role": {"type": "string", "description": "角色（user/assistant/system）"},
+                    "content": {"type": "string", "description": "消息内容"}
+                },
+                "required": ["session_id", "role", "content"]
+            }
+        },
+        {
+            "name": "delete_cron_job",
+            "description": "删除指定的定时任务",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "job_id": {"type": "string", "description": "定时任务 ID"}
+                },
+                "required": ["job_id"]
+            }
+        },
+        {
+            "name": "get_logs",
+            "description": "获取操作日志（按来源过滤）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "default": 20, "description": "返回的最大日志数"},
+                    "source": {"type": "string", "description": "来源过滤（mcp/user/system）"}
+                }
+            }
+        },
+        {
+            "name": "get_config",
+            "description": "获取当前系统配置",
+            "inputSchema": {"type": "object", "properties": {}}
+        },
+        {
+            "name": "update_config",
+            "description": "更新系统配置",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "temperature": {"type": "number", "description": "模型温度（0-2）"},
+                    "log_level": {"type": "string", "description": "日志级别（DEBUG/INFO/WARNING/ERROR）"}
+                }
+            }
+        },
     ]
 
 
@@ -354,6 +440,83 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"- 可用工具: {len(tools)}\n"
             f"- 技能数: {len(skills)}"
         )
+
+    elif name == "update_skill":
+        result = hermes_service.update_skill(
+            name=arguments["skill_name"],
+            content=arguments["content"],
+        )
+        return result.get("message", "操作完成")
+
+    elif name == "delete_skill":
+        result = hermes_service.delete_skill(arguments["skill_name"])
+        return result.get("message", "操作完成")
+
+    elif name == "create_session":
+        result = hermes_service.create_session(
+            title=arguments.get("title", ""),
+            model=arguments.get("model", ""),
+            source=arguments.get("source", "mcp"),
+        )
+        return result.get("message", "操作完成")
+
+    elif name == "add_message":
+        result = hermes_service.add_session_message(
+            session_id=arguments["session_id"],
+            role=arguments["role"],
+            content=arguments["content"],
+        )
+        return result.get("message", "操作完成")
+
+    elif name == "delete_cron_job":
+        result = hermes_service.delete_cron_job(arguments["job_id"])
+        return result.get("message", "操作完成")
+
+    elif name == "get_logs":
+        from backend.routers.logs import _log_store
+        logs = list(_log_store)
+        source = arguments.get("source")
+        if source:
+            logs = [l for l in logs if l.get("source") == source]
+        limit = arguments.get("limit", 20)
+        logs = logs[:limit]
+        if not logs:
+            return "当前没有日志记录"
+        lines = []
+        for log in logs:
+            lines.append(
+                f"- [{log.get('source', '?')}] {log.get('action', '?')} | {log.get('timestamp', '?')}"
+            )
+        return f"共 {len(logs)} 条日志:\n" + "\n".join(lines)
+
+    elif name == "get_config":
+        from backend.config import get_config
+        config = get_config()
+        # 脱敏
+        sensitive = {"api_key", "token", "password", "secret"}
+        safe = {}
+        for k, v in config.items():
+            if any(s in k.lower() for s in sensitive):
+                safe[k] = "****"
+            else:
+                safe[k] = v
+        return json.dumps(safe, ensure_ascii=False, indent=2)
+
+    elif name == "update_config":
+        import yaml
+        from backend.config import get_hermes_home
+        hermes_home = get_hermes_home()
+        config_path = hermes_home / "config.yaml"
+        existing = {}
+        if config_path.exists():
+            try:
+                existing = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+            except Exception:
+                pass
+        existing.update(arguments)
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(yaml.dump(existing, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+        return f"配置已更新: {', '.join(arguments.keys())}"
 
     else:
         return f"未知工具: {name}"
