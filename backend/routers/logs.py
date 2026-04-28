@@ -66,12 +66,14 @@ def add_log(
         logs = logs[:_MAX_LOGS]
     _save_logs(logs)
 
-    # 自动记录系统消息到最近活跃会话（仅重要操作）
+    # 自动记录系统消息到最近活跃会话（仅重要操作，排除对话记录本身）
     if source in ("mcp", "system") and level in ("info", "success"):
-        try:
-            _auto_record_to_session(action, target, detail, source)
-        except Exception:
-            pass
+        # 排除 log_conversation 的日志，避免循环写入会话
+        if "log_conversation" not in action and "记录对话" not in action:
+            try:
+                _auto_record_to_session(action, target, detail, source)
+            except Exception:
+                pass
 
 
 def _auto_record_to_session(action: str, target: str, detail: str, source: str):

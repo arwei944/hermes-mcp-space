@@ -192,19 +192,47 @@ class HermesService:
 
     def add_session_message(self, session_id: str, role: str, content: str) -> Dict[str, Any]:
         """向会话添加消息"""
-        data = self._load_sessions_data()
-        if session_id not in data.get("messages", {}):
-            data.setdefault("messages", {})[session_id] = []
+        ts = datetime.now().isoformat()
         msg = {
             "role": role,
             "content": content,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": ts,
         }
+
+        # 优先写入 SQLite（如果存在）
+        db_path = self._get_session_db_path()
+        if db_path:
+            try:
+                conn = sqlite3.connect(str(db_path))
+                cursor = conn.cursor()
+                # 确保 messages 表存在
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS messages (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        session_id TEXT NOT NULL,
+                        role TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        created_at TEXT NOT NULL
+                    )
+                """)
+                cursor.execute(
+                    "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
+                    (session_id, role, content, ts),
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass  # fallback to JSON
+
+        # 同时写入 JSON（兼容）
+        data = self._load_sessions_data()
+        if session_id not in data.get("messages", {}):
+            data.setdefault("messages", {})[session_id] = []
         data["messages"][session_id].append(msg)
         # 更新会话的 updated_at
         for s in data.get("sessions", []):
             if s["id"] == session_id:
-                s["updated_at"] = datetime.now().isoformat()
+                s["updated_at"] = ts
                 break
         self._save_sessions_data(data)
         return {"success": True, "message": msg}
