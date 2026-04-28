@@ -105,7 +105,7 @@ async def get_status():
     total_uptime = int((datetime.now() - first_deploy).total_seconds())
     return {
         "status": "ok",
-        "version": os.environ.get("APP_VERSION", "1.8.0"),
+        "version": os.environ.get("APP_VERSION", "1.9.0"),
         "uptime": int(time.time() - _start_time),
         "total_uptime": total_uptime,
         "first_deploy": first_deploy.isoformat(),

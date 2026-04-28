@@ -5,6 +5,19 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '1.9.0',
+            date: '2026-04-28 20:15',
+            title: '插件市场 + 数据动态化',
+            changes: [
+                '插件市场：17 个内置插件（工具/技能/记忆）',
+                '插件分类浏览 + 搜索 + 一键安装',
+                '内置插件直接创建本地目录（无需 Git）',
+                '插件工具自动合并到 MCP tools/list',
+                '插件技能自动合并到技能列表',
+                '关于页面数据动态化（MCP工具数/API端点数实时获取）',
+                '技能页面 CRUD 验证正常',
+            ],
+        },        {
             version: '1.8.0',
             date: '2026-04-28 19:25',
             title: '插件系统 + SVG图标 + 实时对话记录',
@@ -113,18 +126,32 @@ const AboutPage = (() => {
 
     async function render() {
         const container = document.getElementById('contentBody');
+        container.innerHTML = Components.createLoading();
         try {
-            const status = await API.system.health();
-            var version = status.version || '1.7.0';
+            const [status, toolsData] = await Promise.all([
+                API.system.health(),
+                API.request('GET', '/api/tools').catch(() => []),
+            ]);
+            var version = status.version || '1.8.0';
             var totalUptime = status.total_uptime || status.uptime || 0;
             var firstDeploy = status.first_deploy || '';
+            var mcpToolCount = Array.isArray(toolsData) ? toolsData.length : (toolsData.tools || []).length;
         } catch (err) {
-            var version = '1.7.0';
+            var version = '1.8.0';
             var totalUptime = 0;
             var firstDeploy = '';
+            var mcpToolCount = 0;
         }
 
-        container.innerHTML = buildPage(version, totalUptime, firstDeploy);
+        // 动态计算 API 端点数
+        try {
+            var routesRes = await API.request('GET', '/openapi.json').catch(() => null);
+            var apiCount = routesRes ? Object.keys(routesRes.paths || {}).length : 0;
+        } catch (err) {
+            var apiCount = 0;
+        }
+
+        container.innerHTML = buildPage(version, totalUptime, firstDeploy, mcpToolCount, apiCount);
     }
 
     function formatUptime(seconds) {
@@ -139,7 +166,7 @@ const AboutPage = (() => {
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     }
 
-    function buildPage(version, totalUptime, firstDeploy) {
+    function buildPage(version, totalUptime, firstDeploy, mcpToolCount, apiCount) {
         const uptimeStr = formatUptime(totalUptime);
 
         return `<div style="max-width:720px">
@@ -153,8 +180,8 @@ const AboutPage = (() => {
                         <span>版本 <strong class="mono">${version}</strong></span>
                         <span>总运行 <strong>${uptimeStr}</strong></span>
                         <span>首次部署 <strong>${formatDeployTime(firstDeploy) || '-'}</strong></span>
-                        <span>MCP 工具 <strong>24</strong> 个</span>
-                        <span>API 端点 <strong>100+</strong></span>
+                        <span>MCP 工具 <strong>${mcpToolCount || '?'}</strong> 个</span>
+                        <span>API 端点 <strong>${apiCount || '?'}</strong> 个</span>
                     </div>
                 </div>
             `)}

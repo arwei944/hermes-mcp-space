@@ -248,6 +248,69 @@ def install_plugin(source: str) -> Dict[str, Any]:
     }
 
 
+def install_builtin(name: str, meta: Dict[str, Any]) -> Dict[str, Any]:
+    """安装内置插件（从索引数据直接创建本地插件目录）
+
+    Args:
+        name: 插件名称
+        meta: 插件元数据（来自 plugin_index.json）
+
+    Returns:
+        {"success": True/False, "message": "..."}
+    """
+    plugins_dir = get_plugins_dir()
+    plugin_dir = plugins_dir / name
+    plugin_dir.mkdir(parents=True, exist_ok=True)
+
+    # 写入 plugin.json
+    plugin_json = {
+        "name": meta.get("name", name),
+        "version": meta.get("version", "1.0.0"),
+        "author": meta.get("author", "Hermes"),
+        "description": meta.get("description", ""),
+        "type": meta.get("type", "tool"),
+        "tags": meta.get("tags", []),
+        "builtin": True,
+    }
+    (plugin_dir / "plugin.json").write_text(
+        json.dumps(plugin_json, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    # 如果有工具定义，写入 tools/
+    tools = meta.get("tools", [])
+    if tools:
+        tools_dir = plugin_dir / "tools"
+        tools_dir.mkdir(exist_ok=True)
+        for tool in tools:
+            tool_name = tool.get("name", "unknown")
+            (tools_dir / f"{tool_name}.json").write_text(
+                json.dumps(tool, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+
+    # 如果是技能类型，创建默认技能文件
+    if meta.get("type") == "skill":
+        skills_dir = plugin_dir / "skills"
+        skills_dir.mkdir(exist_ok=True)
+        (skills_dir / f"{name}.md").write_text(
+            f"# {meta.get('description', name)}\n\n{meta.get('description', '')}\n\n## 使用方法\n\n待补充。\n",
+            encoding="utf-8",
+        )
+
+    # 如果是记忆类型，创建默认记忆模板
+    if meta.get("type") == "memory":
+        memory_dir = plugin_dir / "memory"
+        memory_dir.mkdir(exist_ok=True)
+        (memory_dir / f"{name}.md").write_text(
+            f"# {meta.get('description', name)}\n\n{meta.get('description', '')}\n\n## 内容\n\n待补充。\n",
+            encoding="utf-8",
+        )
+
+    # 记录到 installed.json
+    _record_install(name, meta.get("version", "1.0.0"), "builtin")
+
+    return {"success": True, "message": f"内置插件 '{name}' 安装成功"}
+
+
 def uninstall_plugin(name: str) -> Dict[str, Any]:
     """卸载插件
 
