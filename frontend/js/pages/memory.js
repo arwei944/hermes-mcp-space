@@ -16,8 +16,9 @@ const MemoryPage = (() => {
             const [memoryData, userData, statsData] = await Promise.all([
                 API.memory.getMemory(), API.memory.getUser(), API.memory.stats(),
             ]);
-            _memoryContent = memoryData.content || memoryData || '';
-            _userContent = userData.content || userData || '';
+            // API 返回 {memory: "...", user: "..."} 或字符串
+            _memoryContent = typeof memoryData === 'string' ? memoryData : (memoryData.memory || '');
+            _userContent = typeof userData === 'string' ? userData : (userData.user || '');
             _stats = statsData;
         } catch (err) {
             _memoryContent = getMockMemory();
@@ -44,8 +45,9 @@ const MemoryPage = (() => {
         );
 
         const content = _activeTab === 'memory' ? _memoryContent : _userContent;
-        const wordCount = content.length;
-        const lineCount = content.split('\n').length;
+        const safeContent = typeof content === 'string' ? content : '';
+        const wordCount = safeContent.length;
+        const lineCount = safeContent.split('\n').length;
 
         const statsHtml = _stats
             ? `<div class="editor-stats"><span>字数: ${_stats.wordCount || wordCount}</span><span>行数: ${_stats.lineCount || lineCount}</span><span>条目: ${_stats.entries || '-'}</span></div>`
@@ -61,7 +63,7 @@ const MemoryPage = (() => {
                             <button class="btn btn-sm btn-primary" onclick="MemoryPage.saveContent()">保存</button>
                         </div>
                     </div>
-                    <textarea class="editor-textarea" id="memoryEditor">${Components.escapeHtml(content)}</textarea>
+                    <textarea class="editor-textarea" id="memoryEditor">${Components.escapeHtml(safeContent)}</textarea>
                     ${statsHtml}
                 </div>
                 <div class="editor-pane">
@@ -69,7 +71,7 @@ const MemoryPage = (() => {
                         <h3>预览</h3>
                         <span style="font-size:11px;color:var(--text-tertiary)">Markdown 渲染</span>
                     </div>
-                    <div class="editor-preview markdown-body" id="memoryPreview">${Components.renderMarkdown(content)}</div>
+                    <div class="editor-preview markdown-body" id="memoryPreview">${Components.renderMarkdown(safeContent)}</div>
                 </div>
             </div>`;
     }

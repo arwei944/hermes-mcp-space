@@ -13,8 +13,15 @@ const ToolsPage = (() => {
 
         try {
             const [toolsData, toolsetsData] = await Promise.all([API.tools.list(), API.tools.toolsets()]);
-            _tools = toolsData.tools || toolsData || [];
-            _toolsets = toolsetsData.toolsets || toolsetsData || [];
+            // 后端返回 {name, description, schema, status} 或 {name, description, toolset, enabled}
+            const rawTools = toolsData.tools || toolsData || [];
+            _tools = rawTools.map(t => ({
+                ...t,
+                enabled: t.enabled !== undefined ? t.enabled : t.status !== 'inactive',
+                toolset: t.toolset || t.name.split('_')[0] || 'default',
+            }));
+            const rawToolsets = toolsetsData.toolsets || toolsetsData || [];
+            _toolsets = rawToolsets.map(ts => typeof ts === 'string' ? ts : ts.name).filter(Boolean);
         } catch (err) {
             const mock = getMockTools();
             _tools = mock.tools;
