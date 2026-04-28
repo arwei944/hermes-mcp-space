@@ -4,9 +4,14 @@ Hermes Agent MCP Space - 部署入口
 策略：Monkey-patch Gradio 的 App.create_app，在创建 app 后立即注册自定义路由。
 """
 
+# CRITICAL: Disable SSR mode before importing gradio
+# HF Spaces enables SSR by default, which renders on port 7861 via Node.js
+# and bypasses our custom routes on port 7860
+import os
+os.environ["GRADIO_SSR_MODE"] = "false"
+
 import json
 import logging
-import os
 import re
 from pathlib import Path
 from fastapi import Request
@@ -118,4 +123,4 @@ logger.info(f"Hermes Agent MCP Space v{APP_VERSION} initialized")
 
 # HF Spaces Gradio SDK will call demo.launch() for us
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
+    demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True, ssr_mode=False)
