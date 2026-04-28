@@ -226,7 +226,7 @@ const DashboardPage = (() => {
                         <td class="mono">${s.model || '-'}</td>
                         <td>${s.messages || 0}</td>
                         <td>${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}</td>
-                        <td>${Components.formatTime(s.createdAt)}</td>
+                        <td>${Components.formatDateTime(s.createdAt)}</td>
                     </tr>`).join('')}
                 </tbody>
             </table>

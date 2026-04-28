@@ -74,7 +74,7 @@ const AgentsPage = (() => {
                 <div style="margin-bottom:4px"><span style="color:var(--text-tertiary)">类型: </span>${Components.renderBadge(agent.type || 'default', 'purple')}</div>
                 <div style="margin-bottom:4px"><span style="color:var(--text-tertiary)">当前任务: </span>${Components.escapeHtml(agent.currentTask || '无')}</div>
                 <div style="margin-bottom:4px"><span style="color:var(--text-tertiary)">会话: </span><span class="mono">${Components.truncate(agent.sessionId || '-', 20)}</span></div>
-                <div><span style="color:var(--text-tertiary)">启动时间: </span>${Components.formatTime(agent.startTime)}</div>
+                <div><span style="color:var(--text-tertiary)">启动时间: </span>${Components.formatDateTime(agent.startTime)}</div>
             </div>
             ${progressHtml}
             ${agent.status === 'running' ? `<div style="margin-top:10px"><button class="btn btn-sm btn-danger" onclick="AgentsPage.terminate('${agent.id}')">终止</button></div>` : ''}

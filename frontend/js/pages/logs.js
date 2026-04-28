@@ -90,7 +90,7 @@ const LogsPage = (() => {
                 <thead><tr><th>时间</th><th>级别</th><th>来源</th><th>操作</th><th>详情</th></tr></thead>
                 <tbody>
                     ${filtered.map(l => `<tr>
-                        <td style="white-space:nowrap;font-size:12px;color:var(--text-tertiary)">${Components.formatTime(l.timestamp)}</td>
+                        <td style="white-space:nowrap;font-size:12px;color:var(--text-tertiary)">${Components.formatDateTime(l.timestamp)}</td>
                         <td>${Components.renderBadge(levelText[l.level] || l.level, levelBadge[l.level] || 'blue')}</td>
                         <td>${Components.renderBadge(sourceText[l.source] || l.source, 'orange')}</td>
                         <td style="font-weight:500">${Components.escapeHtml(l.action)}</td>

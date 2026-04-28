@@ -59,7 +59,7 @@ const CronPage = (() => {
                         <td class="mono" style="font-size:12px">${Components.escapeHtml(j.schedule || j.cron || '-')}</td>
                         <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(j.command || j.action || '-')}</td>
                         <td>${Components.renderBadge(statusMap[j.status] || j.status || '-', statusColor[j.status] || 'blue')}</td>
-                        <td style="font-size:12px;color:var(--text-tertiary)">${j.last_run ? Components.formatTime(j.last_run) : '-'}</td>
+                        <td style="font-size:12px;color:var(--text-tertiary)">${j.last_run ? Components.formatDateTime(j.last_run) : '-'}</td>
                         <td>
                             <div style="display:flex;gap:4px">
                                 <button class="btn btn-sm btn-ghost" onclick="CronPage.triggerJob('${j.id}')" title="立即执行">▶️</button>

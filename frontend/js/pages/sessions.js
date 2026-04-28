@@ -117,7 +117,7 @@ const SessionsPage = (() => {
                     return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
                         <div class="chat-message-header">
                             <span class="chat-message-role">${roleText}</span>
-                            <span class="chat-message-time">${m.timestamp ? Components.formatTime(m.timestamp) : ''}</span>
+                            <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
                         </div>
                         <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
                     </div>`;
@@ -233,7 +233,7 @@ const SessionsPage = (() => {
                     return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
                         <div class="chat-message-header">
                             <span class="chat-message-role">${roleText}</span>
-                            <span class="chat-message-time">${m.timestamp ? Components.formatTime(m.timestamp) : ''}</span>
+                            <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
                         </div>
                         <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
                     </div>`;
@@ -288,7 +288,7 @@ const SessionsPage = (() => {
         div.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
         div.innerHTML = `<div class="chat-message-header">
             <span class="chat-message-role">${roleText}</span>
-            <span class="chat-message-time">${msg.timestamp ? Components.formatTime(msg.timestamp) : ''}</span>
+            <span class="chat-message-time">${msg.timestamp ? Components.formatDateTime(msg.timestamp) : ''}</span>
         </div>
         <div class="chat-message-content">${Components.renderMarkdown(content)}</div>`;
         container.appendChild(div);

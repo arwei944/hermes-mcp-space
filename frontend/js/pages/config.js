@@ -37,7 +37,7 @@ const ConfigPage = (() => {
                         <tbody>
                             ${_versions.map((v, i) => `<tr>
                                 <td class="mono">v${v.version || i + 1}</td>
-                                <td style="font-size:12px;color:var(--text-tertiary)">${Components.formatTime(v.timestamp)}</td>
+                                <td style="font-size:12px;color:var(--text-tertiary)">${Components.formatDateTime(v.timestamp)}</td>
                                 <td style="font-size:12px">${Components.escapeHtml(v.summary || '无描述')}</td>
                                 <td><button class="btn btn-sm btn-ghost" onclick="ConfigPage.rollback(${i})">回滚</button></td>
                             </tr>`).join('')}

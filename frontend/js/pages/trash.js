@@ -50,7 +50,7 @@ const TrashPage = (() => {
                                     <span style="font-weight:600;font-size:14px">${Components.escapeHtml(item.item_name || item.item_id)}</span>
                                     ${Components.renderBadge(typeLabel, typeColor)}
                                 </div>
-                                <div style="font-size:11px;color:var(--text-tertiary)">删除于 ${Components.formatTime(item.deleted_at)}</div>
+                                <div style="font-size:11px;color:var(--text-tertiary)">删除于 ${Components.formatDateTime(item.deleted_at)}</div>
                             </div>
                         </div>
                         ${item.metadata && item.metadata.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">${Components.escapeHtml(item.metadata.description)}</div>` : ''}
