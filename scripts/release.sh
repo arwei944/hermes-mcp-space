@@ -31,7 +31,7 @@ fi
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_DIR"
 
-DATE=$(date +%Y-%m-%d)
+DATE=$(date "+%Y-%m-%d %H:%M")
 ABOUT_FILE="frontend/js/pages/about.js"
 
 echo "========================================="

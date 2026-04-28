@@ -5,8 +5,22 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '1.8.0',
+            date: '2026-04-28 19:25',
+            title: '插件系统 + SVG图标 + 实时对话记录',
+            changes: [
+                '插件系统：支持从 Git 仓库安装/卸载插件',
+                '插件可扩展工具（MCP）、技能、记忆',
+                '新增插件市场页面',
+                'MCP 工具 24 → 28（+list/install/uninstall_plugin + log_conversation）',
+                'SVG 矢量图标替换所有 emoji（39 个图标）',
+                'log_conversation MCP 工具：Trae 可主动记录对话',
+                '首次部署运行时间持久化（重启不归零）',
+                '版本发布时间精确到分钟',
+            ],
+        },        {
             version: '1.7.0',
-            date: '2026-04-28',
+            date: '2026-04-28 18:41',
             title: '会话模块合并 + 实时数据记录',
             changes: [
                 '会话管理 + 会话对话合并为一个「会话」模块',
@@ -101,22 +115,32 @@ const AboutPage = (() => {
         const container = document.getElementById('contentBody');
         try {
             const status = await API.system.health();
-            var version = status.version || '1.6.0';
-            var uptime = status.uptime || 0;
+            var version = status.version || '1.7.0';
+            var totalUptime = status.total_uptime || status.uptime || 0;
+            var firstDeploy = status.first_deploy || '';
         } catch (err) {
-            var version = '1.6.0';
-            var uptime = 0;
+            var version = '1.7.0';
+            var totalUptime = 0;
+            var firstDeploy = '';
         }
 
-        container.innerHTML = buildPage(version, uptime);
+        container.innerHTML = buildPage(version, totalUptime, firstDeploy);
     }
 
-    function buildPage(version, uptime) {
-        const uptimeStr = uptime > 86400
-            ? `${Math.floor(uptime / 86400)}天 ${Math.floor((uptime % 86400) / 3600)}小时`
-            : uptime > 3600
-            ? `${Math.floor(uptime / 3600)}小时 ${Math.floor((uptime % 3600) / 60)}分钟`
-            : `${Math.floor(uptime / 60)}分钟`;
+    function formatUptime(seconds) {
+        if (seconds > 86400) return `${Math.floor(seconds / 86400)}天 ${Math.floor((seconds % 86400) / 3600)}小时`;
+        if (seconds > 3600) return `${Math.floor(seconds / 3600)}小时 ${Math.floor((seconds % 3600) / 60)}分钟`;
+        return `${Math.floor(seconds / 60)}分钟`;
+    }
+
+    function formatDeployTime(isoStr) {
+        if (!isoStr) return '';
+        const d = new Date(isoStr);
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function buildPage(version, totalUptime, firstDeploy) {
+        const uptimeStr = formatUptime(totalUptime);
 
         return `<div style="max-width:720px">
             ${Components.sectionTitle('关于 Hermes Agent')}
@@ -127,7 +151,8 @@ const AboutPage = (() => {
                     <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">AI Agent 管理面板 + MCP 服务</p>
                     <div style="display:inline-flex;gap:24px;font-size:13px;color:var(--text-secondary)">
                         <span>版本 <strong class="mono">${version}</strong></span>
-                        <span>运行时间 <strong>${uptimeStr}</strong></span>
+                        <span>总运行 <strong>${uptimeStr}</strong></span>
+                        <span>首次部署 <strong>${formatDeployTime(firstDeploy) || '-'}</strong></span>
                         <span>MCP 工具 <strong>24</strong> 个</span>
                         <span>API 端点 <strong>100+</strong></span>
                     </div>

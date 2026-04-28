@@ -348,37 +348,61 @@ class HermesService:
     # ==================== 技能管理 ====================
 
     def list_skills(self) -> List[Dict[str, Any]]:
-        """列出所有技能（支持目录和文件两种格式）"""
+        """列出所有技能（支持目录和文件两种格式，含插件技能）"""
         skills_dir = get_skills_dir()
         if not skills_dir.exists():
-            return []
+            skills = []
+        else:
+            skills = []
+            # 格式1: 目录结构 skills/{name}/SKILL.md
+            for item in skills_dir.iterdir():
+                if item.is_dir():
+                    skill_md = item / "SKILL.md"
+                    skills.append({
+                        "name": item.name,
+                        "description": self._read_skill_description(skill_md),
+                        "has_skill_md": skill_md.exists(),
+                        "path": str(item),
+                        "format": "directory",
+                        "source": "builtin",
+                    })
+            # 格式2: 文件结构 skills/{name}.md
+            for item in skills_dir.iterdir():
+                if item.is_file() and item.suffix == ".md":
+                    name = item.stem
+                    # 跳过已作为目录处理的
+                    if any(s["name"] == name for s in skills):
+                        continue
+                    skills.append({
+                        "name": name,
+                        "description": self._read_skill_description(item),
+                        "has_skill_md": True,
+                        "path": str(item),
+                        "format": "file",
+                        "source": "builtin",
+                    })
 
-        skills = []
-        # 格式1: 目录结构 skills/{name}/SKILL.md
-        for item in skills_dir.iterdir():
-            if item.is_dir():
-                skill_md = item / "SKILL.md"
+        # 合并插件提供的技能
+        try:
+            from backend.services.plugin_service import get_plugin_skills
+            plugin_skills = get_plugin_skills()
+            for ps in plugin_skills:
+                # 避免同名覆盖
+                if any(s["name"] == ps["name"] for s in skills):
+                    # 插件技能加前缀避免冲突
+                    ps["name"] = f"{ps['plugin_name']}__{ps['name']}"
                 skills.append({
-                    "name": item.name,
-                    "description": self._read_skill_description(skill_md),
-                    "has_skill_md": skill_md.exists(),
-                    "path": str(item),
-                    "format": "directory",
-                })
-        # 格式2: 文件结构 skills/{name}.md
-        for item in skills_dir.iterdir():
-            if item.is_file() and item.suffix == ".md":
-                name = item.stem
-                # 跳过已作为目录处理的
-                if any(s["name"] == name for s in skills):
-                    continue
-                skills.append({
-                    "name": name,
-                    "description": self._read_skill_description(item),
+                    "name": ps["name"],
+                    "description": ps.get("description", ""),
                     "has_skill_md": True,
-                    "path": str(item),
+                    "path": ps.get("path", ""),
                     "format": "file",
+                    "source": "plugin",
+                    "plugin_name": ps.get("plugin_name", ""),
                 })
+        except Exception:
+            pass
+
         return skills
 
     def get_skill(self, name: str) -> Optional[Dict[str, Any]]:

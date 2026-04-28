@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Hermes Agent - Dashboard & Status API"""
 
+import json
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 from fastapi import APIRouter
 
 from backend.services.hermes_service import hermes_service
@@ -11,6 +13,23 @@ from backend.services.hermes_service import hermes_service
 router = APIRouter(prefix="/api", tags=["system"])
 
 _start_time = time.time()
+
+
+def _get_first_deploy_time() -> datetime:
+    """获取首次部署时间（持久化到文件）"""
+    home = os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))
+    deploy_file = Path(home) / "data" / "first_deploy.json"
+    if deploy_file.exists():
+        try:
+            data = json.loads(deploy_file.read_text(encoding="utf-8"))
+            return datetime.fromisoformat(data["first_deploy"])
+        except Exception:
+            pass
+    # 首次启动，记录时间
+    deploy_file.parent.mkdir(parents=True, exist_ok=True)
+    now = datetime.now()
+    deploy_file.write_text(json.dumps({"first_deploy": now.isoformat()}, ensure_ascii=False), encoding="utf-8")
+    return now
 
 
 def _get_system_resources():
@@ -82,10 +101,14 @@ async def get_status():
     """System status overview"""
     mcp = hermes_service.get_mcp_status()
     remote_url = os.environ.get("HERMES_API_URL", "")
+    first_deploy = _get_first_deploy_time()
+    total_uptime = int((datetime.now() - first_deploy).total_seconds())
     return {
         "status": "ok",
-        "version": os.environ.get("APP_VERSION", "1.0.0"),
+        "version": os.environ.get("APP_VERSION", "1.8.0"),
         "uptime": int(time.time() - _start_time),
+        "total_uptime": total_uptime,
+        "first_deploy": first_deploy.isoformat(),
         "mcp": mcp.get("status", "unknown"),
         "hermes_available": hermes_service.hermes_available,
         "hermes_remote_url": remote_url if remote_url else None,

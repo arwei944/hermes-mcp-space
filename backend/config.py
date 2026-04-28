@@ -75,6 +75,7 @@ def get_config() -> Dict[str, Any]:
     config.setdefault("memories_dir", str(hermes_home / "memories"))
     config.setdefault("cron_dir", str(hermes_home / "cron"))
     config.setdefault("agents_dir", str(hermes_home / "agents"))
+    config.setdefault("plugins_dir", str(hermes_home / "plugins"))
 
     _config_cache = config
     return config
@@ -110,3 +111,8 @@ def get_cron_dir() -> Path:
 def get_agents_dir() -> Path:
     """获取子 Agent 目录路径"""
     return Path(get_config()["agents_dir"])
+
+
+def get_plugins_dir() -> Path:
+    """获取插件目录路径"""
+    return Path(get_config()["plugins_dir"])

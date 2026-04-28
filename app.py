@@ -48,6 +48,7 @@ def build_full_html():
         "js/api.js", "js/components.js",
         "js/pages/dashboard.js", "js/pages/sessions.js", "js/pages/chat.js",
         "js/pages/tools.js", "js/pages/skills.js", "js/pages/memory.js",
+        "js/pages/plugins.js",
         "js/pages/cron.js", "js/pages/agents.js", "js/pages/config.js",
         "js/pages/about.js",
         "js/pages/mcp.js", "js/pages/logs.js",
@@ -115,7 +116,7 @@ def _patched_create_app(blocks, **kwargs):
     # Mount all backend API routers
     try:
         from backend.routers import (
-            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard, logs, events
+            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard, logs, events, plugins
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -128,6 +129,7 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(dashboard.router)
         app.include_router(logs.router)
         app.include_router(events.router)
+        app.include_router(plugins.router)
         logger.info("Backend API routers mounted successfully")
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")

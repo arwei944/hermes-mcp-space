@@ -39,7 +39,7 @@ def _get_capabilities():
 
 def _get_tools():
     """Return the list of available MCP tools."""
-    return [
+    tools = [
         {
             "name": "list_sessions",
             "description": "列出最近的会话列表",
@@ -264,7 +264,66 @@ def _get_tools():
                 }
             }
         },
+        {
+            "name": "list_plugins",
+            "description": "列出所有已安装的插件",
+            "inputSchema": {"type": "object", "properties": {}}
+        },
+        {
+            "name": "install_plugin",
+            "description": "从 Git 仓库安装插件",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "source": {"type": "string", "description": "Git 仓库 URL"}
+                },
+                "required": ["source"]
+            }
+        },
+        {
+            "name": "uninstall_plugin",
+            "description": "卸载插件",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "插件名称"}
+                },
+                "required": ["name"]
+            }
+        },
+        {
+            "name": "log_conversation",
+            "description": "记录对话消息到会话（Trae 调用此工具记录与用户的对话）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "会话 ID（可选，不传则自动使用最近活跃会话）"},
+                    "role": {"type": "string", "description": "消息角色: user / assistant / system", "enum": ["user", "assistant", "system"]},
+                    "content": {"type": "string", "description": "消息内容"},
+                    "summary": {"type": "string", "description": "对话摘要（可选）"}
+                },
+                "required": ["role", "content"]
+            }
+        },
     ]
+
+    # 合并插件提供的工具
+    try:
+        from backend.services.plugin_service import get_plugin_tools
+        plugin_tools = get_plugin_tools()
+        for pt in plugin_tools:
+            # 转换为 MCP 工具格式
+            tools.append({
+                "name": pt.get("name", ""),
+                "description": pt.get("description", ""),
+                "inputSchema": pt.get("inputSchema", {"type": "object", "properties": {}}),
+                "source": "plugin",
+                "plugin_name": pt.get("plugin_name", ""),
+            })
+    except Exception as e:
+        logger.warning(f"加载插件工具失败: {e}")
+
+    return tools
 
 
 def _get_resources():
@@ -519,6 +578,59 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(yaml.dump(existing, allow_unicode=True, default_flow_style=False), encoding="utf-8")
         return f"配置已更新: {', '.join(arguments.keys())}"
+
+    # ---- 插件管理 ----
+    elif name == "list_plugins":
+        from backend.services.plugin_service import plugin_service
+        plugins = plugin_service.list_plugins()
+        if not plugins:
+            return "暂无已安装插件"
+        lines = [f"📦 {p['name']} v{p.get('version','?')} - {p.get('description','无描述')} (by {p.get('author','未知')})" for p in plugins]
+        return "\n".join(lines)
+
+    elif name == "install_plugin":
+        from backend.services.plugin_service import plugin_service
+        source = arguments.get("source", "")
+        if not source:
+            return "错误: 请提供 source 参数（Git 仓库 URL）"
+        result = plugin_service.install_plugin(source)
+        return result.get("message", "安装完成")
+
+    elif name == "uninstall_plugin":
+        from backend.services.plugin_service import plugin_service
+        plugin_name = arguments.get("name", "")
+        if not plugin_name:
+            return "错误: 请提供 name 参数"
+        result = plugin_service.uninstall_plugin(plugin_name)
+        return result.get("message", "卸载完成")
+
+    elif name == "log_conversation":
+        role = arguments.get("role", "user")
+        content = arguments.get("content", "")
+        session_id = arguments.get("session_id", "")
+        summary = arguments.get("summary", "")
+
+        # 如果没有指定 session_id，使用最近活跃会话
+        if not session_id:
+            sessions = hermes_service.list_sessions()
+            active = [s for s in sessions if s.get("status") == "active"]
+            if active:
+                session_id = active[0].get("id") or active[0].get("session_id", "")
+            elif sessions:
+                session_id = sessions[0].get("id") or sessions[0].get("session_id", "")
+
+        if not session_id:
+            # 自动创建会话
+            result = hermes_service.create_session(title=summary or "Trae 对话", source="trae")
+            session_id = result.get("session", {}).get("id", "")
+
+        if not session_id:
+            return "错误: 无法获取或创建会话"
+
+        hermes_service.add_session_message(session_id, role, content)
+        from backend.routers.logs import add_log
+        add_log("记录对话", session_id[:16], f"[{role}] {content[:100]}", "info", "trae")
+        return f"对话已记录到会话 {session_id[:16]}"
 
     else:
         return f"未知工具: {name}"

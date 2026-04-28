@@ -10,6 +10,7 @@ const App = (() => {
         tools: ToolsPage,
         skills: SkillsPage,
         memory: MemoryPage,
+        plugins: PluginsPage,
         cron: CronPage,
         agents: AgentsPage,
         config: ConfigPage,
@@ -24,6 +25,7 @@ const App = (() => {
         tools: '工具管理',
         skills: '技能系统',
         memory: '记忆管理',
+        plugins: '插件市场',
         cron: '定时任务',
         agents: '子 Agent',
         config: '系统配置',
@@ -70,7 +72,7 @@ const App = (() => {
     function applyTheme(isDark) {
         document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
         const btn = document.getElementById('themeToggle');
-        if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+        if (btn) btn.innerHTML = Components.icon(isDark ? 'sun' : 'moon', 18);
         localStorage.setItem('hermes-theme', isDark ? 'dark' : 'light');
     }
 

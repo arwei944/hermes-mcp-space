@@ -69,6 +69,10 @@
                 <span class="nav-icon">📖</span>
                 <span>记忆管理</span>
             </a>
+            <a class="nav-item" data-page="plugins" href="#plugins">
+                <span class="nav-icon">🧩</span>
+                <span>插件市场</span>
+            </a>
         </div>
 
         <div class="nav-section">
@@ -145,6 +149,33 @@
 <!-- Scripts -->
 <script src="/js/api.js"></script>
 <script src="/js/components.js"></script>
+
+<!-- 侧边栏图标映射 (由 JS 替换 emoji) -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const navIconMap = {
+        '📊': 'dashboard',
+        '💬': 'session',
+        '🔧': 'tools',
+        '⚡': 'skills',
+        '📖': 'memory',
+        '🧩': 'plugins',
+        '⏰': 'cron',
+        '🤖': 'agents',
+        '🔌': 'mcp',
+        '📋': 'logs',
+        '⚙️': 'config',
+        'ℹ️': 'about',
+    };
+    document.querySelectorAll('.nav-icon').forEach(el => {
+        const emoji = el.textContent.trim();
+        const iconName = navIconMap[emoji];
+        if (iconName && Components.icon) {
+            el.innerHTML = Components.icon(iconName, 18);
+        }
+    });
+});
+</script>
 <script src="/js/pages/dashboard.js"></script>
 <script src="/js/pages/sessions.js"></script>
 <script src="/js/pages/chat.js"></script>
