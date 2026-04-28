@@ -197,10 +197,10 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         return f"共 {len(skills)} 个技能:\n" + "\n".join(lines)
 
     elif name == "get_skill_content":
-        content = hermes_service.get_skill_content(arguments["skill_name"])
-        if content is None:
+        skill = hermes_service.get_skill(arguments["skill_name"])
+        if skill is None:
             return f"技能 '{arguments['skill_name']}' 不存在"
-        return content
+        return skill.get("content", "")
 
     elif name == "read_memory":
         data = hermes_service.read_memory()
