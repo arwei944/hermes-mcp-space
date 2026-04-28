@@ -12,61 +12,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Git
-        run: |
-          git config --global user.email "hermes-mcp@example.com"
-          git config --global user.name "Hermes MCP Deploy"
-
-      - name: Create HF Space if not exists
+      - name: Deploy to HF Spaces
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           pip install huggingface_hub
           python3 << 'SCRIPT'
-          from huggingface_hub import HfApi
           import os
+          from huggingface_hub import HfApi, create_repo
+          from pathlib import Path
+
           token = os.environ["HF_TOKEN"]
-          api = HfApi()
-          try:
-              api.create_repo(
-                  repo_id="arwei944/hermes-mcp-space",
-                  repo_type="space",
-                  space_sdk="gradio",
-                  exist_ok=True,
-                  token=token
-              )
-              print("✅ Space 创建/确认成功")
-          except Exception as e:
-              print(f"创建 Space 失败: {e}")
-              raise
+          repo_id = "arwei944/hermes-mcp-space"
+
+          # 1. 创建 Space（如果不存在）
+          create_repo(
+              repo_id=repo_id,
+              repo_type="space",
+              space_sdk="gradio",
+              exist_ok=True,
+              token=token
+          )
+          print(f"✅ Space {repo_id} 就绪")
+
+          # 2. 上传所有文件
+          api = HfApi(token=token)
+          api.upload_folder(
+              folder_path="/workspace/hermes-mcp-space",
+              repo_id=repo_id,
+              repo_type="space",
+              commit_message=f"deploy: {__import__('datetime').datetime.utcnow().isoformat()}",
+              delete_patterns=["*.pyc", "__pycache__/*", ".github/*"],
+              ignore_patterns=[".git/*", "__pycache__/*", "*.pyc"],
+          )
+          print(f"✅ 部署完成!")
+          print(f"📍 https://huggingface.co/spaces/{repo_id}")
           SCRIPT
-
-      - name: Clone HF Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git clone "https://arwei944:${HF_TOKEN}@huggingface.co/spaces/arwei944/hermes-mcp-space" /tmp/hf-space
-
-      - name: Copy project files
-        run: |
-          cd /tmp/hf-space
-          # 清除旧文件（保留 .git）
-          find . -maxdepth 1 ! -name '.git' ! -name '.' -exec rm -rf {} +
-          # 复制项目文件
-          rsync -av --exclude='.git' \
-                     --exclude='.github' \
-                     --exclude='__pycache__' \
-                     --exclude='*.pyc' \
-                     --exclude='.gitignore' \
-                     /workspace/hermes-mcp-space/ /tmp/hf-space/
-
-      - name: Commit and push to HF
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          cd /tmp/hf-space
-          git add -A
-          git diff --staged --quiet || git commit -m "deploy: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          git push "https://arwei944:${HF_TOKEN}@huggingface.co/spaces/arwei944/hermes-mcp-space" main
-          echo "✅ 部署完成!"
-          echo "📍 Space URL: https://huggingface.co/spaces/arwei944/hermes-mcp-space"
