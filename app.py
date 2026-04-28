@@ -49,6 +49,7 @@ def build_full_html():
         "js/pages/dashboard.js", "js/pages/sessions.js", "js/pages/chat.js",
         "js/pages/tools.js", "js/pages/skills.js", "js/pages/memory.js",
         "js/pages/cron.js", "js/pages/agents.js", "js/pages/config.js",
+        "js/pages/about.js",
         "js/pages/mcp.js", "js/pages/logs.js",
         "js/app.js",
     ]
