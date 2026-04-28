@@ -5,6 +5,17 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '1.10.0',
+            date: '2026-04-28 21:00',
+            title: '回收站 + 按钮事件修复',
+            changes: [
+                '新增回收站页面（恢复/永久删除/清空）',
+                '删除技能自动移到回收站（可恢复）',
+                '技能页面改用事件委托替代 inline onclick',
+                '所有按钮添加 type="button" 防止表单提交',
+                '首页添加 HTTP 缓存控制头',
+            ],
+        },        {
             version: '1.9.0',
             date: '2026-04-28 20:15',
             title: '插件市场 + 数据动态化',

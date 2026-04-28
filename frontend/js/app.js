@@ -17,6 +17,7 @@ const App = (() => {
         mcp: McpPage,
         logs: LogsPage,
         about: AboutPage,
+        trash: TrashPage,
     };
 
     const pageTitles = {
@@ -32,6 +33,7 @@ const App = (() => {
         mcp: 'MCP 服务',
         logs: '操作日志',
         about: '关于',
+        trash: '回收站',
     };
 
     let _currentPage = null;
