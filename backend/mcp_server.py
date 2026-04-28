@@ -426,11 +426,39 @@ async def mcp_endpoint(request: Request):
         tool_name = params.get("name", "")
         arguments = params.get("arguments", {})
         try:
+            # 记录 MCP 工具调用日志
+            try:
+                from backend.routers.logs import add_log
+                from backend.routers.events import emit_event
+                arg_preview = str(arguments)[:100] if arguments else ""
+                add_log(
+                    action=f"MCP 调用: {tool_name}",
+                    target=tool_name,
+                    detail=arg_preview,
+                    level="info",
+                    source="mcp",
+                )
+                emit_event("mcp.tool_call", {"tool": tool_name, "arguments": arguments}, source="mcp")
+            except Exception:
+                pass
+
             result_text = await _call_tool(tool_name, arguments)
             return JSONResponse(content=_jsonrpc_response(req_id, {
                 "content": [{"type": "text", "text": result_text}]
             }))
         except Exception as e:
+            # 记录 MCP 调用失败
+            try:
+                from backend.routers.logs import add_log
+                add_log(
+                    action=f"MCP 失败: {tool_name}",
+                    target=tool_name,
+                    detail=str(e)[:200],
+                    level="error",
+                    source="mcp",
+                )
+            except Exception:
+                pass
             return JSONResponse(content=_jsonrpc_error(req_id, -32603, str(e)))
 
     elif method == "resources/list":
