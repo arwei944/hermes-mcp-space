@@ -7,6 +7,7 @@ const App = (() => {
     const pages = {
         dashboard: DashboardPage,
         sessions: SessionsPage,
+        chat: ChatPage,
         tools: ToolsPage,
         skills: SkillsPage,
         memory: MemoryPage,
@@ -14,11 +15,13 @@ const App = (() => {
         agents: AgentsPage,
         config: ConfigPage,
         mcp: McpPage,
+        logs: LogsPage,
     };
 
     const pageTitles = {
         dashboard: '仪表盘',
         sessions: '会话管理',
+        chat: '会话对话',
         tools: '工具管理',
         skills: '技能系统',
         memory: '记忆管理',
@@ -26,6 +29,7 @@ const App = (() => {
         agents: '子 Agent',
         config: '系统配置',
         mcp: 'MCP 服务',
+        logs: '操作日志',
     };
 
     let _currentPage = null;
@@ -177,13 +181,14 @@ const App = (() => {
         const term = query.toLowerCase().trim();
         const searchMap = {
             '仪表盘': 'dashboard', '统计': 'dashboard', '概览': 'dashboard',
-            '会话': 'sessions', '对话': 'sessions', '聊天': 'sessions',
+            '会话': 'sessions', '对话': 'chat', '聊天': 'chat',
             '工具': 'tools', '函数': 'tools',
             '技能': 'skills', 'skill': 'skills',
             '记忆': 'memory', 'memory': 'memory',
             '定时': 'cron', '任务': 'cron', 'cron': 'cron', '调度': 'cron',
             'agent': 'agents', '子agent': 'agents', '子代理': 'agents',
             'mcp': 'mcp', '服务': 'mcp',
+            '日志': 'logs', 'log': 'logs', '操作': 'logs',
             '配置': 'config', '设置': 'config', 'config': 'config',
         };
         for (const [keyword, page] of Object.entries(searchMap)) {

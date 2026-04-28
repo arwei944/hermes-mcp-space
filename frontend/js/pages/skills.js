@@ -1,11 +1,14 @@
 /**
- * 技能系统页面 (Mac 极简风格)
+ * 技能管理页面 (Mac 极简风格)
+ * 在线创建/编辑/预览技能
  */
 
 const SkillsPage = (() => {
     let _skills = [];
-    let _activeSkill = null;
-    let _skillContent = null;
+    let _currentSkill = null;
+    let _editorContent = '';
+    let _showEditor = false;
+    let _isCreating = false;
 
     async function render() {
         const container = document.getElementById('contentBody');
@@ -15,182 +18,201 @@ const SkillsPage = (() => {
             const data = await API.skills.list();
             _skills = data.skills || data || [];
         } catch (err) {
-            _skills = getMockSkills();
+            _skills = [];
         }
 
         container.innerHTML = buildPage();
         bindEvents();
     }
 
-    function getMockSkills() {
-        return [
-            { name: 'code-review', description: '代码审查技能', tags: ['开发', '代码质量'], hasSkillMd: true },
-            { name: 'doc-writer', description: '文档编写技能', tags: ['文档', '写作'], hasSkillMd: true },
-            { name: 'data-analyzer', description: '数据分析技能', tags: ['数据', '分析'], hasSkillMd: true },
-            { name: 'bug-hunter', description: 'Bug 搜索技能', tags: ['测试', '调试'], hasSkillMd: true },
-            { name: 'refactor', description: '代码重构技能', tags: ['开发', '重构'], hasSkillMd: true },
-            { name: 'security-scan', description: '安全扫描技能', tags: ['安全', '审计'], hasSkillMd: false },
-            { name: 'perf-tuner', description: '性能优化技能', tags: ['性能', '优化'], hasSkillMd: true },
-        ];
-    }
-
     function buildPage() {
-        const leftPanel = buildFileTree();
-        const rightPanel = _activeSkill ? buildSkillDetail() : buildEmptyDetail();
+        // 统计
+        const statsHtml = `<div class="stats">
+            ${Components.renderStatCard('技能总数', _skills.length, '', '⚡', 'purple')}
+            ${Components.renderStatCard('已激活', _skills.filter(s => s.status !== 'disabled').length, '', '✅', 'green')}
+        </div>`;
 
-        return `<div class="split-panel">
-            <div class="split-panel-left">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                    ${Components.sectionTitle('技能列表')}
-                    <button class="btn btn-sm btn-primary" onclick="SkillsPage.createSkill()">+ 新建</button>
+        // 操作按钮
+        const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+            <button class="btn btn-primary" onclick="SkillsPage.showCreate()">创建技能</button>
+        </div>`;
+
+        // 编辑器
+        const editorHtml = _showEditor ? buildEditor() : '';
+
+        // 技能列表
+        const skillsHtml = _skills.length === 0
+            ? Components.createEmptyState('⚡', '暂无技能', '点击「创建技能」添加第一个技能', '')
+            : `<div class="table-wrapper"><table class="table">
+                <thead><tr><th>名称</th><th>描述</th><th>标签</th><th>操作</th></tr></thead>
+                <tbody>
+                    ${_skills.map(s => `<tr>
+                        <td class="mono" style="color:var(--accent);font-weight:500">${Components.escapeHtml(s.name || '-')}</td>
+                        <td style="font-size:12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.description || '-')}</td>
+                        <td>${(s.tags || []).map(t => Components.renderBadge(t, 'blue')).join(' ') || '-'}</td>
+                        <td>
+                            <div style="display:flex;gap:4px">
+                                <button class="btn btn-sm btn-ghost" onclick="SkillsPage.viewSkill('${Components.escapeHtml(s.name)}')" title="查看">👁️</button>
+                                <button class="btn btn-sm btn-ghost" onclick="SkillsPage.editSkill('${Components.escapeHtml(s.name)}')" title="编辑">✏️</button>
+                                <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="SkillsPage.deleteSkill('${Components.escapeHtml(s.name)}')" title="删除">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>`).join('')}
+                </tbody>
+            </table></div>`;
+
+        return `${statsHtml}${actionsHtml}${editorHtml}${skillsHtml}`;
+    }
+
+    function buildEditor() {
+        const title = _isCreating ? '创建技能' : (_currentSkill ? `编辑: ${_currentSkill}` : '编辑技能');
+        return `<div class="modal-overlay" onclick="SkillsPage.hideEditor()">
+            <div class="modal" style="max-width:800px;width:90%" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>${title}</h3>
+                    <button class="modal-close" onclick="SkillsPage.hideEditor()">✕</button>
                 </div>
-                ${leftPanel}
+                <div class="modal-body">
+                    ${_isCreating ? Components.formGroup('技能名称', `<input class="form-input" id="skillName" placeholder="例如: my-skill">`, '英文、数字、下划线') : ''}
+                    ${Components.formGroup('描述', `<input class="form-input" id="skillDesc" placeholder="技能描述" value="${Components.escapeHtml(_currentSkill?.description || '')}">`)}
+                    ${Components.formGroup('标签', `<input class="form-input" id="skillTags" placeholder="例如: 开发, 工具" value="${Components.escapeHtml((_currentSkill?.tags || []).join(', '))}">`, '逗号分隔')}
+                    ${Components.formGroup('内容', `
+                        <div style="display:flex;gap:8px;margin-bottom:8px">
+                            <button class="btn btn-sm btn-ghost" onclick="SkillsPage.previewContent()">预览</button>
+                            <button class="btn btn-sm btn-ghost" onclick="SkillsPage.insertTemplate()">插入模板</button>
+                        </div>
+                        <textarea class="form-input" id="skillContent" rows="12" placeholder="# 技能说明\n\n描述该技能的功能和使用方法..." style="font-family:var(--mono-font, monospace);font-size:13px">${Components.escapeHtml(_editorContent)}</textarea>
+                    `)}
+                    <div id="skillPreview" style="display:none;margin-top:12px;padding:16px;border-radius:var(--radius-sm);background:var(--surface-secondary);border:1px solid var(--border)">
+                        <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">预览</div>
+                        <div class="markdown-body" id="skillPreviewContent"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-ghost" onclick="SkillsPage.hideEditor()">取消</button>
+                    <button class="btn btn-primary" onclick="SkillsPage.saveSkill()">保存</button>
+                </div>
             </div>
-            <div class="split-panel-right" id="skillDetailPanel">${rightPanel}</div>
         </div>`;
     }
 
-    function buildFileTree() {
-        const items = _skills.map(skill => ({
-            id: skill.name,
-            icon: skill.hasSkillMd ? '⚡' : '📄',
-            name: skill.name,
-            onClick: `SkillsPage.selectSkill('${skill.name}')`,
-        }));
-
-        return Components.createFileTree({
-            title: `${_skills.length} 个技能`,
-            items,
-            activeId: _activeSkill,
-            actions: (item) => `
-                <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();SkillsPage.editSkill('${item.id}')" title="编辑">编辑</button>
-                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();SkillsPage.deleteSkill('${item.id}')" title="删除">删除</button>
-            `,
-        });
+    function showCreate() {
+        _isCreating = true;
+        _currentSkill = null;
+        _editorContent = '';
+        _showEditor = true;
+        document.getElementById('contentBody').innerHTML = buildPage();
+        bindEvents();
     }
 
-    function buildEmptyDetail() {
-        return Components.createEmptyState('⚡', '选择一个技能', '从左侧列表中选择一个技能查看详情', '');
-    }
-
-    function buildSkillDetail() {
-        const skill = _skills.find(s => s.name === _activeSkill);
-        if (!skill) return buildEmptyDetail();
-
-        const tagsHtml = (skill.tags || []).map(t => Components.renderBadge(t, 'purple')).join(' ');
-        const contentHtml = _skillContent
-            ? `<div class="markdown-body">${Components.renderMarkdown(_skillContent)}</div>`
-            : Components.createEmptyState('📄', '暂无内容', '该技能没有 SKILL.md 文件', '');
-
-        return `<div style="padding:20px">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
-                <div>
-                    <h2 style="font-size:17px;font-weight:600;margin-bottom:6px">${Components.escapeHtml(skill.name)}</h2>
-                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">${Components.escapeHtml(skill.description || '')}</p>
-                    <div class="tag-list">${tagsHtml}</div>
-                </div>
-                <div style="display:flex;gap:6px">
-                    <button class="btn btn-sm btn-secondary" onclick="SkillsPage.editSkill('${skill.name}')">编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="SkillsPage.deleteSkill('${skill.name}')">删除</button>
-                </div>
-            </div>
-            <hr style="border:none;border-top:1px solid var(--border);margin-bottom:16px">
-            ${Components.sectionTitle('SKILL.md')}
-            ${contentHtml}
-        </div>`;
-    }
-
-    async function selectSkill(name) {
-        _activeSkill = name;
-        _skillContent = null;
-        const panel = document.getElementById('skillDetailPanel');
-        if (panel) panel.innerHTML = Components.createLoading();
-
-        document.querySelectorAll('.file-tree-item').forEach(el => {
-            el.classList.toggle('active', el.dataset.id === name);
-        });
-
+    async function editSkill(name) {
         try {
             const data = await API.skills.content(name);
-            _skillContent = data.content || data || '';
+            _currentSkill = name;
+            _editorContent = typeof data === 'string' ? data : (data.content || '');
+            _isCreating = false;
+            _showEditor = true;
+            document.getElementById('contentBody').innerHTML = buildPage();
+            bindEvents();
         } catch (err) {
-            _skillContent = null;
+            Components.Toast.error(`加载失败: ${err.message}`);
         }
-
-        if (panel) panel.innerHTML = buildSkillDetail();
     }
 
-    function createSkill() {
-        Components.Modal.open({
-            title: '创建新技能', size: 'lg',
-            content: `<form id="createSkillForm">
-                ${Components.formGroup('技能名称', Components.formInput('name', '例如: my-skill', ''), '使用小写字母和连字符')}
-                ${Components.formGroup('描述', Components.formInput('description', '技能描述', ''))}
-                ${Components.formGroup('标签（逗号分隔）', Components.formInput('tags', '例如: 开发, 工具', ''))}
-                ${Components.formGroup('SKILL.md 内容', Components.formTextarea('content', '# 技能说明\n\n描述该技能的功能和使用方法...', '', 10))}
-            </form>`,
-            footer: `<button class="btn btn-ghost" onclick="Components.Modal.close()">取消</button><button class="btn btn-primary" onclick="SkillsPage.saveNewSkill()">创建</button>`,
-        });
-    }
-
-    async function saveNewSkill() {
-        const form = document.getElementById('createSkillForm');
-        if (!form) return;
-        const name = form.querySelector('[name="name"]').value.trim();
-        const description = form.querySelector('[name="description"]').value.trim();
-        const tags = form.querySelector('[name="tags"]').value.split(',').map(t => t.trim()).filter(Boolean);
-        const content = form.querySelector('[name="content"]').value;
-        if (!name) { Components.Toast.warning('请输入技能名称'); return; }
+    async function viewSkill(name) {
         try {
-            await API.skills.create({ name, description, tags, content });
-            Components.Toast.success('技能创建成功');
-            Components.Modal.close();
-            render();
-        } catch (err) { Components.Toast.error(`创建失败: ${err.message}`); }
+            const data = await API.skills.content(name);
+            const content = typeof data === 'string' ? data : (data.content || '');
+            _currentSkill = name;
+            _editorContent = content;
+            _isCreating = false;
+            _showEditor = true;
+            document.getElementById('contentBody').innerHTML = buildPage();
+            bindEvents();
+        } catch (err) {
+            Components.Toast.error(`加载失败: ${err.message}`);
+        }
     }
 
-    function editSkill(name) {
-        const skill = _skills.find(s => s.name === name);
-        if (!skill) return;
-        Components.Modal.open({
-            title: `编辑技能: ${name}`, size: 'lg',
-            content: `<form id="editSkillForm">
-                ${Components.formGroup('技能名称', `<input class="form-input" type="text" name="name" value="${Components.escapeHtml(name)}" disabled>`)}
-                ${Components.formGroup('描述', Components.formInput('description', '', skill.description || ''))}
-                ${Components.formGroup('标签（逗号分隔）', Components.formInput('tags', '', (skill.tags || []).join(', ')))}
-                ${Components.formGroup('SKILL.md 内容', Components.formTextarea('content', '', _skillContent || '', 12))}
-            </form>`,
-            footer: `<button class="btn btn-ghost" onclick="Components.Modal.close()">取消</button><button class="btn btn-primary" onclick="SkillsPage.saveEditSkill('${Components.escapeHtml(name)}')">保存</button>`,
-        });
+    function hideEditor() {
+        _showEditor = false;
+        _currentSkill = null;
+        _editorContent = '';
+        document.getElementById('contentBody').innerHTML = buildPage();
+        bindEvents();
     }
 
-    async function saveEditSkill(originalName) {
-        const form = document.getElementById('editSkillForm');
-        if (!form) return;
-        const description = form.querySelector('[name="description"]').value.trim();
-        const tags = form.querySelector('[name="tags"]').value.split(',').map(t => t.trim()).filter(Boolean);
-        const content = form.querySelector('[name="content"]').value;
+    function previewContent() {
+        const textarea = document.getElementById('skillContent');
+        const preview = document.getElementById('skillPreview');
+        const previewContent = document.getElementById('skillPreviewContent');
+        if (textarea && preview && previewContent) {
+            previewContent.innerHTML = Components.renderMarkdown(textarea.value);
+            preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    function insertTemplate() {
+        const textarea = document.getElementById('skillContent');
+        if (textarea) {
+            textarea.value = `# 技能名称
+
+## 描述
+描述该技能的功能和用途。
+
+## 使用方法
+1. 步骤一
+2. 步骤二
+3. 步骤三
+
+## 注意事项
+- 注意事项一
+- 注意事项二
+
+## 示例
+\`\`\`
+示例代码或命令
+\`\`\`
+`;
+        }
+    }
+
+    async function saveSkill() {
+        const content = document.getElementById('skillContent')?.value || '';
+        const desc = document.getElementById('skillDesc')?.value || '';
+
         try {
-            await API.skills.update(originalName, { description, tags, content });
-            Components.Toast.success('技能已更新');
-            Components.Modal.close();
-            render();
-        } catch (err) { Components.Toast.error(`更新失败: ${err.message}`); }
+            if (_isCreating) {
+                const name = document.getElementById('skillName')?.value.trim();
+                if (!name) {
+                    Components.Toast.error('请填写技能名称');
+                    return;
+                }
+                const tags = (document.getElementById('skillTags')?.value || '').split(',').map(t => t.trim()).filter(Boolean);
+                await API.skills.create({ name, content, description: desc, tags });
+                Components.Toast.success('技能已创建');
+            } else {
+                await API.skills.update(_currentSkill, { content, description: desc });
+                Components.Toast.success('技能已更新');
+            }
+            await render();
+        } catch (err) {
+            Components.Toast.error(`保存失败: ${err.message}`);
+        }
     }
 
     async function deleteSkill(name) {
-        if (!confirm(`确定要删除技能 "${name}" 吗？`)) return;
+        if (!confirm(`确定要删除技能「${name}」吗？`)) return;
         try {
             await API.skills.delete(name);
             Components.Toast.success('技能已删除');
-            _skills = _skills.filter(s => s.name !== name);
-            if (_activeSkill === name) { _activeSkill = null; _skillContent = null; }
-            document.getElementById('contentBody').innerHTML = buildPage();
-            bindEvents();
-        } catch (err) { Components.Toast.error(`删除失败: ${err.message}`); }
+            await render();
+        } catch (err) {
+            Components.Toast.error(`删除失败: ${err.message}`);
+        }
     }
 
     function bindEvents() {}
 
-    return { render, selectSkill, createSkill, saveNewSkill, editSkill, saveEditSkill, deleteSkill };
+    return { render, showCreate, editSkill, viewSkill, hideEditor, saveSkill, deleteSkill, previewContent, insertTemplate };
 })();
