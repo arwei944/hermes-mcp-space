@@ -124,8 +124,13 @@ const App = (() => {
         const type = event.type || '';
         const data = event.data || {};
 
-        // SSE 事件只用于自动刷新，不显示 Toast（各页面已有自己的 Toast）
-        // 如果当前在仪表盘或日志页面，自动刷新
+        // 传递给当前页面的 onSSEEvent 方法（实时更新）
+        const page = pages[_currentPage];
+        if (page && typeof page.onSSEEvent === 'function') {
+            try { page.onSSEEvent(type, data); } catch (e) { /* ignore */ }
+        }
+
+        // 仪表盘/日志页面自动刷新
         if (_currentPage === 'dashboard' || _currentPage === 'logs') {
             clearTimeout(App._refreshTimer);
             App._refreshTimer = setTimeout(() => refresh(), 1000);

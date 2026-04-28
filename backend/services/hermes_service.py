@@ -235,6 +235,19 @@ class HermesService:
                 s["updated_at"] = ts
                 break
         self._save_sessions_data(data)
+
+        # 触发 SSE 事件，通知前端有新消息
+        try:
+            from backend.routers.events import emit_event
+            emit_event("session.message", {
+                "session_id": session_id,
+                "role": role,
+                "content": content,
+                "timestamp": ts,
+            }, source="session")
+        except Exception:
+            pass
+
         return {"success": True, "message": msg}
 
     def delete_session(self, session_id: str) -> Dict[str, Any]:

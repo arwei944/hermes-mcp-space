@@ -5,6 +5,17 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '1.12.0',
+            date: '2026-04-28 21:30',
+            title: '实时对话同步',
+            changes: [
+                '后端：add_session_message 写入后触发 session.message SSE 事件',
+                '前端：app.js SSE 事件传递给当前页面 onSSEEvent',
+                '前端：sessions.js 实时监听 SSE，自动追加新消息到 DOM',
+                '新增 auto-log-conversation 技能（Trae 自动同步对话）',
+                '移除 SSE 重复 Toast 通知',
+            ],
+        },        {
             version: '1.11.0',
             date: '2026-04-28 21:15',
             title: '全面体验优化',

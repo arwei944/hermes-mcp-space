@@ -411,5 +411,45 @@ const SessionsPage = (() => {
         }
     }
 
-    return { render, select, sendMessage, showCreate, deleteSession, compressSession };
+    // ---- SSE 实时事件处理 ----
+    function onSSEEvent(type, data) {
+        if (type === 'session.message' && data) {
+            const sid = data.session_id;
+            const msg = {
+                role: data.role,
+                content: data.content,
+                timestamp: data.timestamp,
+            };
+
+            if (sid === _currentId) {
+                // 当前会话有新消息 → 直接追加到 DOM
+                _messages.push(msg);
+                appendMessage(msg);
+                scrollToBottom();
+                // 更新消息计数
+                const countEl = document.querySelector('.chat-main-header span:last-of-type');
+                // 不需要额外操作，appendMessage 已处理
+            } else {
+                // 其他会话有新消息 → 更新侧边栏（如果有新会话则刷新列表）
+                const exists = _sessions.some(s => (s.id || s.session_id) === sid);
+                if (!exists) {
+                    // 新会话被创建（通过 MCP），刷新整个列表
+                    API.sessions.list().then(list => {
+                        _sessions = list;
+                        refreshSidebar();
+                    }).catch(() => {});
+                }
+            }
+        }
+
+        if (type === 'session.updated' || type === 'session.deleted') {
+            // 会话列表变化 → 刷新侧边栏
+            API.sessions.list().then(list => {
+                _sessions = list;
+                refreshSidebar();
+            }).catch(() => {});
+        }
+    }
+
+    return { render, select, sendMessage, showCreate, deleteSession, compressSession, onSSEEvent };
 })();
