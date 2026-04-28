@@ -473,8 +473,8 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         return result.get("message", "操作完成")
 
     elif name == "get_logs":
-        from backend.routers.logs import _log_store
-        logs = list(_log_store)
+        from backend.routers.logs import _load_logs
+        logs = _load_logs()
         source = arguments.get("source")
         if source:
             logs = [l for l in logs if l.get("source") == source]
