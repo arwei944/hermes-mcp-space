@@ -7,7 +7,6 @@ const App = (() => {
     const pages = {
         dashboard: DashboardPage,
         sessions: SessionsPage,
-        chat: ChatPage,
         tools: ToolsPage,
         skills: SkillsPage,
         memory: MemoryPage,
@@ -21,8 +20,7 @@ const App = (() => {
 
     const pageTitles = {
         dashboard: '仪表盘',
-        sessions: '会话管理',
-        chat: '会话对话',
+        sessions: '会话',
         tools: '工具管理',
         skills: '技能系统',
         memory: '记忆管理',

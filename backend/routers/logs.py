@@ -50,7 +50,7 @@ def add_log(
     level: str = "info",
     source: str = "system",
 ):
-    """添加一条操作日志（持久化到文件）"""
+    """添加一条操作日志（持久化到文件），同时记录到最近活跃会话"""
     entry = {
         "id": f"log-{int(time.time() * 1000)}",
         "timestamp": datetime.now().isoformat(),
@@ -65,6 +65,36 @@ def add_log(
     if len(logs) > _MAX_LOGS:
         logs = logs[:_MAX_LOGS]
     _save_logs(logs)
+
+    # 自动记录系统消息到最近活跃会话（仅重要操作）
+    if source in ("mcp", "system") and level in ("info", "success"):
+        try:
+            _auto_record_to_session(action, target, detail, source)
+        except Exception:
+            pass
+
+
+def _auto_record_to_session(action: str, target: str, detail: str, source: str):
+    """自动将操作记录到最近活跃会话"""
+    from backend.services.hermes_service import HermesService
+    service = HermesService()
+    sessions = service.list_sessions()
+    active = [s for s in sessions if s.get("status") == "active"]
+    if not active:
+        return
+    # 取最近的活跃会话
+    latest = active[0]
+    session_id = latest.get("id") or latest.get("session_id")
+    if not session_id:
+        return
+
+    # 构建系统消息
+    source_label = {"mcp": "MCP", "system": "系统", "cron": "定时任务"}.get(source, source)
+    msg_content = f"[{source_label}] {action}"
+    if detail:
+        msg_content += f" — {detail[:200]}"
+
+    service.add_session_message(session_id, "system", msg_content)
 
 
 @router.get("", summary="获取操作日志")

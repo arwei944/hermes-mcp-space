@@ -1,26 +1,46 @@
 /**
- * 会话管理页面 (Mac 极简风格)
+ * 会话页面 (Mac 极简风格)
+ * 融合会话管理 + 会话对话：左侧列表，右侧对话
  */
 
 const SessionsPage = (() => {
     let _sessions = [];
-    let _expandedId = null;
+    let _currentId = null;
+    let _messages = [];
     let _searchTerm = '';
     let _statusFilter = '';
 
-    async function render() {
+    async function render(sessionId) {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
         try {
-            const data = await API.sessions.list();
-            _sessions = data.sessions || data || [];
+            _sessions = await API.sessions.list();
         } catch (err) {
             _sessions = [];
         }
 
+        if (sessionId) {
+            _currentId = sessionId;
+            await loadMessages(sessionId);
+        } else if (_sessions.length > 0) {
+            _currentId = _sessions[0].id || _sessions[0].session_id;
+            await loadMessages(_currentId);
+        }
+
         container.innerHTML = buildPage();
         bindEvents();
+        scrollToBottom();
+    }
+
+    async function loadMessages(id) {
+        _currentId = id;
+        try {
+            const data = await API.sessions.messages(id);
+            _messages = data.messages || data || [];
+        } catch (err) {
+            _messages = [];
+        }
     }
 
     function getFilteredSessions() {
@@ -44,85 +64,165 @@ const SessionsPage = (() => {
         const filtered = getFilteredSessions();
         const activeCount = _sessions.filter(s => s.status === 'active').length;
 
-        return Components.renderSection(`会话列表`, `
-            <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <input type="text" id="sessionSearch" placeholder="搜索 ID、标题、来源、模型..." style="flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none" value="${Components.escapeHtml(_searchTerm)}">
-                <select id="statusFilter" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text-primary)">
-                    <option value="">全部状态</option>
-                    <option value="active" ${_statusFilter==='active'?'selected':''}>活跃 (${activeCount})</option>
-                    <option value="completed" ${_statusFilter==='completed'?'selected':''}>完成 (${_sessions.length - activeCount})</option>
-                </select>
-                <button class="btn btn-primary btn-sm" onclick="SessionsPage.showCreate()">+ 新建会话</button>
-                <span style="font-size:12px;color:var(--text-tertiary)">${filtered.length}/${_sessions.length}</span>
+        // 左侧会话列表
+        const listHtml = filtered.length === 0
+            ? `<div style="padding:20px;text-align:center;color:var(--text-tertiary)">暂无会话</div>`
+            : filtered.map(s => {
+                const id = s.id || s.session_id;
+                const isActive = id === _currentId;
+                const msgCount = s.message_count || s.messages || 0;
+                return `<div class="session-item ${isActive ? 'active' : ''}" onclick="SessionsPage.select('${id}')">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
+                        <div style="display:flex;gap:4px;align-items:center">
+                            ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
+                            <button class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" onclick="event.stopPropagation();SessionsPage.deleteSession('${id}')" title="删除">✕</button>
+                        </div>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
+                        <span>${Components.escapeHtml(s.source || '-')}</span>
+                        <span>${Components.escapeHtml(s.model || '-')}</span>
+                        <span>${msgCount} 条消息</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+        // 右侧对话区
+        const currentSession = _sessions.find(s => (s.id || s.session_id) === _currentId);
+        const headerHtml = currentSession ? `
+            <div class="chat-main-header">
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-weight:500">${Components.escapeHtml(currentSession.title || currentSession.id)}</span>
+                    ${Components.renderBadge(currentSession.source, currentSession.source === 'Trae' ? 'purple' : currentSession.source === 'Web' ? 'blue' : 'green')}
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
+                    <button class="btn btn-sm btn-ghost" onclick="SessionsPage.compressSession('${_currentId}')">压缩</button>
+                    <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="SessionsPage.deleteSession('${_currentId}')">删除</button>
+                </div>
+            </div>` : '';
+
+        const messagesHtml = !_currentId
+            ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
+                <div style="font-size:32px;margin-bottom:12px">💬</div>
+                <div style="font-size:14px;margin-bottom:8px">选择或创建一个会话</div>
+                <button class="btn btn-primary" onclick="SessionsPage.showCreate()">创建新会话</button>
+              </div>`
+            : _messages.length === 0
+            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">暂无消息，发送第一条消息吧</div>`
+            : `<div class="chat-messages" id="chatMessages">
+                ${_messages.map(m => {
+                    const isUser = m.role === 'user';
+                    const roleText = ({user:'用户',assistant:'助手',system:'系统'})[m.role] || m.role;
+                    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                    return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+                        <div class="chat-message-header">
+                            <span class="chat-message-role">${roleText}</span>
+                            <span class="chat-message-time">${m.timestamp ? Components.formatTime(m.timestamp) : ''}</span>
+                        </div>
+                        <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
+                    </div>`;
+                }).join('')}
+            </div>`;
+
+        const inputHtml = _currentId ? `
+            <div class="chat-input-bar">
+                <input type="text" class="form-input" id="chatInput" placeholder="输入消息..." style="flex:1" onkeydown="if(event.key==='Enter')SessionsPage.sendMessage()">
+                <button class="btn btn-primary" onclick="SessionsPage.sendMessage()" style="padding:8px 16px">发送</button>
+            </div>` : '';
+
+        return `<div class="chat-layout">
+            <div class="chat-sidebar">
+                <div class="chat-sidebar-header">
+                    <h3>会话</h3>
+                    <button class="btn btn-sm btn-primary" onclick="SessionsPage.showCreate()">+ 新建</button>
+                </div>
+                <div class="chat-sidebar-search">
+                    <input type="text" id="sessionSearch" placeholder="搜索会话..." value="${Components.escapeHtml(_searchTerm)}">
+                </div>
+                <div style="padding:4px 12px;display:flex;gap:4px">
+                    <select id="statusFilter" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:11px;outline:none;color:var(--text-secondary)">
+                        <option value="">全部 (${_sessions.length})</option>
+                        <option value="active" ${_statusFilter==='active'?'selected':''}>活跃 (${activeCount})</option>
+                        <option value="completed" ${_statusFilter==='completed'?'selected':''}>完成 (${_sessions.length - activeCount})</option>
+                    </select>
+                </div>
+                <div class="chat-sidebar-list">${listHtml}</div>
             </div>
-            <table class="table">
-                <thead><tr><th>ID</th><th>标题</th><th>来源</th><th>模型</th><th>消息数</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
-                <tbody>
-                    ${filtered.length === 0 ? `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-tertiary)">${_searchTerm || _statusFilter ? '没有匹配的会话' : '暂无会话记录'}</td></tr>` :
-                    filtered.map(s => `<tr>
-                        <td class="mono">${Components.truncate(s.id, 16)}</td>
-                        <td style="font-weight:500;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || '-')}</td>
-                        <td>${Components.renderBadge(s.source, s.source === 'Trae' ? 'purple' : s.source === 'Web' ? 'blue' : s.source === 'CLI' ? 'green' : 'orange')}</td>
-                        <td class="mono">${s.model || '-'}</td>
-                        <td>${s.message_count || s.messages || 0}</td>
-                        <td>${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}</td>
-                        <td>${Components.formatTime(s.created_at || s.createdAt)}</td>
-                        <td class="table-actions-cell">
-                            <button class="btn btn-sm btn-ghost" onclick="SessionsPage.viewMessages('${s.id}')" title="查看消息">详情</button>
-                            <button class="btn btn-sm btn-ghost" onclick="SessionsPage.compressSession('${s.id}')" title="压缩">压缩</button>
-                            <button class="btn btn-sm btn-danger" onclick="SessionsPage.deleteSession('${s.id}')" title="删除">删除</button>
-                        </td>
-                    </tr>`).join('')}
-                </tbody>
-            </table>
-            <div id="messageThreadContainer"></div>
-            <div id="createModalContainer"></div>
-        `);
+            <div class="chat-main">
+                ${headerHtml}
+                ${messagesHtml}
+                ${inputHtml}
+            </div>
+        </div>`;
     }
 
-    async function viewMessages(id) {
-        const container = document.getElementById('messageThreadContainer');
-        if (_expandedId === id) { _expandedId = null; container.innerHTML = ''; return; }
-        _expandedId = id;
-        container.innerHTML = Components.createLoading();
+    async function select(id) {
+        await loadMessages(id);
+        document.getElementById('contentBody').innerHTML = buildPage();
+        bindEvents();
+        scrollToBottom();
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        if (!input || !_currentId) return;
+        const content = input.value.trim();
+        if (!content) return;
+        input.value = '';
+
+        const msg = { role: 'user', content, timestamp: new Date().toISOString() };
+        _messages.push(msg);
+        appendMessage(msg);
+        scrollToBottom();
 
         try {
-            const data = await API.sessions.messages(id);
-            const messages = data.messages || data || [];
-            renderMessageThread(messages);
+            await API.sessions.addMessage(_currentId, 'user', content);
         } catch (err) {
-            container.innerHTML = Components.createEmptyState('📜', '消息历史', '无法加载消息历史', '');
+            Components.Toast.error(`发送失败: ${err.message}`);
         }
     }
 
-    function renderMessageThread(messages) {
-        const container = document.getElementById('messageThreadContainer');
-        if (!messages || messages.length === 0) {
-            container.innerHTML = Components.createEmptyState('📜', '暂无消息', '该会话没有消息记录', '');
-            return;
+    function appendMessage(msg) {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        const isUser = msg.role === 'user';
+        const roleText = ({user:'用户',assistant:'助手',system:'系统'})[msg.role] || msg.role;
+        const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+        const div = document.createElement('div');
+        div.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
+        div.innerHTML = `<div class="chat-message-header">
+            <span class="chat-message-role">${roleText}</span>
+            <span class="chat-message-time">${msg.timestamp ? Components.formatTime(msg.timestamp) : ''}</span>
+        </div>
+        <div class="chat-message-content">${Components.renderMarkdown(content)}</div>`;
+        container.appendChild(div);
+    }
+
+    function scrollToBottom() {
+        setTimeout(() => {
+            const el = document.getElementById('chatMessages');
+            if (el) el.scrollTop = el.scrollHeight;
+        }, 50);
+    }
+
+    async function showCreate() {
+        try {
+            const result = await API.sessions.create({ title: `会话 ${new Date().toLocaleString('zh-CN')}`, source: 'web' });
+            Components.Toast.success('会话已创建');
+            await render();
+        } catch (err) {
+            Components.Toast.error(`创建失败: ${err.message}`);
         }
-        container.innerHTML = `<div style="margin-top:16px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <span style="font-size:13px;font-weight:600">消息历史 (${messages.length} 条)</span>
-                <button class="btn btn-sm btn-ghost" onclick="SessionsPage.closeMessages()">收起</button>
-            </div>
-            <div class="message-thread">${messages.map(msg => `
-                <div class="message-item">
-                    <div class="message-role ${msg.role || 'user'}">${({user:'用户',assistant:'助手',system:'系统'})[msg.role] || msg.role || '用户'}</div>
-                    <div class="message-content">${Components.truncate(msg.content || JSON.stringify(msg), 500)}</div>
-                </div>
-            `).join('')}</div>
-        </div>`;
     }
 
     async function deleteSession(id) {
         try {
             await API.sessions.delete(id);
             Components.Toast.success('会话已删除');
-            _sessions = _sessions.filter(s => s.id !== id);
-            _expandedId = null;
-            document.getElementById('contentBody').innerHTML = buildPage();
-            bindEvents();
+            if (_currentId === id) { _currentId = null; _messages = []; }
+            _sessions = _sessions.filter(s => (s.id || s.session_id) !== id);
+            await render();
         } catch (err) {
             Components.Toast.error(`删除失败: ${err.message}`);
         }
@@ -130,18 +230,12 @@ const SessionsPage = (() => {
 
     async function compressSession(id) {
         try {
-            Components.Toast.info('正在压缩上下文...');
+            Components.Toast.info('正在压缩...');
             await API.sessions.compress(id);
-            Components.Toast.success('上下文压缩完成');
+            Components.Toast.success('压缩完成');
         } catch (err) {
             Components.Toast.error(`压缩失败: ${err.message}`);
         }
-    }
-
-    function closeMessages() {
-        _expandedId = null;
-        const container = document.getElementById('messageThreadContainer');
-        if (container) container.innerHTML = '';
     }
 
     function bindEvents() {
@@ -163,15 +257,5 @@ const SessionsPage = (() => {
         }
     }
 
-    async function showCreate() {
-        try {
-            await API.sessions.create({ title: `会话 ${new Date().toLocaleString('zh-CN')}`, source: 'web' });
-            Components.Toast.success('会话已创建');
-            await render();
-        } catch (err) {
-            Components.Toast.error(`创建失败: ${err.message}`);
-        }
-    }
-
-    return { render, viewMessages, deleteSession, compressSession, closeMessages, showCreate };
+    return { render, select, sendMessage, showCreate, deleteSession, compressSession };
 })();
