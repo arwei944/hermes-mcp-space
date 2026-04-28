@@ -362,8 +362,34 @@ def build_gradio_app() -> "gr.Blocks":
 
 # ==================== 主入口 ====================
 
+# 魔搭 Gradio SDK 会自动导入此模块并查找 demo / Blocks 对象
+# 所以我们在模块级别创建 demo 实例
+logger.info("正在初始化 Hermes Agent MCP Space...")
+
+# 启动后台服务
+try:
+    _panel_thread = start_panel_server()
+    _panel_server_ref = _panel_thread
+except Exception as e:
+    logger.warning(f"管理面板启动失败（将在降级模式下运行）: {e}")
+    _panel_server_ref = None
+
+if ENABLE_MCP_SSE:
+    try:
+        _mcp_thread = start_mcp_sse_server()
+        _mcp_server_ref = _mcp_thread
+    except Exception as e:
+        logger.warning(f"MCP SSE 服务启动失败: {e}")
+        _mcp_server_ref = None
+
+# 创建 Gradio demo（魔搭 SDK 会自动使用这个变量）
+demo = build_gradio_app()
+
+logger.info("Hermes Agent MCP Space 初始化完成")
+
+
 def main():
-    """主入口函数"""
+    """主入口函数（本地开发用）"""
     logger.info("=" * 60)
     logger.info("  Hermes Agent MCP Space 启动中...")
     logger.info(f"  管理面板端口: {PANEL_PORT}")
@@ -372,20 +398,6 @@ def main():
     logger.info(f"  Hermes 主目录: {HERMES_HOME}")
     logger.info("=" * 60)
 
-    # 1. 启动 FastAPI 管理面板（后台线程）
-    panel_thread = start_panel_server()
-    global _panel_server
-    _panel_server = panel_thread
-
-    # 2. 启动 MCP SSE 服务（后台线程，可选）
-    if ENABLE_MCP_SSE:
-        mcp_thread = start_mcp_sse_server()
-        global _mcp_server
-        _mcp_server = mcp_thread
-
-    # 3. 构建并启动 Gradio 界面（阻塞主线程）
-    logger.info("启动 Gradio 界面...")
-    demo = build_gradio_app()
     demo.launch(
         server_name="0.0.0.0",
         server_port=7860,
