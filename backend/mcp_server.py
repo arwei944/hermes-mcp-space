@@ -305,6 +305,97 @@ def _get_tools():
                 "required": ["role", "content"]
             }
         },
+        # ---- Phase 1: 文件操作工具 ----
+        {
+            "name": "read_file",
+            "description": "读取文件内容（支持文本文件，大文件自动截断）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "文件绝对路径"},
+                    "offset": {"type": "integer", "default": 0, "description": "起始行号（从0开始）"},
+                    "limit": {"type": "integer", "default": 500, "description": "最大读取行数"}
+                },
+                "required": ["path"]
+            }
+        },
+        {
+            "name": "write_file",
+            "description": "写入文件内容（自动创建父目录）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "文件绝对路径"},
+                    "content": {"type": "string", "description": "要写入的内容"}
+                },
+                "required": ["path", "content"]
+            }
+        },
+        {
+            "name": "list_directory",
+            "description": "列出目录内容（文件和子目录）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "目录绝对路径"},
+                    "pattern": {"type": "string", "description": "glob 过滤模式（如 *.py）"}
+                },
+                "required": ["path"]
+            }
+        },
+        {
+            "name": "search_files",
+            "description": "在目录中搜索包含指定内容的文件",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "搜索根目录"},
+                    "pattern": {"type": "string", "description": "搜索内容（正则表达式）"},
+                    "file_pattern": {"type": "string", "description": "文件过滤（如 *.py）"},
+                    "max_results": {"type": "integer", "default": 20, "description": "最大结果数"}
+                },
+                "required": ["path", "pattern"]
+            }
+        },
+        # ---- Phase 1: 终端执行工具 ----
+        {
+            "name": "shell_execute",
+            "description": "执行 shell 命令并返回输出（有超时和输出大小限制）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "command": {"type": "string", "description": "要执行的命令"},
+                    "timeout": {"type": "integer", "default": 30, "description": "超时秒数（最大120）"},
+                    "cwd": {"type": "string", "description": "工作目录"}
+                },
+                "required": ["command"]
+            }
+        },
+        # ---- Phase 1: Web 搜索工具 ----
+        {
+            "name": "web_search",
+            "description": "搜索网页内容（使用 DuckDuckGo）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索关键词"},
+                    "max_results": {"type": "integer", "default": 5, "description": "最大结果数"}
+                },
+                "required": ["query"]
+            }
+        },
+        {
+            "name": "web_fetch",
+            "description": "抓取网页内容并返回纯文本",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "网页 URL"},
+                    "max_length": {"type": "integer", "default": 5000, "description": "最大返回字符数"}
+                },
+                "required": ["url"]
+            }
+        },
     ]
 
     # 合并插件提供的工具
@@ -484,7 +575,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '2.2.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '2.3.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -638,6 +729,204 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         from backend.routers.logs import add_log
         add_log("记录对话", session_id[:16], f"[{role}] {content[:100]}", "info", "trae")
         return f"对话已记录到会话 {session_id[:16]}"
+
+    # ---- Phase 1: 文件操作工具 ----
+    elif name == "read_file":
+        import os as _os
+        fpath = arguments.get("path", "")
+        offset = int(arguments.get("offset", 0))
+        limit = int(arguments.get("limit", 500))
+        if not _os.path.isfile(fpath):
+            raise ValueError(f"文件不存在: {fpath}")
+        try:
+            with open(fpath, "r", encoding="utf-8", errors="replace") as f:
+                lines = f.readlines()
+            total = len(lines)
+            selected = lines[offset:offset + limit]
+            content = "".join(selected)
+            header = f"文件: {fpath}\n总行数: {total}\n显示: 第 {offset+1}-{min(offset+limit, total)} 行\n{'='*50}\n"
+            return header + content
+        except Exception as e:
+            raise ValueError(f"读取文件失败: {e}")
+
+    elif name == "write_file":
+        import os as _os
+        fpath = arguments.get("path", "")
+        content = arguments.get("content", "")
+        if not fpath:
+            raise ValueError("请提供文件路径")
+        try:
+            _os.makedirs(_os.path.dirname(fpath), exist_ok=True)
+            with open(fpath, "w", encoding="utf-8") as f:
+                f.write(content)
+            return f"文件已写入: {fpath} ({len(content)} 字符)"
+        except Exception as e:
+            raise ValueError(f"写入文件失败: {e}")
+
+    elif name == "list_directory":
+        import os as _os
+        dpath = arguments.get("path", "")
+        pattern = arguments.get("pattern", "")
+        if not _os.path.isdir(dpath):
+            raise ValueError(f"目录不存在: {dpath}")
+        try:
+            import glob as _glob
+            if pattern:
+                items = _glob.glob(_os.path.join(dpath, pattern))
+            else:
+                items = _os.listdir(dpath)
+            result = []
+            for item in sorted(items):
+                full = item if _os.path.isabs(item) else _os.path.join(dpath, item)
+                if _os.path.isdir(full):
+                    result.append(f"📁 {item}/")
+                else:
+                    size = _os.path.getsize(full)
+                    result.append(f"📄 {item} ({size} bytes)")
+            return f"目录: {dpath}\n{'='*50}\n" + "\n".join(result) if result else "空目录"
+        except Exception as e:
+            raise ValueError(f"列出目录失败: {e}")
+
+    elif name == "search_files":
+        import os as _os
+        root = arguments.get("path", "")
+        pattern = arguments.get("pattern", "")
+        file_pattern = arguments.get("file_pattern", "")
+        max_results = int(arguments.get("max_results", 20))
+        if not _os.path.isdir(root):
+            raise ValueError(f"目录不存在: {root}")
+        try:
+            import re as _re
+            import glob as _glob
+            regex = _re.compile(pattern)
+            results = []
+            # 收集文件
+            if file_pattern:
+                files = []
+                for ext in _glob.glob(_os.path.join(root, "**", file_pattern), recursive=True):
+                    if _os.path.isfile(ext):
+                        files.append(ext)
+            else:
+                files = []
+                for dirpath, dirnames, filenames in _os.walk(root):
+                    for fn in filenames:
+                        files.append(_os.path.join(dirpath, fn))
+            # 搜索
+            for fpath in files:
+                if len(results) >= max_results:
+                    break
+                try:
+                    with open(fpath, "r", encoding="utf-8", errors="replace") as f:
+                        for i, line in enumerate(f, 1):
+                            if regex.search(line):
+                                results.append(f"{fpath}:{i}: {line.strip()[:120]}")
+                                if len(results) >= max_results:
+                                    break
+                except Exception:
+                    continue
+            if not results:
+                return f"在 {root} 中未找到匹配 '{pattern}' 的内容"
+            return f"搜索: {pattern} in {root}\n找到 {len(results)} 条结果\n{'='*50}\n" + "\n".join(results)
+        except Exception as e:
+            raise ValueError(f"搜索失败: {e}")
+
+    # ---- Phase 1: 终端执行工具 ----
+    elif name == "shell_execute":
+        import subprocess as _subprocess
+        command = arguments.get("command", "")
+        timeout = min(int(arguments.get("timeout", 30)), 120)
+        cwd = arguments.get("cwd", "")
+        if not command:
+            raise ValueError("请提供命令")
+        try:
+            result = _subprocess.run(
+                command, shell=True, capture_output=True, text=True,
+                timeout=timeout, cwd=cwd or None,
+                env={**_subprocess.os.environ, "PAGER": "cat"}
+            )
+            output = result.stdout or ""
+            error = result.stderr or ""
+            # 截断过长输出
+            max_output = 10000
+            if len(output) > max_output:
+                output = output[:max_output] + f"\n... (输出已截断，共 {len(result.stdout)} 字符)"
+            if len(error) > max_output:
+                error = error[:max_output] + f"\n... (错误已截断)"
+            parts = [f"命令: {command}"]
+            if cwd:
+                parts.append(f"工作目录: {cwd}")
+            parts.append(f"退出码: {result.returncode}")
+            if output:
+                parts.append(f"\n--- stdout ---\n{output}")
+            if error:
+                parts.append(f"\n--- stderr ---\n{error}")
+            return "\n".join(parts)
+        except _subprocess.TimeoutExpired:
+            raise ValueError(f"命令执行超时（{timeout}秒）")
+        except Exception as e:
+            raise ValueError(f"命令执行失败: {e}")
+
+    # ---- Phase 1: Web 搜索工具 ----
+    elif name == "web_search":
+        query = arguments.get("query", "")
+        max_results = int(arguments.get("max_results", 5))
+        if not query:
+            raise ValueError("请提供搜索关键词")
+        try:
+            from duckduckgo_search import DDGS
+            results = []
+            with DDGS() as ddgs:
+                for r in ddgs.text(query, max_results=max_results):
+                    results.append(f"标题: {r.get('title', '')}\n链接: {r.get('href', '')}\n摘要: {r.get('body', '')}")
+            if not results:
+                return f"未找到 '{query}' 的搜索结果"
+            return f"搜索: {query}\n{'='*50}\n\n" + "\n\n---\n\n".join(results)
+        except ImportError:
+            # 降级：使用 requests + DuckDuckGo HTML
+            try:
+                import urllib.parse as _up
+                import urllib.request as _ur
+                import re as _re
+                url = f"https://html.duckduckgo.com/html/?q={_up.quote(query)}"
+                req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with _ur.urlopen(req, timeout=10) as resp:
+                    html = resp.read().decode("utf-8", errors="replace")
+                # 提取搜索结果
+                results = _re.findall(r'class="result__a"[^>]*>(.*?)</a>.*?class="result__snippet"[^>]*>(.*?)</a>', html, _re.DOTALL)
+                if not results:
+                    return f"未找到 '{query}' 的搜索结果"
+                output = []
+                for i, (title, snippet) in enumerate(results[:max_results]):
+                    clean_title = _re.sub(r'<[^>]+>', '', title).strip()
+                    clean_snippet = _re.sub(r'<[^>]+>', '', snippet).strip()
+                    output.append(f"{i+1}. {clean_title}\n   {clean_snippet}")
+                return f"搜索: {query}\n{'='*50}\n\n" + "\n\n".join(output)
+            except Exception as e:
+                raise ValueError(f"搜索失败: {e}")
+
+    elif name == "web_fetch":
+        url = arguments.get("url", "")
+        max_length = int(arguments.get("max_length", 5000))
+        if not url:
+            raise ValueError("请提供 URL")
+        try:
+            import urllib.request as _ur
+            import re as _re
+            req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with _ur.urlopen(req, timeout=15) as resp:
+                html = resp.read().decode("utf-8", errors="replace")
+            # 移除 script/style 标签
+            html = _re.sub(r'<script[^>]*>.*?</script>', '', html, flags=_re.DOTALL | _re.IGNORECASE)
+            html = _re.sub(r'<style[^>]*>.*?</style>', '', html, flags=_re.DOTALL | _re.IGNORECASE)
+            # 移除 HTML 标签
+            text = _re.sub(r'<[^>]+>', ' ', html)
+            # 清理空白
+            text = _re.sub(r'\s+', ' ', text).strip()
+            if len(text) > max_length:
+                text = text[:max_length] + f"\n... (内容已截断，共 {len(text)} 字符)"
+            return f"URL: {url}\n长度: {len(text)} 字符\n{'='*50}\n{text}"
+        except Exception as e:
+            raise ValueError(f"抓取网页失败: {e}")
 
     else:
         raise ValueError(f"未知工具: {name}")

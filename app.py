@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "2.2.0")
+APP_VERSION = os.environ.get("APP_VERSION", "2.3.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
 
 
@@ -177,7 +177,7 @@ def _patched_create_app(blocks, **kwargs):
         async def custom_openapi():
             return get_openapi(
                 title="Hermes Agent API",
-                version=os.environ.get("APP_VERSION", "2.2.0"),
+                version=os.environ.get("APP_VERSION", "2.3.0"),
                 routes=app.routes,
             )
         logger.info("API docs mounted (/docs + /redoc)")
@@ -195,6 +195,14 @@ def _patched_create_app(blocks, **kwargs):
             logger.info("Seed data already exists, skipped")
     except Exception as e:
         logger.warning(f"Failed to initialize seed data: {e}")
+
+    # Start cron scheduler
+    try:
+        from backend.services.cron_scheduler import start_scheduler
+        start_scheduler()
+        logger.info("Cron scheduler started")
+    except Exception as e:
+        logger.warning(f"Failed to start cron scheduler: {e}")
 
     # Add SSE event emit middleware
     try:

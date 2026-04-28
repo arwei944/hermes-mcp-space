@@ -632,6 +632,12 @@ class HermesService:
         job["status"] = job.get("status", "active")
         jobs.append(job)
         if self._save_jobs(jobs):
+            # 重新加载调度器
+            try:
+                from backend.services.cron_scheduler import reload_scheduler
+                reload_scheduler()
+            except Exception:
+                pass
             return {"success": True, "message": "任务创建成功", "job": job}
         return {"success": False, "message": "保存任务失败"}
 
@@ -644,6 +650,11 @@ class HermesService:
                 job["updated_at"] = datetime.now().isoformat()
                 jobs[i] = job
                 if self._save_jobs(jobs):
+                    try:
+                        from backend.services.cron_scheduler import reload_scheduler
+                        reload_scheduler()
+                    except Exception:
+                        pass
                     return {"success": True, "message": "任务更新成功", "job": job}
                 return {"success": False, "message": "保存任务失败"}
         return {"success": False, "message": f"任务 {job_id} 不存在"}
@@ -655,6 +666,11 @@ class HermesService:
         if len(new_jobs) == len(jobs):
             return {"success": False, "message": f"任务 {job_id} 不存在"}
         if self._save_jobs(new_jobs):
+            try:
+                from backend.services.cron_scheduler import reload_scheduler
+                reload_scheduler()
+            except Exception:
+                pass
             return {"success": True, "message": f"任务 {job_id} 已删除"}
         return {"success": False, "message": "保存任务失败"}
 

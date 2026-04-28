@@ -5,6 +5,20 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '2.3.0',
+            date: '2026-04-29 00:30',
+            title: '核心工具补齐 + 定时任务引擎',
+            changes: [
+                '文件操作: read_file / write_file / list_directory / search_files',
+                '终端执行: shell_execute（subprocess，超时+截断）',
+                'Web 工具: web_search（DuckDuckGo）+ web_fetch（网页抓取）',
+                '定时任务执行引擎: APScheduler 真正调度执行',
+                'MCP 工具 29 → 37 个',
+                '移除 14 处 Mock/假数据',
+                '修复 about.js API 调用参数顺序错误',
+                '版本号三处不一致修复',
+            ],
+        },        {
             version: '2.2.0',
             date: '2026-04-28 23:30',
             title: '多平台连接配置 + System Prompt',
