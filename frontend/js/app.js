@@ -124,28 +124,7 @@ const App = (() => {
         const type = event.type || '';
         const data = event.data || {};
 
-        // 事件类型 → 通知消息映射
-        const messages = {
-            'memory.updated': '📝 记忆已更新',
-            'skill.created': '⚡ 新技能已创建',
-            'skill.updated': '⚡ 技能已更新',
-            'skill.deleted': '⚡ 技能已删除',
-            'tool.toggled': '🔧 工具状态已变更',
-            'cron.created': '⏰ 定时任务已创建',
-            'cron.updated': '⏰ 定时任务已更新',
-            'cron.deleted': '⏰ 定时任务已删除',
-            'cron.triggered': '▶️ 定时任务已触发',
-            'session.deleted': '💬 会话已删除',
-            'session.compressed': '💬 会话已压缩',
-            'config.updated': '⚙️ 配置已更新',
-            'mcp.restarted': '🔌 MCP 服务已重启',
-        };
-
-        const msg = messages[type];
-        if (msg) {
-            Components.Toast.info(msg);
-        }
-
+        // SSE 事件只用于自动刷新，不显示 Toast（各页面已有自己的 Toast）
         // 如果当前在仪表盘或日志页面，自动刷新
         if (_currentPage === 'dashboard' || _currentPage === 'logs') {
             clearTimeout(App._refreshTimer);
