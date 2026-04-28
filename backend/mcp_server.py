@@ -203,16 +203,16 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         return content
 
     elif name == "read_memory":
-        data = hermes_service.get_memory()
+        data = hermes_service.read_memory()
         return data.get("memory", "无记忆内容")
 
     elif name == "read_user_profile":
-        data = hermes_service.get_memory()
+        data = hermes_service.read_memory()
         return data.get("user", "无用户画像")
 
     elif name == "write_memory":
-        success = hermes_service.save_memory(arguments["content"])
-        return "记忆保存成功" if success else "记忆保存失败"
+        result = hermes_service.update_memory(memory=arguments["content"])
+        return result.get("message", "操作完成")
 
     elif name == "get_system_status":
         status = hermes_service.get_mcp_status()
@@ -245,10 +245,10 @@ async def _read_resource(uri: str) -> str:
     from backend.services.hermes_service import hermes_service
 
     if uri == "hermes://memory":
-        data = hermes_service.get_memory()
+        data = hermes_service.read_memory()
         return data.get("memory", "")
     elif uri == "hermes://user-profile":
-        data = hermes_service.get_memory()
+        data = hermes_service.read_memory()
         return data.get("user", "")
     elif uri == "hermes://sessions":
         import json as _json
