@@ -132,12 +132,12 @@ const AboutPage = (() => {
                 API.system.health(),
                 API.request('GET', '/api/tools').catch(() => []),
             ]);
-            var version = status.version || '1.8.0';
+            var version = status.version || '1.9.0';
             var totalUptime = status.total_uptime || status.uptime || 0;
             var firstDeploy = status.first_deploy || '';
             var mcpToolCount = Array.isArray(toolsData) ? toolsData.length : (toolsData.tools || []).length;
         } catch (err) {
-            var version = '1.8.0';
+            var version = '1.9.0';
             var totalUptime = 0;
             var firstDeploy = '';
             var mcpToolCount = 0;
