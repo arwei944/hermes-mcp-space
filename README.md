@@ -1,6 +1,6 @@
 ---
 title: Hermes Agent MCP Space
-emoji: ☤
+emoji: 🤖
 colorFrom: indigo
 colorTo: purple
 sdk: gradio
