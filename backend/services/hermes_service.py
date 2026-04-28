@@ -219,6 +219,21 @@ class HermesService:
                     "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
                     (session_id, role, content, ts),
                 )
+                # 同步到 FTS5 全文搜索索引
+                try:
+                    cursor.execute("""
+                        CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+                            session_id, role, content, created_at,
+                            content='messages', content_rowid='id'
+                        )
+                    """)
+                    cursor.execute("""
+                        INSERT INTO messages_fts(rowid, session_id, role, content, created_at)
+                        SELECT id, session_id, role, content, created_at FROM messages
+                        WHERE id = last_insert_rowid()
+                    """)
+                except Exception:
+                    pass
                 conn.commit()
                 conn.close()
             except Exception:
@@ -404,6 +419,8 @@ class HermesService:
                         "name": item.name,
                         "description": meta.get("description") or self._read_skill_description(skill_md),
                         "tags": meta.get("tags", []),
+                        "category": meta.get("category", ""),
+                        "version": meta.get("version", ""),
                         "has_skill_md": skill_md.exists(),
                         "path": str(item),
                         "format": "directory",
@@ -413,7 +430,6 @@ class HermesService:
             for item in skills_dir.iterdir():
                 if item.is_file() and item.suffix == ".md":
                     name = item.stem
-                    # 跳过已作为目录处理的
                     if any(s["name"] == name for s in skills):
                         continue
                     meta = self._read_skill_meta(name)
@@ -421,6 +437,8 @@ class HermesService:
                         "name": name,
                         "description": meta.get("description") or self._read_skill_description(item),
                         "tags": meta.get("tags", []),
+                        "category": meta.get("category", ""),
+                        "version": meta.get("version", ""),
                         "has_skill_md": True,
                         "path": str(item),
                         "format": "file",
@@ -559,15 +577,110 @@ class HermesService:
             return {"success": False, "message": f"删除失败: {str(e)}"}
 
     def _read_skill_meta(self, name: str) -> dict:
-        """读取技能元数据文件"""
-        import json
+        """读取技能元数据（优先 frontmatter，其次 meta.json）"""
+        import json, re
+        meta = {}
+
+        # 优先从 SKILL.md 的 YAML frontmatter 解析
+        skill_file = get_skills_dir() / f"{name}.md"
+        skill_dir = get_skills_dir() / name
+        if skill_dir.is_dir():
+            skill_file = skill_dir / "SKILL.md"
+
+        if skill_file.exists():
+            try:
+                text = skill_file.read_text(encoding="utf-8")
+                match = re.match(r'^---\s*\n(.*?)\n---', text, re.DOTALL)
+                if match:
+                    import yaml
+                    try:
+                        fm = yaml.safe_load(match.group(1))
+                        if isinstance(fm, dict):
+                            meta = fm
+                    except Exception:
+                        # 简单解析 key: value
+                        for line in match.group(1).split("\n"):
+                            if ":" in line:
+                                k, v = line.split(":", 1)
+                                meta[k.strip()] = v.strip()
+            except Exception:
+                pass
+
+        # 合并 meta.json
         meta_file = get_skills_dir() / f"{name}.meta.json"
         if meta_file.exists():
             try:
-                return json.loads(meta_file.read_text(encoding="utf-8"))
+                file_meta = json.loads(meta_file.read_text(encoding="utf-8"))
+                # meta.json 补充 frontmatter 没有的字段
+                for k, v in file_meta.items():
+                    if k not in meta:
+                        meta[k] = v
             except Exception:
                 pass
-        return {}
+
+        return meta
+
+    def search_messages(self, query: str, session_id: str = None, limit: int = 20) -> List[Dict[str, Any]]:
+        """全文搜索消息内容"""
+        db_path = self._get_session_db_path()
+        if not db_path:
+            return []
+        try:
+            conn = sqlite3.connect(str(db_path))
+            cursor = conn.cursor()
+            # 确保 FTS 表存在
+            cursor.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+                    session_id, role, content, created_at,
+                    content='messages', content_rowid='id'
+                )
+            """)
+            # 对已有数据重建索引（如果 FTS 为空）
+            cursor.execute("SELECT COUNT(*) FROM messages_fts")
+            fts_count = cursor.fetchone()[0]
+            if fts_count == 0:
+                cursor.execute("SELECT COUNT(*) FROM messages")
+                msg_count = cursor.fetchone()[0]
+                if msg_count > 0:
+                    cursor.execute("INSERT INTO messages_fts(rowid, session_id, role, content, created_at) SELECT id, session_id, role, content, created_at FROM messages")
+                    conn.commit()
+
+            # 执行搜索
+            if session_id:
+                cursor.execute("""
+                    SELECT m.session_id, m.role, m.content, m.created_at,
+                           rank
+                    FROM messages_fts f
+                    JOIN messages m ON m.id = f.rowid
+                    WHERE messages_fts MATCH ? AND m.session_id = ?
+                    ORDER BY rank
+                    LIMIT ?
+                """, (query, session_id, limit))
+            else:
+                cursor.execute("""
+                    SELECT m.session_id, m.role, m.content, m.created_at,
+                           rank
+                    FROM messages_fts f
+                    JOIN messages m ON m.id = f.rowid
+                    WHERE messages_fts MATCH ?
+                    ORDER BY rank
+                    LIMIT ?
+                """, (query, limit))
+
+            results = []
+            for row in cursor.fetchall():
+                results.append({
+                    "session_id": row[0],
+                    "role": row[1],
+                    "content": row[2],
+                    "timestamp": row[3],
+                    "relevance": row[4],
+                })
+            conn.close()
+            return results
+        except Exception as e:
+            logger.warning(f"全文搜索失败: {e}")
+            return []
 
     def _read_skill_description(self, skill_md: Path) -> str:
         """从 SKILL.md 中提取简短描述"""
@@ -589,43 +702,94 @@ class HermesService:
     def read_memory(self) -> Dict[str, str]:
         """读取当前记忆（MEMORY.md + USER.md）"""
         memories_dir = get_memories_dir()
-        result = {"memory": "", "user": ""}
+        result = {"memory": "", "user": "", "memory_usage": 0, "memory_limit": 2200, "user_usage": 0, "user_limit": 1375}
 
         memory_md = memories_dir / "MEMORY.md"
         if memory_md.exists():
             try:
-                result["memory"] = memory_md.read_text(encoding="utf-8")
+                text = memory_md.read_text(encoding="utf-8")
+                result["memory"] = text
+                result["memory_usage"] = len(text)
             except Exception:
                 result["memory"] = ""
 
         user_md = memories_dir / "USER.md"
         if user_md.exists():
             try:
-                result["user"] = user_md.read_text(encoding="utf-8")
+                text = user_md.read_text(encoding="utf-8")
+                result["user"] = text
+                result["user_usage"] = len(text)
             except Exception:
                 result["user"] = ""
 
         return result
 
     def update_memory(self, memory: Optional[str] = None, user: Optional[str] = None) -> Dict[str, Any]:
-        """更新记忆文件"""
+        """更新记忆文件（含容量管理和去重）"""
         memories_dir = get_memories_dir()
         memories_dir.mkdir(parents=True, exist_ok=True)
         updated = []
+        warnings = []
 
         if memory is not None:
+            # 去重：移除连续重复行
+            lines = memory.split("\n")
+            deduped = []
+            prev = ""
+            for line in lines:
+                stripped = line.strip()
+                if stripped and stripped == prev:
+                    continue  # 跳过连续重复
+                deduped.append(line)
+                prev = stripped
+            memory = "\n".join(deduped)
+
+            # 容量限制：超出时截断旧内容
+            MEMORY_LIMIT = 2200
+            if len(memory) > MEMORY_LIMIT:
+                warnings.append(f"MEMORY.md 超出 {MEMORY_LIMIT} 字符限制 ({len(memory)})，已截断旧内容")
+                memory = memory[-MEMORY_LIMIT:]
+                # 确保从完整行开始
+                first_newline = memory.find("\n")
+                if first_newline > 0:
+                    memory = memory[first_newline + 1:]
+
             (memories_dir / "MEMORY.md").write_text(memory, encoding="utf-8")
             updated.append("MEMORY.md")
 
         if user is not None:
+            # 去重
+            lines = user.split("\n")
+            deduped = []
+            prev = ""
+            for line in lines:
+                stripped = line.strip()
+                if stripped and stripped == prev:
+                    continue
+                deduped.append(line)
+                prev = stripped
+            user = "\n".join(deduped)
+
+            # 容量限制
+            USER_LIMIT = 1375
+            if len(user) > USER_LIMIT:
+                warnings.append(f"USER.md 超出 {USER_LIMIT} 字符限制 ({len(user)})，已截断旧内容")
+                user = user[-USER_LIMIT:]
+                first_newline = user.find("\n")
+                if first_newline > 0:
+                    user = user[first_newline + 1:]
+
             (memories_dir / "USER.md").write_text(user, encoding="utf-8")
             updated.append("USER.md")
 
-        return {
+        result = {
             "success": True,
             "message": f"已更新: {', '.join(updated)}",
             "updated_files": updated,
         }
+        if warnings:
+            result["warnings"] = warnings
+        return result
 
     # ==================== 定时任务管理 ====================
 

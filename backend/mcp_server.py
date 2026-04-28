@@ -396,6 +396,40 @@ def _get_tools():
                 "required": ["url"]
             }
         },
+        # ---- Phase 2: 全文搜索工具 ----
+        {
+            "name": "search_messages",
+            "description": "全文搜索所有会话消息内容（SQLite FTS5）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索关键词"},
+                    "session_id": {"type": "string", "description": "限定会话 ID（可选）"},
+                    "limit": {"type": "integer", "default": 20, "description": "最大结果数"}
+                },
+                "required": ["query"]
+            }
+        },
+        # ---- Phase 2: Context Files ----
+        {
+            "name": "read_soul",
+            "description": "读取 Agent 人格定义（SOUL.md）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+            }
+        },
+        {
+            "name": "write_soul",
+            "description": "写入 Agent 人格定义（SOUL.md）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "人格定义内容（Markdown 格式）"}
+                },
+                "required": ["content"]
+            }
+        },
     ]
 
     # 合并插件提供的工具
@@ -575,7 +609,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '2.3.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '2.4.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -927,6 +961,52 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             return f"URL: {url}\n长度: {len(text)} 字符\n{'='*50}\n{text}"
         except Exception as e:
             raise ValueError(f"抓取网页失败: {e}")
+
+    # ---- Phase 2: 全文搜索工具 ----
+    elif name == "search_messages":
+        query = arguments.get("query", "")
+        session_id = arguments.get("session_id")
+        limit = int(arguments.get("limit", 20))
+        if not query:
+            raise ValueError("请提供搜索关键词")
+        try:
+            from backend.services.hermes_service import hermes_service
+            results = hermes_service.search_messages(query, session_id, limit)
+            if not results:
+                return f"未找到匹配 '{query}' 的消息"
+            output = [f"搜索: {query} | 找到 {len(results)} 条结果\n{'='*50}"]
+            for r in results:
+                content_preview = r["content"][:150].replace("\n", " ")
+                output.append(f"[{r['role']}] ({r['session_id'][:12]}...) {content_preview}")
+            return "\n".join(output)
+        except Exception as e:
+            raise ValueError(f"搜索失败: {e}")
+
+    # ---- Phase 2: Context Files ----
+    elif name == "read_soul":
+        try:
+            from backend.config import get_hermes_home
+            soul_path = get_hermes_home() / "SOUL.md"
+            if soul_path.exists():
+                content = soul_path.read_text(encoding="utf-8")
+                return f"SOUL.md ({len(content)} 字符)\n{'='*50}\n{content}"
+            else:
+                return "SOUL.md 尚未创建。使用 write_soul 工具创建 Agent 人格定义。"
+        except Exception as e:
+            raise ValueError(f"读取 SOUL.md 失败: {e}")
+
+    elif name == "write_soul":
+        content = arguments.get("content", "")
+        if not content:
+            raise ValueError("请提供人格定义内容")
+        try:
+            from backend.config import get_hermes_home
+            soul_path = get_hermes_home() / "SOUL.md"
+            soul_path.parent.mkdir(parents=True, exist_ok=True)
+            soul_path.write_text(content, encoding="utf-8")
+            return f"SOUL.md 已更新 ({len(content)} 字符)"
+        except Exception as e:
+            raise ValueError(f"写入 SOUL.md 失败: {e}")
 
     else:
         raise ValueError(f"未知工具: {name}")

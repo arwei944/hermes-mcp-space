@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "2.3.0")
+APP_VERSION = os.environ.get("APP_VERSION", "2.4.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
 
 
@@ -177,7 +177,7 @@ def _patched_create_app(blocks, **kwargs):
         async def custom_openapi():
             return get_openapi(
                 title="Hermes Agent API",
-                version=os.environ.get("APP_VERSION", "2.3.0"),
+                version=os.environ.get("APP_VERSION", "2.4.0"),
                 routes=app.routes,
             )
         logger.info("API docs mounted (/docs + /redoc)")

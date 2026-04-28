@@ -5,6 +5,21 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '2.4.0',
+            date: '2026-04-29 01:00',
+            title: '数据能力增强',
+            changes: [
+                '会话全文搜索: SQLite FTS5 索引 + search_messages MCP 工具',
+                '记忆容量管理: MEMORY.md 2200字符 / USER.md 1375字符限制',
+                '记忆自动去重: 移除连续重复行',
+                '记忆使用率: read_memory 返回 usage/limit 字段',
+                'Context Files: read_soul / write_soul (SOUL.md 人格定义)',
+                '技能 frontmatter 解析: 支持 YAML frontmatter 元数据',
+                '技能元数据增强: list_skills 返回 category/version',
+                '技能系统修复: description + tags 完整支持',
+                'MCP 工具 37 → 40 个',
+            ],
+        },        {
             version: '2.3.0',
             date: '2026-04-29 00:30',
             title: '核心工具补齐 + 定时任务引擎',
