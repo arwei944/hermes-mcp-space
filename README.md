@@ -1,6 +1,8 @@
 # Hermes Agent MCP Space
 
-基于 [Hermes Agent](https://github.com/hermes-agent/hermes) 的 MCP（Model Context Protocol）集成服务，部署为 ModelScope Gradio SDK Space，供 Trae、Cursor 等 MCP 客户端连接使用。
+> **GitHub**: [arwei944/hermes-mcp-space](https://github.com/arwei944/hermes-mcp-space) | **魔搭**: [arwei944/hermes-mcp-space](https://www.modelscope.cn/arwei944/hermes-mcp-space)
+
+基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的 MCP（Model Context Protocol）集成服务，部署为 ModelScope Gradio SDK Space，供 Trae、Cursor 等 MCP 客户端连接使用。
 
 ## 项目简介
 
