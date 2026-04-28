@@ -138,6 +138,37 @@ def _patched_create_app(blocks, **kwargs):
     except Exception as e:
         logger.warning(f"Failed to mount MCP server: {e}")
 
+    # Mount API docs (Swagger UI + ReDoc)
+    try:
+        from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+        from fastapi.openapi.utils import get_openapi
+
+        @app.get("/docs", include_in_schema=False)
+        async def custom_swagger_ui():
+            return get_swagger_ui_html(
+                openapi_url="/openapi.json",
+                title="Hermes Agent API",
+                swagger_favicon_url="",
+            )
+
+        @app.get("/redoc", include_in_schema=False)
+        async def custom_redoc():
+            return get_redoc_html(
+                openapi_url="/openapi.json",
+                title="Hermes Agent API",
+            )
+
+        @app.get("/openapi.json", include_in_schema=False)
+        async def custom_openapi():
+            return get_openapi(
+                title="Hermes Agent API",
+                version=os.environ.get("APP_VERSION", "1.0.0"),
+                routes=app.routes,
+            )
+        logger.info("API docs mounted (/docs + /redoc)")
+    except Exception as e:
+        logger.warning(f"Failed to mount API docs: {e}")
+
     logger.info("Custom routes injected into Gradio app")
     return app
 
