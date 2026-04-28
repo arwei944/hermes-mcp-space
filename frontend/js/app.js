@@ -39,8 +39,24 @@ const App = (() => {
         API.checkForUpdate();
         API.startUpdateCheck(30000);
 
+        // 检测后端连接状态
+        checkBackendStatus();
+
         // 初始路由
         handleRoute();
+    }
+
+    async function checkBackendStatus() {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        try {
+            await API.system.health();
+            if (dot) dot.style.background = '#22c55e';
+            if (text) text.textContent = '已连接';
+        } catch (err) {
+            if (dot) dot.style.background = '#f59e0b';
+            if (text) text.textContent = '降级模式';
+        }
     }
 
     function handleRoute() {

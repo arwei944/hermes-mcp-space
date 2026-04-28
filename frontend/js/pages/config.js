@@ -42,7 +42,7 @@ const ConfigPage = (() => {
                     { value: 'claude-3-haiku', label: 'Claude 3 Haiku' },
                 ], c.model))}
                 <div class="form-row">
-                    ${Components.formGroup('Temperature', `<input class="form-input" type="number" name="temperature" min="0" max="2" step="0.1" value="${c.temperature ?? 0.7}">`, '0-2，越高越随机')}
+                    ${Components.formGroup('温度', `<input class="form-input" type="number" name="temperature" min="0" max="2" step="0.1" value="${c.temperature ?? 0.7}">`, '0-2，越高越随机')}
                     ${Components.formGroup('最大 Token', `<input class="form-input" type="number" name="maxTokens" min="256" max="128000" step="256" value="${c.maxTokens ?? 4096}">`)}
                 </div>
                 ${Components.formGroup('系统提示词', Components.formTextarea('systemPrompt', '系统提示词...', c.systemPrompt || '', 4))}
@@ -75,8 +75,8 @@ const ConfigPage = (() => {
             ${Components.sectionTitle('高级设置')}
             ${Components.renderSection('', `
                 ${Components.formGroup('日志级别', Components.formSelect('logLevel', [
-                    { value: 'debug', label: 'Debug' }, { value: 'info', label: 'Info' },
-                    { value: 'warn', label: 'Warn' }, { value: 'error', label: 'Error' },
+                    { value: 'debug', label: '调试' }, { value: 'info', label: '信息' },
+                    { value: 'warn', label: '警告' }, { value: 'error', label: '错误' },
                 ], c.logLevel || 'info'))}
                 ${Components.formGroup('调试模式', Components.formSwitch('debugMode', '启用详细日志和调试信息', c.debugMode))}
             `)}

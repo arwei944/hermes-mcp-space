@@ -95,7 +95,7 @@ const ToolsPage = (() => {
                         ${tool.enabled ? Components.renderBadge('已启用', 'green') : Components.renderBadge('已禁用', 'orange')}
                     </div>
                 </div>
-                ${Components.sectionTitle('Schema')}
+                ${Components.sectionTitle('参数定义')}
                 ${Components.renderJson(tool.schema || tool.inputSchema || tool.parameters || {})}
             `;
         } catch (err) {

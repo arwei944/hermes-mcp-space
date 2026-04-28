@@ -1,21 +1,32 @@
 /**
  * 仪表盘页面 (Mac 极简风格)
+ * 接入真实 API 数据，失败时降级为模拟数据
  */
 
 const DashboardPage = (() => {
     let _data = null;
+    let _cronJobs = [];
+    let _useFallback = false;
 
     async function render() {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
         try {
-            _data = await API.system.dashboard();
+            const [dashData, cronData] = await Promise.all([
+                API.system.dashboard(),
+                API.cron.list(),
+            ]);
+            _data = dashData;
+            _cronJobs = cronData.jobs || cronData || [];
+            _useFallback = false;
         } catch (err) {
             _data = getMockData();
+            _cronJobs = getMockCron();
+            _useFallback = true;
         }
 
-        container.innerHTML = buildPage(_data);
+        container.innerHTML = buildPage();
     }
 
     function getMockData() {
@@ -32,10 +43,24 @@ const DashboardPage = (() => {
         };
     }
 
+    function getMockCron() {
+        return [
+            { id: 'cron_001', name: '日报生成', schedule: '0 9 * * *', status: 'active' },
+            { id: 'cron_002', name: '缓存清理', schedule: '0 3 * * 0', status: 'active' },
+            { id: 'cron_003', name: '模型更新', schedule: '手动', status: 'paused' },
+        ];
+    }
+
     function buildPage(data) {
-        const s = data.stats || {};
-        const recentSessions = data.recentSessions || [];
-        const sys = data.systemStatus || {};
+        const s = _data.stats || {};
+        const recentSessions = _data.recentSessions || [];
+        const sys = _data.systemStatus || {};
+
+        // 降级模式提示
+        const fallbackNotice = _useFallback ? `
+            <div style="margin-bottom:16px;padding:10px 14px;border-radius:var(--radius-sm);background:#fffbeb;border:1px solid #fde68a;font-size:12px;color:#92400e">
+                ⚠️ 当前使用演示数据（后端 API 未连接）。部署到 HF Spaces 后将显示真实数据。
+            </div>` : '';
 
         // 统计卡片
         const statsHtml = `<div class="stats">
@@ -50,11 +75,12 @@ const DashboardPage = (() => {
             <table class="table">
                 <thead><tr><th>ID</th><th>来源</th><th>模型</th><th>消息数</th><th>状态</th><th>时间</th></tr></thead>
                 <tbody>
-                    ${recentSessions.map(s => `<tr>
+                    ${recentSessions.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary)">暂无会话记录</td></tr>` :
+                    recentSessions.map(s => `<tr>
                         <td class="mono">#${Components.truncate(s.id, 12)}</td>
-                        <td>${Components.renderBadge(s.source, s.source === 'Trae' ? 'purple' : s.source === 'Web' ? 'blue' : s.source === 'CLI' ? 'green' : 'orange')}</td>
-                        <td class="mono">${s.model}</td>
-                        <td>${s.messages}</td>
+                        <td>${Components.renderBadge(s.source || '-', s.source === 'Trae' ? 'purple' : s.source === 'Web' ? 'blue' : s.source === 'CLI' ? 'green' : 'orange')}</td>
+                        <td class="mono">${s.model || '-'}</td>
+                        <td>${s.messages || 0}</td>
                         <td>${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}</td>
                         <td>${Components.formatTime(s.createdAt)}</td>
                     </tr>`).join('')}
@@ -62,29 +88,36 @@ const DashboardPage = (() => {
             </table>
         `, '查看全部 →');
 
-        // 两栏布局
-        const twoColHtml = `<div class="two-col">
-            ${Components.renderSection('定时任务', `
-                <table class="table">
-                    <thead><tr><th>名称</th><th>调度</th><th>状态</th></tr></thead>
-                    <tbody>
-                        <tr><td>日报生成</td><td class="mono">0 9 * * *</td><td>${Components.renderBadge('运行中', 'green')}</td></tr>
-                        <tr><td>缓存清理</td><td class="mono">0 3 * * 0</td><td>${Components.renderBadge('运行中', 'green')}</td></tr>
-                        <tr><td>模型更新</td><td class="mono">手动</td><td>${Components.renderBadge('暂停', 'orange')}</td></tr>
-                    </tbody>
-                </table>
-            `, '管理 →')}
-            ${Components.renderSection('系统状态', `
-                <div class="status-list">
-                    <div class="status-item"><span class="status-item-label">运行时间</span><span class="status-item-value">${sys.uptime || '-'}</span></div>
-                    <div class="status-item"><span class="status-item-label">版本</span><span class="status-item-value">${sys.version || '-'}</span></div>
-                    <div class="status-item"><span class="status-item-label">内存使用</span><span class="status-item-value">${sys.memoryUsage || '-'}</span></div>
-                    <div class="status-item"><span class="status-item-label">CPU 使用率</span><span class="status-item-value">${sys.cpuUsage || '-'}</span></div>
-                </div>
-            `)}
-        </div>`;
+        // 定时任务表格
+        const cronStatusMap = { active: '运行中', paused: '暂停', disabled: '已禁用', idle: '空闲' };
+        const cronBadgeMap = { active: 'green', paused: 'orange', disabled: 'red', idle: 'blue' };
+        const cronHtml = Components.renderSection('定时任务', `
+            <table class="table">
+                <thead><tr><th>名称</th><th>调度</th><th>状态</th></tr></thead>
+                <tbody>
+                    ${_cronJobs.length === 0 ? `<tr><td colspan="3" style="text-align:center;padding:40px;color:var(--text-tertiary)">暂无定时任务</td></tr>` :
+                    _cronJobs.map(j => `<tr>
+                        <td>${Components.escapeHtml(j.name || '-')}</td>
+                        <td class="mono">${Components.escapeHtml(j.schedule || j.cron || '-')}</td>
+                        <td>${Components.renderBadge(cronStatusMap[j.status] || j.status || '-', cronBadgeMap[j.status] || 'blue')}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        `, '管理 →');
 
-        return `${statsHtml}${sessionsHtml}${twoColHtml}`;
+        // 系统状态
+        const statusHtml = Components.renderSection('系统状态', `
+            <div class="status-list">
+                <div class="status-item"><span class="status-item-label">运行时间</span><span class="status-item-value">${sys.uptime || '-'}</span></div>
+                <div class="status-item"><span class="status-item-label">版本</span><span class="status-item-value">${sys.version || '-'}</span></div>
+                <div class="status-item"><span class="status-item-label">内存使用</span><span class="status-item-value">${sys.memoryUsage || '-'}</span></div>
+                <div class="status-item"><span class="status-item-label">CPU 使用率</span><span class="status-item-value">${sys.cpuUsage || '-'}</span></div>
+            </div>
+        `);
+
+        const twoColHtml = `<div class="two-col">${cronHtml}${statusHtml}</div>`;
+
+        return `${fallbackNotice}${statsHtml}${sessionsHtml}${twoColHtml}`;
     }
 
     return { render };

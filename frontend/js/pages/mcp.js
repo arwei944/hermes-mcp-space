@@ -1,27 +1,44 @@
 /**
  * MCP 服务页面 (Mac 极简风格)
+ * 展示 MCP 服务状态、暴露工具、Trae 连接配置
  */
 
 const McpPage = (() => {
     let _status = null;
-    let _tools = [];
-    let _connectionInfo = null;
+    let _mcpTools = [];
+    let _apiStatus = null;
+    let _mcpTestResult = null;
 
     async function render() {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
         try {
-            const [statusData, toolsData, connData] = await Promise.all([
-                API.mcp.status(), API.mcp.tools(), API.mcp.connectionInfo(),
+            const [statusData, apiStatus] = await Promise.all([
+                API.mcp.status(),
+                API.system.status(),
             ]);
             _status = statusData;
-            _tools = toolsData.tools || toolsData || [];
-            _connectionInfo = connData;
+            _apiStatus = apiStatus;
         } catch (err) {
             _status = getMockStatus();
-            _tools = getMockTools();
-            _connectionInfo = getMockConnection();
+            _apiStatus = { status: '降级模式', hermes_available: false };
+        }
+
+        // 尝试获取 MCP 暴露的工具列表
+        try {
+            const mcpBaseUrl = window.location.origin;
+            const resp = await fetch(`${mcpBaseUrl}/mcp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                _mcpTools = data.result?.tools || [];
+            }
+        } catch (err) {
+            _mcpTools = getMockTools();
         }
 
         container.innerHTML = buildPage();
@@ -29,73 +46,86 @@ const McpPage = (() => {
     }
 
     function getMockStatus() {
-        return { running: true, uptime: '2天 5小时', port: 3000, protocol: 'stdio', connections: 1 };
+        return { status: 'unavailable', message: 'Hermes Agent 未安装', servers: [] };
     }
 
     function getMockTools() {
         return [
-            { name: 'hermes_chat', description: '与 Hermes Agent 对话', category: 'core' },
-            { name: 'hermes_search', description: '搜索 Hermes 知识库', category: 'core' },
-            { name: 'hermes_execute', description: '执行 Hermes 技能', category: 'core' },
-            { name: 'hermes_memory', description: '读写 Hermes 记忆', category: 'memory' },
-            { name: 'hermes_config', description: '管理 Hermes 配置', category: 'system' },
-            { name: 'hermes_status', description: '获取 Hermes 状态', category: 'system' },
+            { name: 'list_sessions', description: '列出最近的会话列表' },
+            { name: 'get_session_messages', description: '获取会话消息历史' },
+            { name: 'list_tools', description: '列出所有可用工具' },
+            { name: 'list_skills', description: '列出所有可用技能' },
+            { name: 'read_memory', description: '读取 Agent 长期记忆' },
+            { name: 'write_memory', description: '写入 Agent 长期记忆' },
+            { name: 'get_system_status', description: '获取系统状态' },
+            { name: 'get_dashboard_summary', description: '获取仪表盘摘要' },
         ];
-    }
-
-    function getMockConnection() {
-        return {
-            transport: 'stdio', command: 'node', args: ['/path/to/hermes-mcp/index.js'],
-            env: { HERMES_PORT: '3000', HERMES_HOST: 'localhost' },
-            traeConfig: { mcpServers: { hermes: { command: 'node', args: ['/path/to/hermes-mcp/index.js'], env: { HERMES_PORT: '3000' } } } },
-        };
     }
 
     function buildPage() {
         const s = _status || {};
+        const api = _apiStatus || {};
+        const isOnline = s.status === 'running';
+        const hermesOk = api.hermes_available === true;
+        const baseUrl = window.location.origin;
 
         // 统计卡片
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('MCP 服务', s.running ? '运行中' : '已停止', s.uptime || '', '🔌', s.running ? 'green' : 'red')}
-            ${Components.renderStatCard('端口', s.port || '-', '', '🌐', 'blue')}
-            ${Components.renderStatCard('协议', s.protocol || '-', '', '📡', 'purple')}
-            ${Components.renderStatCard('活跃连接', s.connections || 0, '', '🔗', 'orange')}
+            ${Components.renderStatCard('MCP 服务', isOnline ? '运行中' : '未运行', isOnline ? '服务正常' : '服务未启动', '🔌', isOnline ? 'green' : 'red')}
+            ${Components.renderStatCard('Hermes 主程序', hermesOk ? '已连接' : '未连接', hermesOk ? '数据实时同步' : '使用降级数据', '🤖', hermesOk ? 'green' : 'orange')}
+            ${Components.renderStatCard('暴露工具', _mcpTools.length + ' 个', 'MCP 协议可用', '🔧', 'blue')}
+            ${Components.renderStatCard('后端状态', api.status === 'ok' ? '正常' : '降级', api.status || '-', '📡', api.status === 'ok' ? 'green' : 'orange')}
         </div>`;
 
         // 操作按钮
         const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">
+            <button class="btn btn-secondary" onclick="McpPage.testConnection()">测试 MCP 连接</button>
             <button class="btn btn-secondary" onclick="McpPage.restartService()">重启 MCP 服务</button>
         </div>`;
 
+        // MCP 测试结果
+        const testResultHtml = _mcpTestResult ? `
+            <div style="margin-bottom:16px;padding:12px 16px;border-radius:var(--radius-sm);background:${_mcpTestResult.ok ? 'var(--success-bg, #f0fdf4)' : 'var(--error-bg, #fef2f2)'};border:1px solid ${_mcpTestResult.ok ? 'var(--success-border, #bbf7d0)' : 'var(--error-border, #fecaca)'}">
+                <div style="font-size:13px;font-weight:600;color:${_mcpTestResult.ok ? 'var(--success, #16a34a)' : 'var(--error, #dc2626)'}">${_mcpTestResult.ok ? '✅ MCP 连接正常' : '❌ MCP 连接失败'}</div>
+                ${_mcpTestResult.detail ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${_mcpTestResult.detail}</div>` : ''}
+            </div>
+        ` : '';
+
         // 暴露的工具
-        const toolsHtml = Components.renderSection('暴露的工具', `
+        const toolsHtml = Components.renderSection('MCP 暴露的工具', `
             <table class="table">
-                <thead><tr><th>工具名称</th><th>描述</th><th>分类</th></tr></thead>
+                <thead><tr><th>工具名称</th><th>描述</th></tr></thead>
                 <tbody>
-                    ${_tools.length === 0 ? `<tr><td colspan="3" style="text-align:center;padding:40px;color:var(--text-tertiary)">没有暴露的工具</td></tr>` :
-                    _tools.map(t => `<tr>
+                    ${_mcpTools.length === 0 ? `<tr><td colspan="2" style="text-align:center;padding:40px;color:var(--text-tertiary)">没有暴露的工具</td></tr>` :
+                    _mcpTools.map(t => `<tr>
                         <td class="mono" style="color:var(--accent)">${Components.escapeHtml(t.name)}</td>
-                        <td>${Components.escapeHtml(t.description)}</td>
-                        <td>${Components.renderBadge(t.category || 'default', 'blue')}</td>
+                        <td>${Components.escapeHtml(t.description || '无描述')}</td>
                     </tr>`).join('')}
                 </tbody>
             </table>
         `);
 
-        // 两栏布局
-        const connInfo = _connectionInfo || {};
-        const traeConfig = connInfo.traeConfig || {};
+        // 两栏布局：端点信息 + Trae 配置
+        const traeConfig = {
+            mcpServers: {
+                hermes: {
+                    url: `${baseUrl}/mcp`
+                }
+            }
+        };
         const traeJson = JSON.stringify(traeConfig, null, 2);
 
         const twoColHtml = `<div class="two-col">
-            ${Components.renderSection('连接信息', `
+            ${Components.renderSection('服务端点', `
                 <div class="connection-info">
-                    <div><span class="info-label">传输方式:</span><span class="info-value">${connInfo.transport || '-'}</span></div>
-                    <div><span class="info-label">命令:</span><span class="info-value">${connInfo.command || '-'}</span></div>
-                    <div><span class="info-label">参数:</span><span class="info-value">${(connInfo.args || []).join(' ')}</span></div>
+                    <div><span class="info-label">Streamable HTTP:</span><span class="info-value mono">${baseUrl}/mcp</span></div>
+                    <div><span class="info-label">SSE (兼容):</span><span class="info-value mono">${baseUrl}/sse</span></div>
+                    <div><span class="info-label">协议版本:</span><span class="info-value">MCP 2025-03-26</span></div>
+                    <div><span class="info-label">Hermes 可用:</span><span class="info-value">${hermesOk ? '是' : '否（使用降级数据）'}</span></div>
                 </div>
             `)}
             ${Components.renderSection('Trae 配置', `
+                <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">在 Trae 中打开 设置 → MCP → 添加配置，粘贴以下 JSON：</p>
                 <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
                     <button class="btn btn-sm btn-ghost" onclick="McpPage.copyConfig()">复制配置</button>
                 </div>
@@ -103,7 +133,39 @@ const McpPage = (() => {
             `)}
         </div>`;
 
-        return `${statsHtml}${actionsHtml}${toolsHtml}${twoColHtml}`;
+        return `${statsHtml}${actionsHtml}${testResultHtml}${toolsHtml}${twoColHtml}`;
+    }
+
+    async function testConnection() {
+        Components.Toast.info('正在测试 MCP 连接...');
+        try {
+            const baseUrl = window.location.origin;
+            const resp = await fetch(`${baseUrl}/mcp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0', id: 1,
+                    method: 'initialize',
+                    params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test', version: '1.0' } }
+                }),
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const serverInfo = data.result?.serverInfo || {};
+                _mcpTestResult = {
+                    ok: true,
+                    detail: `服务器: ${serverInfo.name || 'Hermes Agent'} v${serverInfo.version || '?'}，协议: ${data.result?.protocolVersion || '?'}，${_mcpTools.length} 个工具可用`,
+                };
+                Components.Toast.success('MCP 连接正常');
+            } else {
+                _mcpTestResult = { ok: false, detail: `HTTP ${resp.status}: ${resp.statusText}` };
+                Components.Toast.error('MCP 连接失败');
+            }
+        } catch (err) {
+            _mcpTestResult = { ok: false, detail: err.message };
+            Components.Toast.error(`连接失败: ${err.message}`);
+        }
+        document.getElementById('contentBody').innerHTML = buildPage();
     }
 
     async function restartService() {
@@ -135,5 +197,5 @@ const McpPage = (() => {
 
     function bindEvents() {}
 
-    return { render, restartService, copyConfig };
+    return { render, restartService, copyConfig, testConnection };
 })();

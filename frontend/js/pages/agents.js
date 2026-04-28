@@ -54,7 +54,7 @@ const AgentsPage = (() => {
             ? Components.renderBadge('运行中', 'green')
             : agent.status === 'completed' ? Components.renderBadge('已完成', 'blue')
             : agent.status === 'failed' ? Components.renderBadge('失败', 'red')
-            : Components.renderBadge(agent.status, 'orange');
+            : Components.renderBadge(({idle:'空闲',pending:'等待中',stopped:'已停止'})[agent.status] || agent.status, 'orange');
 
         const progressHtml = agent.status === 'running' ? `
             <div style="margin-top:10px">

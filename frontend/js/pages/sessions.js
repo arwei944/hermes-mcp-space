@@ -103,7 +103,7 @@ const SessionsPage = (() => {
             </div>
             <div class="message-thread">${messages.map(msg => `
                 <div class="message-item">
-                    <div class="message-role ${msg.role || 'user'}">${msg.role || 'user'}</div>
+                    <div class="message-role ${msg.role || 'user'}">${({user:'用户',assistant:'助手',system:'系统'})[msg.role] || msg.role || '用户'}</div>
                     <div class="message-content">${Components.truncate(msg.content || JSON.stringify(msg), 500)}</div>
                 </div>
             `).join('')}</div>
