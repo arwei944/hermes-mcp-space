@@ -35,7 +35,7 @@ jobs:
           )
           print(f"✅ Space {repo_id} 就绪")
 
-          # 2. 上传所有文件
+          # 2. 上传所有文件（排除魔搭专用文件和 Dockerfile）
           api = HfApi(token=token)
           folder_path = os.environ.get("GITHUB_WORKSPACE", ".")
           print(f"📁 上传目录: {folder_path}")
@@ -44,8 +44,8 @@ jobs:
               repo_id=repo_id,
               repo_type="space",
               commit_message=f"deploy: {__import__('datetime').datetime.utcnow().isoformat()}",
-              delete_patterns=["*.pyc", "__pycache__/*", ".github/*"],
-              ignore_patterns=[".git/*", "__pycache__/*", "*.pyc"],
+              delete_patterns=["*.pyc", "__pycache__/*", ".github/*", "Dockerfile", "ms_deploy.json", "config.yaml.example"],
+              ignore_patterns=[".git/*", "__pycache__/*", "*.pyc", "Dockerfile", "ms_deploy.json", "config.yaml.example", ".gitignore"],
           )
           print(f"✅ 部署完成!")
           print(f"📍 https://huggingface.co/spaces/{repo_id}")
