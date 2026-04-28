@@ -39,7 +39,7 @@ const DashboardPage = (() => {
                 { id: 'sess_004', source: 'API', model: 'qwen3-coder', messages: 8, createdAt: new Date(Date.now() - 10800000).toISOString(), status: 'completed' },
                 { id: 'sess_005', source: 'Trae', model: 'claude-4', messages: 42, createdAt: new Date(Date.now() - 86400000).toISOString(), status: 'completed' },
             ],
-            systemStatus: { uptime: '3天 12小时 30分钟', version: '1.0.0', memoryUsage: '256MB / 512MB', cpuUsage: '12%' },
+            systemStatus: { uptime: '3天 12小时 30分钟', version: '2.0.0', memoryUsage: '256MB / 512MB', cpuUsage: '12%' },
         };
     }
 

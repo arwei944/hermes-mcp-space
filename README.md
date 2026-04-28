@@ -121,7 +121,7 @@ python app.py
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
 | `HERMES_API_URL` | 空 | 远程 Hermes API 地址（配置后使用真实数据） |
-| `APP_VERSION` | `1.0.0` | 应用版本号 |
+| `APP_VERSION` | `2.0.0` | 应用版本号 |
 | `HERMES_HOME` | `~/.hermes` | 数据存储目录 |
 
 ## 项目结构

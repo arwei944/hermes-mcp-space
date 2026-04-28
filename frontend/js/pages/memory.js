@@ -32,7 +32,7 @@ const MemoryPage = (() => {
     }
 
     function getMockMemory() {
-        return `# Agent 记忆\n\n## 项目信息\n- 项目名称: Hermes Agent\n- 版本: 1.0.0\n- 技术栈: Node.js, TypeScript, Express\n\n## 用户偏好\n- 用户喜欢简洁的代码风格\n- 优先使用 TypeScript\n- 测试覆盖率要求 > 80%\n\n## 重要决策\n1. 使用 Express 作为 Web 框架\n2. 采用 MCP 协议进行工具通信\n3. 记忆系统使用 Markdown 文件存储`;
+        return `# Agent 记忆\n\n## 项目信息\n- 项目名称: Hermes Agent\n- 版本: 2.0.0\n- 技术栈: Node.js, TypeScript, Express\n\n## 用户偏好\n- 用户喜欢简洁的代码风格\n- 优先使用 TypeScript\n- 测试覆盖率要求 > 80%\n\n## 重要决策\n1. 使用 Express 作为 Web 框架\n2. 采用 MCP 协议进行工具通信\n3. 记忆系统使用 Markdown 文件存储`;
     }
 
     function getMockUser() {

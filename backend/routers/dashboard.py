@@ -89,7 +89,7 @@ async def get_dashboard():
         "recentSessions": sessions[:5],
         "systemStatus": {
             "uptime": uptime_str,
-            "version": os.environ.get("APP_VERSION", "1.0.0"),
+            "version": os.environ.get("APP_VERSION", "2.0.0"),
             "memoryUsage": mem_usage,
             "cpuUsage": cpu_usage,
         },

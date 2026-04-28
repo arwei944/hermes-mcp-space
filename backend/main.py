@@ -19,7 +19,7 @@ from backend.config import get_config
 app = FastAPI(
     title="Hermes Agent 管理面板",
     description="Hermes Agent 的 Web 管理面板后端 API",
-    version="0.1.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -92,7 +92,7 @@ async def serve_index():
     # 如果前端未构建，返回简单的欢迎页面
     return {
         "name": "Hermes Agent 管理面板 API",
-        "version": "0.1.0",
+        "version": "2.0.0",
         "docs": "/docs",
         "message": "前端未构建，请先运行 npm run build 构建 frontend 目录",
     }
