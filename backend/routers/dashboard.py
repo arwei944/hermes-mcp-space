@@ -13,6 +13,22 @@ router = APIRouter(prefix="/api", tags=["system"])
 _start_time = time.time()
 
 
+def _get_system_resources():
+    """获取系统资源使用情况"""
+    try:
+        import psutil
+        process = psutil.Process(os.getpid())
+        mem_mb = process.memory_info().rss / 1024 / 1024
+        cpu_pct = process.cpu_percent(interval=0.5)
+        # 系统总内存
+        total_mem = psutil.virtual_memory().total / 1024 / 1024
+        return f"{mem_mb:.0f}MB / {total_mem:.0f}MB", f"{cpu_pct:.1f}%"
+    except ImportError:
+        return "-", "-"
+    except Exception:
+        return "-", "-"
+
+
 @router.get("/dashboard")
 async def get_dashboard():
     """Dashboard data: stats + recent sessions + system status"""
@@ -32,6 +48,8 @@ async def get_dashboard():
     hours, _ = divmod(remainder, 3600)
     uptime_str = f"{days}天 {hours}小时" if days > 0 else f"{hours}小时"
 
+    mem_usage, cpu_usage = _get_system_resources()
+
     return {
         "stats": {
             "sessions": len(sessions),
@@ -47,8 +65,8 @@ async def get_dashboard():
         "systemStatus": {
             "uptime": uptime_str,
             "version": os.environ.get("APP_VERSION", "1.0.0"),
-            "memoryUsage": "-",
-            "cpuUsage": "-",
+            "memoryUsage": mem_usage,
+            "cpuUsage": cpu_usage,
         },
     }
 
