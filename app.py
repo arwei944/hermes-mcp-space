@@ -95,3 +95,6 @@ with gr.Blocks(
     gr.HTML(frontend_html)
 
 logger.info("Hermes Agent MCP Space 初始化完成")
+
+# HF Spaces Gradio SDK 需要显式启动
+demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
