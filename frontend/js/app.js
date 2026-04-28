@@ -67,7 +67,7 @@ const App = (() => {
         } catch (err) {
             console.error(`[App] 页面 ${pageName} 渲染失败:`, err);
             document.getElementById('contentBody').innerHTML = Components.createEmptyState(
-                '\u26A0\uFE0F', '页面加载失败',
+                '⚠️', '页面加载失败',
                 err.message || '未知错误',
                 `<button class="btn btn-primary" onclick="App.refresh()">重试</button>`
             );

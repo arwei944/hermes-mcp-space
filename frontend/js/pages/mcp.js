@@ -56,10 +56,10 @@ const McpPage = (() => {
 
         // 统计卡片
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('MCP 服务', s.running ? '运行中' : '已停止', s.uptime || '', '\uD83D\uDD0C', s.running ? 'green' : 'red')}
-            ${Components.renderStatCard('端口', s.port || '-', '', '\uD83C\uDF10', 'blue')}
-            ${Components.renderStatCard('协议', s.protocol || '-', '', '\uD83D\uDCE1', 'purple')}
-            ${Components.renderStatCard('活跃连接', s.connections || 0, '', '\uD83D\uDD17', 'orange')}
+            ${Components.renderStatCard('MCP 服务', s.running ? '运行中' : '已停止', s.uptime || '', '🔌', s.running ? 'green' : 'red')}
+            ${Components.renderStatCard('端口', s.port || '-', '', '🌐', 'blue')}
+            ${Components.renderStatCard('协议', s.protocol || '-', '', '📡', 'purple')}
+            ${Components.renderStatCard('活跃连接', s.connections || 0, '', '🔗', 'orange')}
         </div>`;
 
         // 操作按钮

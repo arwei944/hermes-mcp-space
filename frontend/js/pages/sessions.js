@@ -86,14 +86,14 @@ const SessionsPage = (() => {
             const messages = data.messages || data || [];
             renderMessageThread(messages);
         } catch (err) {
-            container.innerHTML = Components.createEmptyState('\uD83D\uDCDC', '消息历史', '无法加载消息历史', '');
+            container.innerHTML = Components.createEmptyState('📜', '消息历史', '无法加载消息历史', '');
         }
     }
 
     function renderMessageThread(messages) {
         const container = document.getElementById('messageThreadContainer');
         if (!messages || messages.length === 0) {
-            container.innerHTML = Components.createEmptyState('\uD83D\uDCDC', '暂无消息', '该会话没有消息记录', '');
+            container.innerHTML = Components.createEmptyState('📜', '暂无消息', '该会话没有消息记录', '');
             return;
         }
         container.innerHTML = `<div style="margin-top:16px">

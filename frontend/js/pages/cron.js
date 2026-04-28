@@ -143,7 +143,7 @@ const CronPage = (() => {
         try {
             const data = await API.cron.history(id);
             const history = data.history || data || [];
-            if (history.length === 0) { container.innerHTML = Components.createEmptyState('\uD83D\uDCDC', '暂无历史', '该任务没有执行记录', ''); return; }
+            if (history.length === 0) { container.innerHTML = Components.createEmptyState('📜', '暂无历史', '该任务没有执行记录', ''); return; }
             container.innerHTML = `<div style="margin-top:16px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
                     <span style="font-size:13px;font-weight:600">执行历史 - ${job ? job.name : id}</span>
@@ -160,7 +160,7 @@ const CronPage = (() => {
                 `).join('')}</div>
             </div>`;
         } catch (err) {
-            container.innerHTML = Components.createEmptyState('\uD83D\uDCDC', '加载失败', err.message, '');
+            container.innerHTML = Components.createEmptyState('📜', '加载失败', err.message, '');
         }
     }
 

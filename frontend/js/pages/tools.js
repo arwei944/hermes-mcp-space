@@ -62,7 +62,7 @@ const ToolsPage = (() => {
         const filterHtml = Components.createFilterGroup(filterTags, _activeFilter, 'ToolsPage.setFilter');
 
         const toolsHtml = filtered.length === 0
-            ? Components.createEmptyState('\uD83D\uDD27', '暂无工具', '没有匹配的工具', '')
+            ? Components.createEmptyState('🔧', '暂无工具', '没有匹配的工具', '')
             : `<div class="tool-grid">${filtered.map(tool => `
                 <div class="tool-card" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')">
                     <div class="tool-card-header">
@@ -99,7 +99,7 @@ const ToolsPage = (() => {
                 ${Components.renderJson(tool.schema || tool.inputSchema || tool.parameters || {})}
             `;
         } catch (err) {
-            document.getElementById('modalBody').innerHTML = Components.createEmptyState('\uD83D\uDD27', '加载失败', err.message, '');
+            document.getElementById('modalBody').innerHTML = Components.createEmptyState('🔧', '加载失败', err.message, '');
         }
     }
 

@@ -39,10 +39,10 @@ const DashboardPage = (() => {
 
         // 统计卡片
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('总会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, '\uD83D\uDCAC', 'blue')}
-            ${Components.renderStatCard('活跃工具', s.activeTools || 0, `共 ${s.tools || 0} 个`, '\uD83D\uDD27', 'green')}
-            ${Components.renderStatCard('技能数', s.skills || 0, '', '\u26A1', 'purple')}
-            ${Components.renderStatCard('MCP 连接', s.mcpConnected ? '在线' : '离线', s.mcpConnected ? '\u25CF 在线' : '\u25CF 离线', '\uD83D\uDD0C', 'orange')}
+            ${Components.renderStatCard('总会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, '💬', 'blue')}
+            ${Components.renderStatCard('活跃工具', s.activeTools || 0, `共 ${s.tools || 0} 个`, '🔧', 'green')}
+            ${Components.renderStatCard('技能数', s.skills || 0, '', '⚡', 'purple')}
+            ${Components.renderStatCard('MCP 连接', s.mcpConnected ? '在线' : '离线', s.mcpConnected ? '● 在线' : '● 离线', '🔌', 'orange')}
         </div>`;
 
         // 最近会话表格
@@ -60,7 +60,7 @@ const DashboardPage = (() => {
                     </tr>`).join('')}
                 </tbody>
             </table>
-        `, '查看全部 \u2192');
+        `, '查看全部 →');
 
         // 两栏布局
         const twoColHtml = `<div class="two-col">
@@ -73,7 +73,7 @@ const DashboardPage = (() => {
                         <tr><td>模型更新</td><td class="mono">手动</td><td>${Components.renderBadge('暂停', 'orange')}</td></tr>
                     </tbody>
                 </table>
-            `, '管理 \u2192')}
+            `, '管理 →')}
             ${Components.renderSection('系统状态', `
                 <div class="status-list">
                     <div class="status-item"><span class="status-item-label">运行时间</span><span class="status-item-value">${sys.uptime || '-'}</span></div>

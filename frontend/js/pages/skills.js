@@ -53,7 +53,7 @@ const SkillsPage = (() => {
     function buildFileTree() {
         const items = _skills.map(skill => ({
             id: skill.name,
-            icon: skill.hasSkillMd ? '\u26A1' : '\uD83D\uDCC4',
+            icon: skill.hasSkillMd ? '⚡' : '📄',
             name: skill.name,
             onClick: `SkillsPage.selectSkill('${skill.name}')`,
         }));
@@ -70,7 +70,7 @@ const SkillsPage = (() => {
     }
 
     function buildEmptyDetail() {
-        return Components.createEmptyState('\u26A1', '选择一个技能', '从左侧列表中选择一个技能查看详情', '');
+        return Components.createEmptyState('⚡', '选择一个技能', '从左侧列表中选择一个技能查看详情', '');
     }
 
     function buildSkillDetail() {
@@ -80,7 +80,7 @@ const SkillsPage = (() => {
         const tagsHtml = (skill.tags || []).map(t => Components.renderBadge(t, 'purple')).join(' ');
         const contentHtml = _skillContent
             ? `<div class="markdown-body">${Components.renderMarkdown(_skillContent)}</div>`
-            : Components.createEmptyState('\uD83D\uDCC4', '暂无内容', '该技能没有 SKILL.md 文件', '');
+            : Components.createEmptyState('📄', '暂无内容', '该技能没有 SKILL.md 文件', '');
 
         return `<div style="padding:20px">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
