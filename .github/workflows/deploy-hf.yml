@@ -37,8 +37,12 @@ jobs:
 
           # 2. 上传所有文件
           api = HfApi(token=token)
+          workspace_dir = os.environ.get("GITHUB_WORKSPACE", "/github/workspace")
+          folder_path = os.path.join(workspace_dir, "hermes-mcp-space")
+          print(f"📁 上传目录: {folder_path}")
+          print(f"   文件列表: {list(Path(folder_path).iterdir())[:5]}...")
           api.upload_folder(
-              folder_path="/workspace/hermes-mcp-space",
+              folder_path=folder_path,
               repo_id=repo_id,
               repo_type="space",
               commit_message=f"deploy: {__import__('datetime').datetime.utcnow().isoformat()}",
