@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 """
 Hermes Agent MCP Space - 部署入口
-Gradio 托管 Mac 极简风格前端管理面板
-支持版本管理和热更新
+策略：Monkey-patch Gradio 的 App.create_app，在创建 app 后立即注册自定义路由。
 """
 
+import json
 import logging
 import os
+import re
 from pathlib import Path
+from fastapi import Request
+from fastapi.responses import HTMLResponse
 
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -17,61 +20,102 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-# ==================== 版本管理 ====================
 APP_VERSION = os.environ.get("APP_VERSION", "1.0.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
 
-# ==================== 创建 Gradio 应用 ====================
 
-logger.info("正在初始化 Hermes Agent MCP Space...")
+def load_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        logger.warning(f"Failed to load {path}: {e}")
+        return ""
+
+
+def build_full_html():
+    """Build a completely self-contained HTML page with all CSS and JS inlined."""
+    frontend_dir = Path(__file__).resolve().parent / "frontend"
+
+    css = load_file(frontend_dir / "css" / "style.css")
+
+    js_files = [
+        "js/api.js", "js/components.js",
+        "js/pages/dashboard.js", "js/pages/sessions.js", "js/pages/tools.js",
+        "js/pages/skills.js", "js/pages/memory.js", "js/pages/cron.js",
+        "js/pages/agents.js", "js/pages/config.js", "js/pages/mcp.js",
+        "js/app.js",
+    ]
+
+    all_js = ""
+    for jsf in js_files:
+        content = load_file(frontend_dir / jsf)
+        if content:
+            all_js += f"\n// === {jsf} ===\n{content}\n"
+
+    index_html = load_file(frontend_dir / "index.html")
+
+    # Replace CSS link with inline style
+    html = index_html.replace(
+        '<link rel="stylesheet" href="/css/style.css">',
+        f'<style>\n{css}\n</style>'
+    )
+
+    # Remove all <script src=...> tags
+    html = re.sub(r'<script\s+src="[^"]*"></script>', '', html)
+
+    # Insert all JS inline before </body>
+    html = html.replace('</body>', f'<script>\n{all_js}\n</script>\n</body>')
+
+    return html
+
+
+logger.info("Initializing Hermes Agent MCP Space...")
 
 import gradio as gr
-from starlette.staticfiles import StaticFiles
+from gradio.routes import App
 
-# 获取前端目录
-FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
+# Build the full HTML FIRST
+full_html = build_full_html()
+logger.info(f"Frontend HTML built ({len(full_html)} bytes)")
 
-# 读取 index.html
-index_path = FRONTEND_DIR / "index.html"
-try:
-    with open(index_path, "r", encoding="utf-8") as f:
-        index_html = f.read()
-    logger.info(f"前端 HTML 加载成功 ({len(index_html)} bytes)")
-except Exception as e:
-    logger.error(f"前端 HTML 加载失败: {e}")
-    index_html = "<p>前端加载失败</p>"
+# Monkey-patch App.create_app to inject our custom routes after Gradio creates the app
+_original_create_app = App.create_app
 
-with gr.Blocks(
-    title="Hermes Agent MCP Space",
-    css=".gradio-container{max-width:100%!important;padding:0!important;}",
-) as demo:
-    gr.HTML(index_html)
+def _patched_create_app(blocks, **kwargs):
+    app = _original_create_app(blocks, **kwargs)
 
-# 挂载前端静态文件目录（使用 starlette StaticFiles）
-css_dir = str(FRONTEND_DIR / "css")
-js_dir = str(FRONTEND_DIR / "js")
-frontend_dir = str(FRONTEND_DIR)
+    # Remove Gradio's default GET / route so ours takes priority
+    # Use router.routes since app.routes may be read-only in some Gradio versions
+    for route in list(app.router.routes):
+        if getattr(route, 'path', None) == "/" and getattr(route, 'methods', set()) == {"GET"}:
+            app.router.routes.remove(route)
+            logger.info("Removed default Gradio index route")
 
-if os.path.isdir(css_dir):
-    demo.app.mount("/css", StaticFiles(directory=css_dir), name="css")
-    logger.info("CSS 静态文件挂载成功: /css/")
-if os.path.isdir(js_dir):
-    demo.app.mount("/js", StaticFiles(directory=js_dir), name="js")
-    logger.info("JS 静态文件挂载成功: /js/")
-if os.path.isdir(frontend_dir):
-    demo.app.mount("/frontend", StaticFiles(directory=frontend_dir), name="frontend")
-    logger.info("前端静态文件挂载成功: /frontend/")
+    # Now inject our custom routes into the newly created app
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    async def custom_index(request: Request):
+        return full_html
 
-# 版本管理端点
-@demo.app.get("/api/version")
-async def get_version():
-    return {"version": APP_VERSION, "build_time": BUILD_TIME}
+    @app.get("/api/version")
+    async def get_version():
+        return {"version": APP_VERSION, "build_time": BUILD_TIME}
 
-@demo.app.get("/api/health")
-async def health():
-    return {"status": "ok", "service": "hermes-mcp-space", "version": APP_VERSION}
+    @app.get("/api/health")
+    async def health():
+        return {"status": "ok", "service": "hermes-mcp-space", "version": APP_VERSION}
 
-logger.info(f"Hermes Agent MCP Space v{APP_VERSION} 初始化完成")
+    logger.info("Custom routes injected into Gradio app")
+    return app
 
-# HF Spaces Gradio SDK 需要显式启动
-demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
+App.create_app = staticmethod(_patched_create_app)
+
+# Create Gradio Blocks (HF Spaces SDK needs the `demo` variable)
+with gr.Blocks(title="Hermes Agent MCP Space") as demo:
+    gr.HTML("<!-- Hermes Agent MCP Space -->")
+
+logger.info(f"Hermes Agent MCP Space v{APP_VERSION} initialized")
+
+# HF Spaces Gradio SDK will call demo.launch() for us
+if __name__ == "__main__":
+    demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
