@@ -169,44 +169,51 @@ const AboutPage = (() => {
     function buildPage(version, totalUptime, firstDeploy, mcpToolCount, apiCount) {
         const uptimeStr = formatUptime(totalUptime);
 
-        return `<div style="max-width:720px">
-            ${Components.sectionTitle('关于 Hermes Agent')}
-            ${Components.renderSection('', `
-                <div style="text-align:center;padding:24px 0">
-                    <div style="font-size:48px;margin-bottom:12px">🤖</div>
-                    <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Hermes Agent MCP Space</h2>
-                    <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">AI Agent 管理面板 + MCP 服务</p>
-                    <div style="display:inline-flex;gap:24px;font-size:13px;color:var(--text-secondary)">
-                        <span>版本 <strong class="mono">${version}</strong></span>
-                        <span>总运行 <strong>${uptimeStr}</strong></span>
-                        <span>首次部署 <strong>${formatDeployTime(firstDeploy) || '-'}</strong></span>
-                        <span>MCP 工具 <strong>${mcpToolCount || '?'}</strong> 个</span>
-                        <span>API 端点 <strong>${apiCount || '?'}</strong> 个</span>
-                    </div>
+        return `<div style="max-width:960px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                <!-- 左侧：关于 -->
+                <div>
+                    ${Components.sectionTitle('关于 Hermes Agent')}
+                    ${Components.renderSection('', `
+                        <div style="text-align:center;padding:20px 0">
+                            <div style="font-size:48px;margin-bottom:12px">🤖</div>
+                            <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Hermes Agent MCP Space</h2>
+                            <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">AI Agent 管理面板 + MCP 服务</p>
+                            <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px 20px;font-size:13px;color:var(--text-secondary)">
+                                <span>版本 <strong class="mono">${version}</strong></span>
+                                <span>总运行 <strong>${uptimeStr}</strong></span>
+                                <span>首次部署 <strong>${formatDeployTime(firstDeploy) || '-'}</strong></span>
+                                <span>MCP 工具 <strong>${mcpToolCount || '?'}</strong> 个</span>
+                                <span>API 端点 <strong>${apiCount || '?'}</strong> 个</span>
+                            </div>
+                        </div>
+                    `)}
                 </div>
-            `)}
-
-            ${Components.sectionTitle('技术栈')}
-            ${Components.renderSection('', `
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
-                    <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                        <div style="font-weight:600;margin-bottom:6px">后端</div>
-                        <div style="color:var(--text-tertiary)">Python · FastAPI · Gradio 5.49</div>
-                    </div>
-                    <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                        <div style="font-weight:600;margin-bottom:6px">前端</div>
-                        <div style="color:var(--text-tertiary)">原生 JS · CSS · SVG 图表</div>
-                    </div>
-                    <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                        <div style="font-weight:600;margin-bottom:6px">协议</div>
-                        <div style="color:var(--text-tertiary)">MCP Streamable HTTP + SSE</div>
-                    </div>
-                    <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                        <div style="font-weight:600;margin-bottom:6px">部署</div>
-                        <div style="color:var(--text-tertiary)">GitHub Actions → HF Spaces</div>
-                    </div>
+                <!-- 右侧：技术栈 -->
+                <div>
+                    ${Components.sectionTitle('技术栈')}
+                    ${Components.renderSection('', `
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+                            <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                                <div style="font-weight:600;margin-bottom:6px">后端</div>
+                                <div style="color:var(--text-tertiary)">Python · FastAPI · Gradio</div>
+                            </div>
+                            <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                                <div style="font-weight:600;margin-bottom:6px">前端</div>
+                                <div style="color:var(--text-tertiary)">原生 JS · CSS · SVG 图表</div>
+                            </div>
+                            <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                                <div style="font-weight:600;margin-bottom:6px">协议</div>
+                                <div style="color:var(--text-tertiary)">MCP Streamable HTTP + SSE</div>
+                            </div>
+                            <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
+                                <div style="font-weight:600;margin-bottom:6px">部署</div>
+                                <div style="color:var(--text-tertiary)">GitHub Actions → HF Spaces</div>
+                            </div>
+                        </div>
+                    `)}
                 </div>
-            `)}
+            </div>
 
             ${Components.sectionTitle('版本变更记录')}
             ${CHANGELOG.map(rel => `

@@ -182,7 +182,7 @@ const API = (() => {
     const system = {
         status() { return get('/api/status'); },
         dashboard() { return get('/api/dashboard'); },
-        health() { return get('/api/health'); },
+        health() { return get('/api/status'); },
     };
 
     // ==========================================
