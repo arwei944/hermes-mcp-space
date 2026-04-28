@@ -329,7 +329,7 @@ const MarketplacePage = (() => {
         }
     }
 
-    function showSkillModal(mode, name) {
+    async function showSkillModal(mode, name) {
         const title = mode === 'create' ? '创建技能' : mode === 'edit' ? `编辑技能: ${name}` : `查看技能: ${name}`;
         const skill = mode !== 'create' ? _skills.find(s => s.name === name) : null;
         const isView = mode === 'view';
