@@ -172,6 +172,16 @@ def _patched_create_app(blocks, **kwargs):
 
     logger.info("Custom routes injected into Gradio app")
 
+    # Initialize seed data (demo data for first launch)
+    try:
+        from backend.seed_data import init_seed_data
+        if init_seed_data():
+            logger.info("Seed data initialized (first launch)")
+        else:
+            logger.info("Seed data already exists, skipped")
+    except Exception as e:
+        logger.warning(f"Failed to initialize seed data: {e}")
+
     # Add SSE event emit middleware
     try:
         from backend.middleware.events import EventEmitMiddleware

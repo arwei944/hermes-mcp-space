@@ -240,24 +240,21 @@ class HermesService:
     # ==================== 工具管理 ====================
 
     def list_tools(self) -> List[Dict[str, Any]]:
-        """列出所有可用工具"""
-        if not self.hermes_available:
-            return self._get_demo_tools()
-
+        """列出所有可用工具（从 MCP 工具定义获取）"""
+        # 优先从 MCP 工具定义获取
         try:
-            import hermes  # type: ignore
-            # 尝试通过 ToolRegistry 获取工具列表
-            if hasattr(hermes, "ToolRegistry"):
-                registry = hermes.ToolRegistry()
-                tools = []
-                for name, tool in registry.get_all().items():
-                    tools.append({
-                        "name": name,
-                        "description": getattr(tool, "description", ""),
-                        "schema": getattr(tool, "parameters", {}),
-                        "status": "active",
-                    })
-                return tools
+            from backend.mcp_server import _get_tools
+            mcp_tools = _get_tools()
+            return [
+                {
+                    "name": t["name"],
+                    "description": t.get("description", ""),
+                    "schema": t.get("inputSchema", {}),
+                    "status": "active",
+                    "source": "mcp",
+                }
+                for t in mcp_tools
+            ]
         except Exception:
             pass
         return self._get_demo_tools()
@@ -272,55 +269,25 @@ class HermesService:
 
     def toggle_tool(self, name: str, enabled: bool = True) -> Dict[str, Any]:
         """切换工具启用/禁用"""
-        if not self.hermes_available:
-            return {"success": False, "message": "Hermes Agent 未安装，无法切换工具状态"}
-        try:
-            import hermes  # type: ignore
-            if hasattr(hermes, "ToolRegistry"):
-                registry = hermes.ToolRegistry()
-                registry.set_enabled(name, enabled)
-                return {"success": True, "message": f"工具 {name} 已{'启用' if enabled else '禁用'}"}
-        except Exception as e:
-            return {"success": False, "message": f"操作失败: {str(e)}"}
-        return {"success": False, "message": f"工具 {name} 不存在"}
+        # 工具状态存储在内存中（HF Space 重启后重置）
+        if not hasattr(self, '_tool_states'):
+            self._tool_states = {}
+        self._tool_states[name] = enabled
+        return {"success": True, "message": f"工具 {name} 已{'启用' if enabled else '禁用'}", "name": name, "enabled": enabled}
 
     def list_toolsets(self) -> List[Dict[str, Any]]:
         """列出所有工具集"""
-        if not self.hermes_available:
-            return [
-                {
-                    "name": "内置工具集",
-                    "description": "Hermes Agent 内置的基础工具",
-                    "tools": ["file_read", "file_write", "shell_execute"],
-                    "status": "active",
-                }
-            ]
-        try:
-            import hermes  # type: ignore
-            if hasattr(hermes, "ToolRegistry"):
-                registry = hermes.ToolRegistry()
-                toolsets = []
-                for set_name, tool_set in registry.get_toolsets().items():
-                    toolsets.append({
-                        "name": set_name,
-                        "description": getattr(tool_set, "description", ""),
-                        "tools": getattr(tool_set, "tool_names", []),
-                        "status": "active",
-                    })
-                return toolsets
-        except Exception:
-            pass
         return [
             {
-                "name": "内置工具集",
-                "description": "Hermes Agent 内置的基础工具",
-                "tools": ["file_read", "file_write", "shell_execute"],
+                "name": "MCP 工具集",
+                "description": "通过 MCP 协议暴露的 16 个工具",
+                "tools": ["list_sessions", "search_sessions", "get_session_messages", "delete_session", "list_tools", "list_skills", "get_skill_content", "create_skill", "read_memory", "read_user_profile", "write_memory", "write_user_profile", "list_cron_jobs", "create_cron_job", "get_system_status", "get_dashboard_summary"],
                 "status": "active",
             }
         ]
 
     def _get_demo_tools(self) -> List[Dict[str, Any]]:
-        """返回演示工具列表"""
+        """降级模式下的演示工具列表"""
         return [
             {
                 "name": "file_read",
@@ -376,12 +343,13 @@ class HermesService:
     # ==================== 技能管理 ====================
 
     def list_skills(self) -> List[Dict[str, Any]]:
-        """列出所有技能"""
+        """列出所有技能（支持目录和文件两种格式）"""
         skills_dir = get_skills_dir()
         if not skills_dir.exists():
             return []
 
         skills = []
+        # 格式1: 目录结构 skills/{name}/SKILL.md
         for item in skills_dir.iterdir():
             if item.is_dir():
                 skill_md = item / "SKILL.md"
@@ -390,68 +358,98 @@ class HermesService:
                     "description": self._read_skill_description(skill_md),
                     "has_skill_md": skill_md.exists(),
                     "path": str(item),
+                    "format": "directory",
+                })
+        # 格式2: 文件结构 skills/{name}.md
+        for item in skills_dir.iterdir():
+            if item.is_file() and item.suffix == ".md":
+                name = item.stem
+                # 跳过已作为目录处理的
+                if any(s["name"] == name for s in skills):
+                    continue
+                skills.append({
+                    "name": name,
+                    "description": self._read_skill_description(item),
+                    "has_skill_md": True,
+                    "path": str(item),
+                    "format": "file",
                 })
         return skills
 
     def get_skill(self, name: str) -> Optional[Dict[str, Any]]:
-        """获取技能详情"""
-        skill_dir = get_skills_dir() / name
-        if not skill_dir.exists() or not skill_dir.is_dir():
+        """获取技能详情（支持目录和文件两种格式）"""
+        skills_dir = get_skills_dir()
+        skill_dir = skills_dir / name
+        skill_file = skills_dir / f"{name}.md"
+
+        content = ""
+        files = []
+        fmt = "unknown"
+
+        if skill_dir.is_dir():
+            fmt = "directory"
+            skill_md = skill_dir / "SKILL.md"
+            if skill_md.exists():
+                content = skill_md.read_text(encoding="utf-8")
+            for f in skill_dir.rglob("*"):
+                if f.is_file():
+                    files.append(str(f.relative_to(skill_dir)))
+        elif skill_file.is_file():
+            fmt = "file"
+            content = skill_file.read_text(encoding="utf-8")
+            files.append(f"{name}.md")
+        else:
             return None
 
-        skill_md = skill_dir / "SKILL.md"
-        content = ""
-        if skill_md.exists():
-            content = skill_md.read_text(encoding="utf-8")
-
-        # 列出技能目录下的所有文件
-        files = []
-        for f in skill_dir.rglob("*"):
-            if f.is_file():
-                files.append(str(f.relative_to(skill_dir)))
-
-        return {
-            "name": name,
-            "content": content,
-            "files": files,
-            "path": str(skill_dir),
-        }
+        return {"name": name, "content": content, "files": files, "format": fmt}
 
     def create_skill(self, name: str, content: str = "") -> Dict[str, Any]:
-        """创建新技能"""
-        skill_dir = get_skills_dir() / name
-        if skill_dir.exists():
+        """创建新技能（文件格式）"""
+        skills_dir = get_skills_dir()
+        skill_dir = skills_dir / name
+        skill_file = skills_dir / f"{name}.md"
+
+        if skill_dir.exists() or skill_file.exists():
             return {"success": False, "message": f"技能 '{name}' 已存在"}
 
         try:
-            skill_dir.mkdir(parents=True, exist_ok=True)
-            if content:
-                (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
+            skills_dir.mkdir(parents=True, exist_ok=True)
+            skill_file.write_text(content or f"# {name}\n\n技能描述", encoding="utf-8")
             return {"success": True, "message": f"技能 '{name}' 创建成功", "name": name}
         except Exception as e:
             return {"success": False, "message": f"创建失败: {str(e)}"}
 
     def update_skill(self, name: str, content: str) -> Dict[str, Any]:
-        """更新技能"""
-        skill_dir = get_skills_dir() / name
-        if not skill_dir.exists():
-            return {"success": False, "message": f"技能 '{name}' 不存在"}
+        """更新技能（支持目录和文件两种格式）"""
+        skills_dir = get_skills_dir()
+        skill_dir = skills_dir / name
+        skill_file = skills_dir / f"{name}.md"
 
         try:
-            (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
+            if skill_dir.is_dir():
+                (skill_dir / "SKILL.md").write_text(content, encoding="utf-8")
+            elif skill_file.is_file():
+                skill_file.write_text(content, encoding="utf-8")
+            else:
+                return {"success": False, "message": f"技能 '{name}' 不存在"}
             return {"success": True, "message": f"技能 '{name}' 更新成功", "name": name}
         except Exception as e:
             return {"success": False, "message": f"更新失败: {str(e)}"}
 
     def delete_skill(self, name: str) -> Dict[str, Any]:
-        """删除技能"""
-        skill_dir = get_skills_dir() / name
-        if not skill_dir.exists():
-            return {"success": False, "message": f"技能 '{name}' 不存在"}
+        """删除技能（支持目录和文件两种格式）"""
+        skills_dir = get_skills_dir()
+        skill_dir = skills_dir / name
+        skill_file = skills_dir / f"{name}.md"
 
         try:
-            import shutil
-            shutil.rmtree(skill_dir)
+            if skill_dir.is_dir():
+                import shutil
+                shutil.rmtree(skill_dir)
+            elif skill_file.is_file():
+                skill_file.unlink()
+            else:
+                return {"success": False, "message": f"技能 '{name}' 不存在"}
             return {"success": True, "message": f"技能 '{name}' 已删除", "name": name}
         except Exception as e:
             return {"success": False, "message": f"删除失败: {str(e)}"}
