@@ -190,8 +190,6 @@ const ChatPage = (() => {
 
     async function deleteSession(id) {
         try {
-            const ok = await Components.confirm('确认删除', '删除会话后无法恢复，是否继续？');
-            if (!ok) return;
             await API.sessions.delete(id);
             Components.Toast.success('会话已删除');
             _currentSession = null;

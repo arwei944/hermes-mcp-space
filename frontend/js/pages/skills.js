@@ -200,8 +200,6 @@ const SkillsPage = (() => {
 
     async function deleteSkill(name) {
         try {
-            const ok = await Components.confirm('确认删除', '删除技能后可在回收站恢复，是否继续？');
-            if (!ok) return;
             // 先获取技能内容用于回收站
             let skillData = '';
             try {

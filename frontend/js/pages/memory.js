@@ -138,8 +138,6 @@ const MemoryPage = (() => {
     }
 
     async function resetContent() {
-        const ok = await Components.confirm('确认重置', '重置后将丢失当前编辑内容，是否继续？');
-        if (!ok) return;
         const defaults = {
             memory: '# Agent 长期记忆\n\n## 用户偏好\n\n## 项目上下文\n\n## 重要记录\n',
             user: '# 用户画像\n\n## 基本信息\n\n## 技术栈\n\n## 偏好\n',

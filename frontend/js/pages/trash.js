@@ -75,8 +75,6 @@ const TrashPage = (() => {
 
     async function permanentDelete(id) {
         try {
-            const ok = await Components.confirm('永久删除', '永久删除后无法恢复，是否继续？');
-            if (!ok) return;
             await API.request('DELETE', `/api/trash/${id}`);
             Components.Toast.success('已永久删除');
             await render();
@@ -85,8 +83,6 @@ const TrashPage = (() => {
 
     async function emptyTrash() {
         try {
-            const ok = await Components.confirm('清空回收站', '清空后所有项目将无法恢复，是否继续？');
-            if (!ok) return;
             await API.request('DELETE', '/api/trash');
             Components.Toast.success('回收站已清空');
             await render();

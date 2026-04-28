@@ -325,8 +325,6 @@ const SessionsPage = (() => {
     // ---- 无感删除：删除后局部更新，不刷新页面 ----
     async function deleteSession(id) {
         try {
-            const ok = await Components.confirm('确认删除', '删除会话后可在回收站恢复，是否继续？');
-            if (!ok) return;
             await API.sessions.delete(id);
 
             // 更新本地数据
