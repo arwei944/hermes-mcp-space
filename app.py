@@ -91,17 +91,17 @@ def _patched_create_app(blocks, **kwargs):
     app = _original_create_app(blocks, **kwargs)
 
     # Remove Gradio's default GET / route so ours takes priority
-    # Use router.routes since app.routes may be read-only in some Gradio versions
     for route in list(app.router.routes):
         if getattr(route, 'path', None) == "/" and getattr(route, 'methods', set()) == {"GET"}:
             app.router.routes.remove(route)
             logger.info("Removed default Gradio index route")
 
-    # Now inject our custom routes into the newly created app
+    # Inject custom HTML index
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     async def custom_index(request: Request):
         return full_html
 
+    # Inject version/health endpoints
     @app.get("/api/version")
     async def get_version():
         return {"version": APP_VERSION, "build_time": BUILD_TIME}
@@ -109,6 +109,24 @@ def _patched_create_app(blocks, **kwargs):
     @app.get("/api/health")
     async def health():
         return {"status": "ok", "service": "hermes-mcp-space", "version": APP_VERSION}
+
+    # Mount all backend API routers
+    try:
+        from backend.routers import (
+            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard
+        )
+        app.include_router(sessions.router)
+        app.include_router(tools.router)
+        app.include_router(skills.router)
+        app.include_router(memory.router)
+        app.include_router(cron.router)
+        app.include_router(agents.router)
+        app.include_router(mcp.router)
+        app.include_router(config_api.router)
+        app.include_router(dashboard.router)
+        logger.info("Backend API routers mounted successfully")
+    except Exception as e:
+        logger.warning(f"Failed to mount backend API routers: {e}")
 
     logger.info("Custom routes injected into Gradio app")
     return app

@@ -13,6 +13,11 @@ from backend.services.hermes_service import hermes_service
 router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 
 
+@router.get("", summary="获取 MCP 服务状态")
+async def get_mcp_status_root() -> Dict[str, Any]:
+    return hermes_service.get_mcp_status()
+
+
 @router.get("/status", summary="获取 MCP 服务状态")
 async def get_mcp_status() -> Dict[str, Any]:
     """
