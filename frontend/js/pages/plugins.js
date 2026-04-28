@@ -112,7 +112,7 @@ const PluginsPage = (() => {
                 <div style="font-size:11px;color:var(--text-tertiary)">
                     <span style="color:#f59e0b">${stars}</span>
                     <span style="margin-left:4px">${p.rating || '?'}</span>
-                    <span style="margin-left:8px">${Components.formatNumber(p.downloads || 0)} 下载</span>
+                    <span style="margin-left:8px">${(p.downloads || 0).toLocaleString()} 下载</span>
                 </div>
             </div>
             ${isInstalled ? `<div style="margin-top:8px;text-align:right">

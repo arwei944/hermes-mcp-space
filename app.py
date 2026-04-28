@@ -102,7 +102,16 @@ def _patched_create_app(blocks, **kwargs):
     # Inject custom HTML index
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     async def custom_index(request: Request):
-        return full_html
+        from starlette.responses import Response as StarletteResponse
+        return StarletteResponse(
+            content=full_html,
+            media_type="text/html",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
 
     # Inject version/health endpoints
     @app.get("/api/version")
