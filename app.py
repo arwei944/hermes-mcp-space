@@ -52,7 +52,7 @@ def build_full_html():
         "js/pages/cron.js", "js/pages/agents.js", "js/pages/config.js",
         "js/pages/about.js",
         "js/pages/trash.js",
-        "js/pages/mcp.js", "js/pages/logs.js",
+        "js/pages/mcp.js", "js/pages/marketplace.js", "js/pages/logs.js",
         "js/app.js",
     ]
 

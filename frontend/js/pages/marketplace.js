@@ -417,9 +417,9 @@ const MarketplacePage = (() => {
 
         try {
             if (mode === 'create') {
-                await API.skills.create(skillName, content, description, tags);
+                await API.skills.create({ name: skillName, content, description, tags });
             } else {
-                await API.skills.update(skillName, content, description, tags);
+                await API.skills.update(skillName, { content, description, tags });
             }
             Components.Modal.close();
             Components.Toast.success(mode === 'create' ? '技能已创建' : '技能已更新');
