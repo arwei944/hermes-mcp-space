@@ -1,38 +1,31 @@
 # -*- coding: utf-8 -*-
 """
 Hermes Agent MCP Space - 部署入口
-使用 Gradio 托管前端 + FastAPI 提供后端 API，共用 7860 端口
+Gradio 托管 Obsidian 风格前端管理面板
 """
 
 import logging
 import os
 
-# ==================== 日志配置 ====================
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
-    format="[%(asctime)s] %(levelname)s [%(name)s] %(message)s",
+    format="[%(asctime)s] %(levelname)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("hermes-space")
 
-HERMES_HOME = os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))
-
-
-# ==================== 构建前端 HTML ====================
 
 def build_frontend_html() -> str:
     """构建完整的 Obsidian 风格前端 HTML（内联 CSS 和 JS）"""
     frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
 
-    # 读取 CSS
     try:
         with open(os.path.join(frontend_dir, "css", "style.css"), "r", encoding="utf-8") as f:
             css_content = f.read()
     except Exception:
         css_content = "body{font-family:sans-serif;padding:20px;background:#1e1e2e;color:#e0e0e0;}"
 
-    # 读取各 JS 模块
     js_modules = [
         "js/api.js", "js/components.js",
         "js/pages/dashboard.js", "js/pages/sessions.js", "js/pages/tools.js",
@@ -89,8 +82,6 @@ def build_frontend_html() -> str:
 </html>"""
 
 
-# ==================== 创建 Gradio 应用 ====================
-
 logger.info("正在初始化 Hermes Agent MCP Space...")
 
 import gradio as gr
@@ -102,25 +93,5 @@ with gr.Blocks(
     css=".gradio-container{max-width:100%!important;padding:0!important;}.gradio-container .prose{max-width:100%!important;}",
 ) as demo:
     gr.HTML(frontend_html)
-
-# 挂载 FastAPI 路由到 Gradio 内部的 FastAPI app
-try:
-    from backend.routers import sessions, tools, skills, memory, cron, agents, config_api, mcp as mcp_router
-    demo.app.include_router(sessions.router, prefix="/api")
-    demo.app.include_router(tools.router, prefix="/api")
-    demo.app.include_router(skills.router, prefix="/api")
-    demo.app.include_router(memory.router, prefix="/api")
-    demo.app.include_router(cron.router, prefix="/api")
-    demo.app.include_router(agents.router, prefix="/api")
-    demo.app.include_router(config_api.router, prefix="/api")
-    demo.app.include_router(mcp_router.router, prefix="/api")
-    logger.info("后端 API 路由加载成功")
-except Exception as e:
-    logger.warning(f"后端 API 路由加载失败（降级模式）: {e}")
-
-# 健康检查
-@demo.app.get("/api/health")
-async def health():
-    return {"status": "ok", "service": "hermes-mcp-space"}
 
 logger.info("Hermes Agent MCP Space 初始化完成")
