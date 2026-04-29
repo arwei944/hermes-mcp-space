@@ -354,17 +354,21 @@ const Components = (() => {
         if (!dateStr) return '-';
         const date = new Date(dateStr);
         if (isNaN(date.getTime())) return dateStr;
+        // 转换为北京时间 UTC+8
+        const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+        const bj = new Date(utc + (8 * 3600000));
         const now = new Date();
-        const diff = now - date;
+        const nowUtc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const nowBj = new Date(nowUtc + (8 * 3600000));
         const pad = n => String(n).padStart(2, '0');
-        const time = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-        // 今天：只显示时间
-        if (diff < 86400000 && date.getDate() === now.getDate()) return time;
-        // 昨天
-        const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
-        if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth()) return `昨天 ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        const time = `${pad(bj.getHours())}:${pad(bj.getMinutes())}:${pad(bj.getSeconds())}`;
+        // 今天（北京时间）
+        if (bj.toDateString() === nowBj.toDateString()) return time;
+        // 昨天（北京时间）
+        const yesterdayBj = new Date(nowBj); yesterdayBj.setDate(yesterdayBj.getDate() - 1);
+        if (bj.toDateString() === yesterdayBj.toDateString()) return `昨天 ${pad(bj.getHours())}:${pad(bj.getMinutes())}`;
         // 更早
-        return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        return `${bj.getFullYear()}-${pad(bj.getMonth()+1)}-${pad(bj.getDate())} ${pad(bj.getHours())}:${pad(bj.getMinutes())}`;
     }
 
     function formatDateTime(dateStr) {

@@ -3,7 +3,7 @@
  * 统一处理所有 API 请求、错误处理、响应解析
  */
 
-const APP_VERSION = '4.2.0';
+const APP_VERSION = '4.3.0';
 
 const API = (() => {
     const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'

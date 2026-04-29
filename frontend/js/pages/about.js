@@ -5,6 +5,17 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.3.0',
+            date: '2026-04-29 16:45',
+            title: '知识库模块 + 北京时间',
+            changes: [
+                '新增知识库页面：会话记录/经验提炼/记忆内容/技能库 四个 Tab',
+                '知识库概览：5 张统计卡片（会话/经验/记忆/技能/人格）',
+                '新增 5 个 Knowledge API: overview/sessions/experiences/memory/skills',
+                '时间显示改为北京时间 UTC+8',
+                '卡片式布局：会话卡片显示标题/来源/模型/消息数/最后消息',
+            ],
+        },        {
             version: '4.2.0',
             date: '2026-04-29 16:20',
             title: 'SOLO 对话回传 + 思考层评估',

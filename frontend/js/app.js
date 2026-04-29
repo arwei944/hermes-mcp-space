@@ -6,6 +6,7 @@
 const App = (() => {
     const pages = {
         dashboard: DashboardPage,
+        knowledge: KnowledgePage,
         sessions: SessionsPage,
         marketplace: MarketplacePage,
         tools: ToolsPage,
@@ -23,6 +24,7 @@ const App = (() => {
 
     const pageTitles = {
         dashboard: '仪表盘',
+        knowledge: '知识库',
         sessions: '会话',
         marketplace: '扩展管理',
         tools: '工具管理',
