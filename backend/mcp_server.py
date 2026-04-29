@@ -543,6 +543,120 @@ def _get_tools():
                 "required": ["task"]
             }
         },
+        # ---- Phase 4: 浏览器自动化 ----
+        {
+            "name": "browser_navigate",
+            "description": "打开网页 URL",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "网页 URL"}
+                },
+                "required": ["url"]
+            }
+        },
+        {
+            "name": "browser_snapshot",
+            "description": "获取当前页面的 DOM 快照（文本摘要）",
+            "inputSchema": {"type": "object", "properties": {}}
+        },
+        {
+            "name": "browser_screenshot",
+            "description": "对当前页面截图（返回 base64 PNG）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "full_page": {"type": "boolean", "default": False, "description": "是否截取完整页面"}
+                }
+            }
+        },
+        {
+            "name": "browser_click",
+            "description": "点击页面元素（通过 CSS 选择器）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "selector": {"type": "string", "description": "CSS 选择器（如 '#submit-btn' 或 'a[href=\"/login\"]'）"}
+                },
+                "required": ["selector"]
+            }
+        },
+        {
+            "name": "browser_type",
+            "description": "在页面输入框中输入文本",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "selector": {"type": "string", "description": "CSS 选择器"},
+                    "text": {"type": "string", "description": "要输入的文本"}
+                },
+                "required": ["selector", "text"]
+            }
+        },
+        {
+            "name": "browser_evaluate",
+            "description": "在页面中执行 JavaScript 代码",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "script": {"type": "string", "description": "JavaScript 代码"}
+                },
+                "required": ["script"]
+            }
+        },
+        # ---- Phase 4: 消息平台 ----
+        {
+            "name": "send_notification",
+            "description": "发送通知消息（支持配置的 Webhook 通道）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string", "description": "通知内容"},
+                    "channel": {"type": "string", "description": "通道名称（默认 default）"},
+                    "title": {"type": "string", "description": "通知标题（可选）"}
+                },
+                "required": ["message"]
+            }
+        },
+        {
+            "name": "register_webhook",
+            "description": "注册消息推送 Webhook（Telegram/飞书/Slack/Discord）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "通道名称"},
+                    "url": {"type": "string", "description": "Webhook URL"},
+                    "platform": {"type": "string", "description": "平台类型（telegram/feishu/slack/discord/custom）"},
+                    "secret": {"type": "string", "description": "密钥（可选）"}
+                },
+                "required": ["name", "url", "platform"]
+            }
+        },
+        # ---- Phase 4: 外部记忆 ----
+        {
+            "name": "query_memory",
+            "description": "查询外部记忆（语义搜索历史记忆）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索查询"},
+                    "limit": {"type": "integer", "default": 5, "description": "返回条数"}
+                },
+                "required": ["query"]
+            }
+        },
+        {
+            "name": "store_memory",
+            "description": "存储记忆到外部记忆提供者",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "记忆内容"},
+                    "tags": {"type": "array", "items": {"type": "string"}, "description": "标签列表（可选）"}
+                },
+                "required": ["content"]
+            }
+        },
         # ---- Phase 3: MCP 网关管理 ----
         {
             "name": "add_mcp_server",
@@ -790,7 +904,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '3.3.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '4.0.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -1640,6 +1754,176 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 2. 可通过 get_session_messages('{agent_id}') 查看进度
 3. 结果会自动记录到会话中
 4. 使用 list_sessions 查看所有子 Agent 状态"""
+
+    # ---- Phase 4: 浏览器自动化 ----
+    elif name == "browser_navigate":
+        url = arguments.get("url", "")
+        if not url:
+            raise ValueError("❌ 请提供 URL。\n建议：\n1. 确保包含协议前缀（https://）\n2. 检查 URL 拼写")
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
+        try:
+            import urllib.request
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                html = resp.read().decode("utf-8", errors="replace")
+            # 提取页面文本摘要
+            import re
+            text = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+            text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL)
+            text = re.sub(r'<[^>]+>', ' ', text)
+            text = re.sub(r'\s+', ' ', text).strip()
+            title_match = re.search(r'<title[^>]*>(.*?)</title>', html, re.DOTALL)
+            title = title_match.group(1).strip() if title_match else "无标题"
+            return f"页面: {title}\nURL: {url}\n长度: {len(html)} 字符\n\n内容摘要:\n{text[:2000]}"
+        except Exception as e:
+            raise ValueError(f"❌ 无法访问 {url}: {e}\n建议：\n1. 检查 URL 是否正确\n2. 确认网站可访问\n3. 尝试使用 web_fetch 作为替代")
+
+    elif name == "browser_snapshot":
+        try:
+            import urllib.request, re
+            # 使用上一次导航的 URL（从 web_fetch 获取）
+            return "⚠️ browser_snapshot 需要浏览器环境。\n在当前环境中，建议使用 web_fetch 获取页面内容，或使用 browser_navigate 导航后获取摘要。"
+        except Exception as e:
+            raise ValueError(f"❌ 获取页面快照失败: {e}")
+
+    elif name == "browser_screenshot":
+        return "⚠️ browser_screenshot 需要浏览器环境（Playwright/Puppeteer）。\n在 HF Space 沙箱中不可用。建议使用 web_fetch 获取页面内容作为替代。"
+
+    elif name == "browser_click":
+        selector = arguments.get("selector", "")
+        if not selector:
+            raise ValueError("❌ 请提供 CSS 选择器。\n建议：\n1. 使用 browser_snapshot 获取页面结构\n2. 使用精确的选择器（如 #id 或 .class）")
+        return f"⚠️ browser_click 需要浏览器环境。\n选择器: {selector}\n在当前环境中不可用。"
+
+    elif name == "browser_type":
+        selector = arguments.get("selector", "")
+        text = arguments.get("text", "")
+        if not selector or not text:
+            raise ValueError("❌ 请提供选择器和输入文本。")
+        return f"⚠️ browser_type 需要浏览器环境。\n在当前环境中不可用。"
+
+    elif name == "browser_evaluate":
+        script = arguments.get("script", "")
+        if not script:
+            raise ValueError("❌ 请提供 JavaScript 代码。")
+        return f"⚠️ browser_evaluate 需要浏览器环境。\n在当前环境中不可用。"
+
+    # ---- Phase 4: 消息平台 ----
+    elif name == "register_webhook":
+        wname = arguments.get("name", "")
+        wurl = arguments.get("url", "")
+        platform = arguments.get("platform", "custom")
+        secret = arguments.get("secret", "")
+        if not wname or not wurl:
+            raise ValueError("❌ 请提供通道名称和 Webhook URL。\n建议：\n1. name: 自定义通道名（如 'my-telegram'）\n2. url: Webhook 地址\n3. platform: telegram/feishu/slack/discord/custom")
+        try:
+            from backend.config import get_hermes_home
+            import json
+            webhooks_file = get_hermes_home() / "webhooks.json"
+            webhooks = {}
+            if webhooks_file.exists():
+                webhooks = json.loads(webhooks_file.read_text(encoding="utf-8"))
+            webhooks[wname] = {"url": wurl, "platform": platform, "secret": secret}
+            webhooks_file.write_text(json.dumps(webhooks, indent=2, ensure_ascii=False), encoding="utf-8")
+            return f"Webhook 通道 '{wname}' 已注册。\n平台: {platform}\nURL: {wurl}\n使用 send_notification 发送消息。"
+        except Exception as e:
+            raise ValueError(f"❌ 注册 Webhook 失败: {e}")
+
+    elif name == "send_notification":
+        message = arguments.get("message", "")
+        if not message:
+            raise ValueError("❌ 请提供通知内容。")
+        channel = arguments.get("channel", "default")
+        title = arguments.get("title", "Hermes 通知")
+        try:
+            from backend.config import get_hermes_home
+            import json, urllib.request
+            webhooks_file = get_hermes_home() / "webhooks.json"
+            if not webhooks_file.exists():
+                return "⚠️ 未注册任何 Webhook 通道。请先使用 register_webhook 注册。"
+            webhooks = json.loads(webhooks_file.read_text(encoding="utf-8"))
+            target = webhooks.get(channel) or webhooks.get("default")
+            if not target:
+                available = ", ".join(webhooks.keys())
+                return f"❌ 通道 '{channel}' 不存在。可用通道: {available}"
+            
+            wurl = target["url"]
+            platform = target.get("platform", "custom")
+            
+            # 根据平台格式化 payload
+            if platform == "feishu":
+                payload = json.dumps({"msg_type": "text", "content": {"text": f"{title}\n{message}"}}).encode("utf-8")
+            elif platform == "slack":
+                payload = json.dumps({"text": f"*{title}*\n{message}"}).encode("utf-8")
+            elif platform == "discord":
+                payload = json.dumps({"content": f"**{title}**\n{message}"}).encode("utf-8")
+            elif platform == "telegram":
+                payload = json.dumps({"text": f"*{title}*\n{message}", "parse_mode": "Markdown"}).encode("utf-8")
+            else:
+                payload = json.dumps({"title": title, "message": message}).encode("utf-8")
+            
+            req = urllib.request.Request(wurl, data=payload, headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = resp.read().decode("utf-8")
+            return f"通知已发送到 '{channel}' ({platform})。\n标题: {title}\n内容: {message[:100]}"
+        except Exception as e:
+            raise ValueError(f"❌ 发送通知失败: {e}\n建议：\n1. 检查 Webhook URL 是否正确\n2. 确认网络连接\n3. 检查平台密钥配置")
+
+    # ---- Phase 4: 外部记忆 ----
+    elif name == "store_memory":
+        content = arguments.get("content", "")
+        if not content:
+            raise ValueError("❌ 请提供记忆内容。")
+        tags = arguments.get("tags", [])
+        try:
+            # 存储到本地 learnings.md 作为默认后端
+            from datetime import datetime
+            ts = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+            tag_str = ", ".join(tags) if tags else "untagged"
+            entry = f"\n## [{ts}] {tag_str}\n- **内容**: {content}\n"
+            
+            from backend.config import get_hermes_home
+            memory_file = get_hermes_home() / "external_memory.md"
+            memory_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            existing = ""
+            if memory_file.exists():
+                existing = memory_file.read_text(encoding="utf-8")
+            memory_file.write_text(existing + entry, encoding="utf-8")
+            
+            return f"记忆已存储。\n标签: {tag_str}\n内容: {content[:100]}\n存储位置: external_memory.md"
+        except Exception as e:
+            raise ValueError(f"❌ 存储记忆失败: {e}")
+
+    elif name == "query_memory":
+        query = arguments.get("query", "")
+        if not query:
+            raise ValueError("❌ 请提供搜索查询。")
+        limit = int(arguments.get("limit", 5))
+        try:
+            from backend.config import get_hermes_home
+            memory_file = get_hermes_home() / "external_memory.md"
+            if not memory_file.exists():
+                return "暂无外部记忆。使用 store_memory 存储记忆。"
+            
+            text = memory_file.read_text(encoding="utf-8")
+            entries = text.split("## [")
+            # 简单关键词匹配
+            query_lower = query.lower()
+            matched = []
+            for entry in entries:
+                if query_lower in entry.lower():
+                    matched.append("## [" + entry)
+                    if len(matched) >= limit:
+                        break
+            
+            if not matched:
+                return f"未找到匹配 '{query}' 的记忆。\n建议：\n1. 尝试其他关键词\n2. 使用 store_memory 存储相关记忆"
+            
+            return f"找到 {len(matched)} 条匹配记忆\n{'='*50}\n" + "\n---\n".join(matched)
+        except Exception as e:
+            raise ValueError(f"❌ 查询记忆失败: {e}")
 
     # ---- Phase 3: MCP 网关管理 ----
     elif name == "add_mcp_server":

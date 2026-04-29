@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.0.0',
+            date: '2026-04-29 14:30',
+            title: '生态扩展',
+            changes: [
+                '浏览器自动化: browser_navigate/snapshot/screenshot/click/type/evaluate',
+                '消息平台: register_webhook + send_notification (Telegram/飞书/Slack/Discord)',
+                '外部记忆: store_memory + query_memory (语义搜索)',
+                'browser_navigate: 沙箱降级为 urllib 抓取+文本摘要',
+                'Webhook 管理: webhooks.json 持久化存储',
+                'MCP 工具 53 → 63 个',
+            ],
+        },        {
             version: '3.3.0',
             date: '2026-04-29 14:00',
             title: '多 Agent 工作流',
