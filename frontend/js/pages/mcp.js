@@ -172,8 +172,8 @@ const McpPage = (() => {
 
         // MCP 测试结果
         const testResultHtml = _mcpTestResult ? `
-            <div style="margin-bottom:16px;padding:12px 16px;border-radius:var(--radius-sm);background:${_mcpTestResult.ok ? 'var(--success-bg, #f0fdf4)' : 'var(--error-bg, #fef2f2)'};border:1px solid ${_mcpTestResult.ok ? 'var(--success-border, #bbf7d0)' : 'var(--error-border, #fecaca)'}">
-                <div style="font-size:13px;font-weight:600;color:${_mcpTestResult.ok ? 'var(--success, #16a34a)' : 'var(--error, #dc2626)'}">${_mcpTestResult.ok ? '✅ MCP 连接正常' : '❌ MCP 连接失败'}</div>
+            <div style="margin-bottom:16px;padding:12px 16px;border-radius:var(--radius-sm);background:${_mcpTestResult.ok ? 'var(--green-bg)' : 'var(--red-bg)'};border:1px solid ${_mcpTestResult.ok ? 'var(--green)' : 'var(--red)'}">
+                <div style="font-size:13px;font-weight:600;color:${_mcpTestResult.ok ? 'var(--green)' : 'var(--red)'}">${_mcpTestResult.ok ? '✅ MCP 连接正常' : '❌ MCP 连接失败'}</div>
                 ${_mcpTestResult.detail ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${_mcpTestResult.detail}</div>` : ''}
             </div>
         ` : '';

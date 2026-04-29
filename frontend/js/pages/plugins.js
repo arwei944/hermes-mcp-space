@@ -60,14 +60,14 @@ const PluginsPage = (() => {
 
         // 搜索 + 筛选
         const filterHtml = `<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <input type="text" id="pluginSearch" placeholder="搜索插件..." value="${Components.escapeHtml(_keyword)}" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
-            <select id="pluginType" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
+            <input type="text" id="pluginSearch" placeholder="搜索插件..." value="${Components.escapeHtml(_keyword)}" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
+            <select id="pluginType" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
                 <option value="">全部 (${typeCounts.all})</option>
                 <option value="tool" ${_filterType==='tool'?'selected':''}>工具 (${typeCounts.tool})</option>
                 <option value="skill" ${_filterType==='skill'?'selected':''}>技能 (${typeCounts.skill})</option>
                 <option value="memory" ${_filterType==='memory'?'selected':''}>记忆 (${typeCounts.memory})</option>
             </select>
-            <select id="pluginCategory" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
+            <select id="pluginCategory" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
                 <option value="">所有分类</option>
                 ${Object.entries(_categories).map(([cat, count]) => `<option value="${cat}" ${_filterCategory===cat?'selected':''}>${cat} (${count})</option>`).join('')}
             </select>
@@ -89,7 +89,7 @@ const PluginsPage = (() => {
         const typeColor = { tool: 'blue', skill: 'purple', memory: 'green' }[p.type] || 'gray';
         const stars = '★'.repeat(Math.round(p.rating || 0)) + '☆'.repeat(5 - Math.round(p.rating || 0));
 
-        return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        return `<div style="border:1px solid var(--border);border-radius:var(--radius-xs);padding:16px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
                 <div style="flex:1">
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
@@ -110,7 +110,7 @@ const PluginsPage = (() => {
                     ${(p.tags || []).slice(0, 3).map(t => `<span style="font-size:10px;padding:2px 6px;background:var(--surface-secondary);border-radius:var(--radius-xs);color:var(--text-tertiary)">${Components.escapeHtml(t)}</span>`).join('')}
                 </div>
                 <div style="font-size:11px;color:var(--text-tertiary)">
-                    <span style="color:#f59e0b">${stars}</span>
+                    <span style="color:var(--orange)">${stars}</span>
                     <span style="margin-left:4px">${p.rating || '?'}</span>
                     <span style="margin-left:8px">${(p.downloads || 0).toLocaleString()} 下载</span>
                 </div>
@@ -131,7 +131,7 @@ const PluginsPage = (() => {
         }
         return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
             ${_installed.map(p => `
-                <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px">
+                <div style="border:1px solid var(--border);border-radius:var(--radius-xs);padding:16px">
                     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
                         <div>
                             <div style="font-weight:600;font-size:14px">${Components.escapeHtml(p.name)}</div>

@@ -138,7 +138,7 @@ const DashboardPage = (() => {
                 const intensity = max > 0 ? val / max : 0;
                 const bg = intensity === 0 ? 'var(--bg-secondary)' : `rgba(99,102,241,${0.15 + intensity * 0.85})`;
                 const title = `${tool} @ ${h}:00 → ${val} 次`;
-                html += `<div style="width:${cellSize}px;height:${cellSize}px;border-radius:3px;background:${bg};margin-right:${gap}px;cursor:pointer;transition:transform 0.15s" title="${Components.escapeHtml(title)}" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'"></div>`;
+                html += `<div style="width:${cellSize}px;height:${cellSize}px;border-radius:var(--radius-tag);background:${bg};margin-right:${gap}px;cursor:pointer;transition:transform 0.15s" title="${Components.escapeHtml(title)}" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'"></div>`;
             });
             html += '</div>';
         });
@@ -157,8 +157,8 @@ const DashboardPage = (() => {
             const rateColor = d.success_rate >= 90 ? 'var(--green)' : d.success_rate >= 70 ? 'var(--orange)' : 'var(--red)';
             html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                 <div style="width:120px;font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0" title="${Components.escapeHtml(d.tool)}">${Components.escapeHtml(d.tool)}</div>
-                <div style="flex:1;height:18px;background:var(--bg-secondary);border-radius:9px;overflow:hidden;position:relative">
-                    <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),rgba(99,102,241,0.6));border-radius:9px;transition:width 0.6s ease"></div>
+                <div style="flex:1;height:18px;background:var(--bg-secondary);border-radius:var(--radius-sm);overflow:hidden;position:relative">
+                    <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:var(--radius-sm);transition:width 0.6s ease"></div>
                 </div>
                 <div style="width:50px;text-align:right;font-size:11px;color:var(--text-primary);font-weight:600;flex-shrink:0">${d.total_calls}</div>
                 <div style="width:40px;text-align:right;font-size:10px;color:${rateColor};flex-shrink:0">${d.success_rate}%</div>
@@ -263,7 +263,7 @@ const DashboardPage = (() => {
             if (a.type === 'tool_call') {
                 const icon = a.ok ? '✓' : '✕';
                 const iconColor = a.ok ? 'var(--green)' : 'var(--red)';
-                const bgHover = a.ok ? 'rgba(34,197,94,0.04)' : 'rgba(239,68,68,0.04)';
+                const bgHover = a.ok ? 'var(--green-bg)' : 'var(--red-bg)';
                 const errTip = a.err ? ` title="${Components.escapeHtml(a.err)}"` : '';
                 html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:default;transition:background 0.15s" onmouseover="this.style.background='${bgHover}'" onmouseout="this.style.background='transparent'"${errTip}>
                     <span style="color:${iconColor};font-weight:700;font-size:14px;flex-shrink:0;width:16px;text-align:center">${icon}</span>
@@ -281,7 +281,7 @@ const DashboardPage = (() => {
                     <div style="flex:1;min-width:0">
                         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
                             <span style="color:${roleColor};font-weight:600;font-size:11px">${roleLabel}</span>
-                            ${a.tool ? `<span style="color:var(--text-tertiary);font-size:10px;background:var(--bg-secondary);padding:1px 5px;border-radius:3px">${Components.escapeHtml(a.tool)}</span>` : ''}
+                            ${a.tool ? `<span style="color:var(--text-tertiary);font-size:10px;background:var(--bg-secondary);padding:1px 5px;border-radius:var(--radius-tag)">${Components.escapeHtml(a.tool)}</span>` : ''}
                         </div>
                         <div style="color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(a.content || '')}">${Components.escapeHtml(a.content || '')}</div>
                     </div>
@@ -309,7 +309,7 @@ const DashboardPage = (() => {
         let html = '';
         errors.slice(0, 8).forEach(e => {
             const time = e.ts ? Components.formatTime(e.ts) : '';
-            html += `<div style="display:flex;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(239,68,68,0.04);border-left:3px solid var(--red);margin-bottom:6px">
+            html += `<div style="display:flex;gap:10px;padding:8px 10px;border-radius:8px;background:var(--red-bg);border-left:3px solid var(--red);margin-bottom:6px">
                 <div style="flex-shrink:0">
                     <div style="font-size:12px;font-weight:600;color:var(--red)">${Components.escapeHtml(e.tool || '?')}</div>
                     <div style="font-size:10px;color:var(--text-tertiary)">${time}</div>

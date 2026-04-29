@@ -152,8 +152,8 @@ const KnowledgePage = (() => {
             const time = Components.formatTime(s.created_at);
             const statusColor = s.status === 'active' ? 'var(--green)' : 'var(--text-tertiary)';
             const statusDot = s.status === 'active' ? '🟢' : '⚪';
-            const sourceTag = s.source ? `<span style="font-size:9px;background:var(--bg-secondary);padding:1px 6px;border-radius:4px;color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>` : '';
-            const modelTag = s.model && s.model !== 'unknown' ? `<span style="font-size:9px;background:rgba(99,102,241,0.1);padding:1px 6px;border-radius:4px;color:var(--accent)">${Components.escapeHtml(s.model)}</span>` : '';
+            const sourceTag = s.source ? `<span style="font-size:10px;background:var(--bg-secondary);padding:1px 6px;border-radius:var(--radius-tag);color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>` : '';
+            const modelTag = s.model && s.model !== 'unknown' ? `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(s.model)}</span>` : '';
             const lastMsg = s.last_message ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.last_message)}">${Components.escapeHtml(s.last_message)}</div>` : '';
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;cursor:default;transition:transform 0.15s,box-shadow 0.15s;border:1px solid var(--border)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -238,7 +238,7 @@ const KnowledgePage = (() => {
 
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
         _skills.forEach(s => {
-            const tags = (s.tags || []).map(t => `<span style="font-size:9px;background:rgba(99,102,241,0.1);padding:1px 6px;border-radius:4px;color:var(--accent)">${Components.escapeHtml(t)}</span>`).join('');
+            const tags = (s.tags || []).map(t => `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(t)}</span>`).join('');
             const preview = (s.preview || s.description || '无描述').slice(0, 120);
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border:1px solid var(--border);cursor:default;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -265,7 +265,7 @@ const KnowledgePage = (() => {
 
         // 操作按钮
         html += `<div style="margin-bottom:16px;display:flex;gap:8px">
-            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:#fff;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">🧠 执行全量学习（写入文件）</button>
+            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:var(--surface);transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">🧠 执行全量学习（写入文件）</button>
             <span style="font-size:11px;color:var(--text-tertiary);display:flex;align-items:center">自动分析当前数据，将结果写入 learnings.md 和 MEMORY.md</span>
         </div>`;
 
@@ -279,11 +279,11 @@ const KnowledgePage = (() => {
                 const statusColor = e.is_fixed ? 'var(--green)' : 'var(--red)';
                 const statusText = e.is_fixed ? '✅ 已修复' : '⚠️ 未修复';
                 const severityColor = e.severity === 'high' ? 'var(--red)' : e.severity === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
-                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor}">
+                html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor}">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                         <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(e.tool)}</span>
                         <div style="display:flex;gap:8px;align-items:center">
-                            <span style="font-size:10px;color:${severityColor};background:${severityColor}15;padding:2px 6px;border-radius:4px">${e.severity}</span>
+                            <span style="font-size:10px;color:${severityColor};background:${severityColor}15;padding:2px 6px;border-radius:var(--radius-tag)">${e.severity}</span>
                             <span style="font-size:10px;color:${statusColor}">${statusText}</span>
                             <span style="font-size:10px;color:var(--text-tertiary)">${e.count}次</span>
                         </div>
@@ -302,7 +302,7 @@ const KnowledgePage = (() => {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
             patterns.slice(0, 5).forEach(p => {
-                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--green)">
+                html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--green)">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                         <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(p.tool)}</span>
                         <span style="font-size:10px;color:var(--green)">${p.success_rate}% 成功 · ${p.avg_latency_ms}ms</span>
@@ -321,10 +321,10 @@ const KnowledgePage = (() => {
         } else {
             prefs.forEach(p => {
                 const confColor = p.confidence === 'high' ? 'var(--green)' : p.confidence === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
-                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--blue)">
+                html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--blue)">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                         <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(p.category)}</span>
-                        <span style="font-size:9px;color:${confColor};background:${confColor}15;padding:1px 5px;border-radius:3px">${p.confidence}</span>
+                        <span style="font-size:10px;color:${confColor};background:${confColor}15;padding:1px 5px;border-radius:var(--radius-tag)">${p.confidence}</span>
                     </div>
                     <div style="font-size:11px;color:var(--text-secondary)">${Components.escapeHtml(p.content)}</div>
                 </div>`;
@@ -340,10 +340,10 @@ const KnowledgePage = (() => {
         } else {
             suggestions.slice(0, 5).forEach(s => {
                 const typeLabel = s.type === 'composite' ? '复合技能' : '快捷封装';
-                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--purple)">
+                html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--purple)">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                         <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(s.name)}</span>
-                        <span style="font-size:9px;background:rgba(168,85,247,0.1);padding:1px 5px;border-radius:3px;color:var(--purple)">${typeLabel}</span>
+                        <span style="font-size:10px;background:var(--purple-bg);padding:1px 5px;border-radius:var(--radius-tag);color:var(--purple)">${typeLabel}</span>
                         <span style="font-size:10px;color:var(--text-tertiary);margin-left:auto">${s.frequency}次</span>
                     </div>
                     <div style="font-size:11px;color:var(--text-secondary)">${Components.escapeHtml(s.description)}</div>

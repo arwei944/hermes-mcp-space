@@ -443,7 +443,7 @@ const AboutPage = (() => {
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
                         <span class="mono" style="font-size:13px;font-weight:600;color:var(--accent)">v${rel.version}</span>
                         <span style="font-size:12px;color:var(--text-tertiary)">${rel.date}</span>
-                        ${isCurrent ? '<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px">当前版本</span>' : ''}
+                        ${isCurrent ? '<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:var(--radius-tag)">当前版本</span>' : ''}
                         <span style="font-size:13px;font-weight:500">${rel.title}</span>
                     </div>
                     <ul style="margin:0;padding-left:20px;font-size:12px;color:var(--text-secondary);line-height:1.8">

@@ -90,10 +90,10 @@ const App = (() => {
         const text = document.getElementById('statusText');
         try {
             await API.system.health();
-            if (dot) dot.style.background = '#22c55e';
+            if (dot) dot.style.background = 'var(--green)';
             if (text) text.textContent = '已连接';
         } catch (err) {
-            if (dot) dot.style.background = '#f59e0b';
+            if (dot) dot.style.background = 'var(--orange)';
             if (text) text.textContent = '降级模式';
         }
     }

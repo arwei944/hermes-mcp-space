@@ -107,7 +107,7 @@ const MarketplacePage = (() => {
                                 <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="removeMCPServer" data-name="${Components.escapeHtml(s.name)}">删除</button>
                             </div>
                         </div>
-                        ${s.prefix ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">前缀: <code style="background:var(--bg-secondary);padding:1px 4px;border-radius:3px">${Components.escapeHtml(s.prefix)}</code></div>` : ''}
+                        ${s.prefix ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">前缀: <code style="background:var(--bg-secondary);padding:1px 4px;border-radius:var(--radius-tag)">${Components.escapeHtml(s.prefix)}</code></div>` : ''}
                         ${s.last_check ? `<div style="font-size:11px;color:var(--text-tertiary)">最后检查: ${s.last_check}</div>` : ''}
                     </div>
                 `).join('')}
@@ -138,7 +138,7 @@ const MarketplacePage = (() => {
                                 <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.description || '无描述')}</div>
                                 <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
                                     ${(s.tags || []).map(t => `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--bg-secondary);color:var(--text-tertiary)">${Components.escapeHtml(t)}</span>`).join('')}
-                                    ${s.category ? `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--accent-bg, #eff6ff);color:var(--accent)">${Components.escapeHtml(s.category)}</span>` : ''}
+                                    ${s.category ? `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--accent-bg, var(--blue-bg));color:var(--accent)">${Components.escapeHtml(s.category)}</span>` : ''}
                                     ${s.version ? `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--bg-secondary);color:var(--text-tertiary)">v${Components.escapeHtml(s.version)}</span>` : ''}
                                 </div>
                             </div>

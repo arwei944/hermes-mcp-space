@@ -27,6 +27,7 @@
     --radius: 12px;
     --radius-sm: 8px;
     --radius-xs: 6px;
+    --radius-tag: 4px;
 
     --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
     --font-mono: "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -47,6 +48,11 @@
     --red-bg: rgba(255, 59, 48, 0.1);
     --purple-bg: rgba(175, 82, 222, 0.1);
     --blue-bg: rgba(0, 122, 255, 0.1);
+
+    /* 别名（兼容 JS 内联样式中的引用） */
+    --bg-secondary: var(--surface-secondary);
+    --text: var(--text-primary);
+    --accent-bg: var(--accent-light);
 
     --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -120,7 +126,7 @@
     gap: 0;
     height: calc(100vh - 140px);
     background: var(--surface);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     overflow: hidden;
 }
@@ -175,13 +181,13 @@
 }
 .chat-message.user .chat-message-content {
     background: var(--accent-light);
-    border-radius: var(--radius-md) var(--radius-md) var(--radius-md) 4px;
+    border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) 4px;
     padding: 10px 14px;
     margin-left: 40px;
 }
 .chat-message.assistant .chat-message-content {
     background: var(--surface-secondary);
-    border-radius: var(--radius-md) var(--radius-md) var(--radius-md) 4px;
+    border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) 4px;
     padding: 10px 14px;
     margin-left: 40px;
 }
@@ -347,7 +353,7 @@ textarea {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, var(--accent), var(--purple));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -856,11 +862,11 @@ textarea {
     white-space: nowrap;
 }
 
-.badge-green { background: rgba(52, 199, 89, 0.12); color: #248a3d; }
-.badge-orange { background: rgba(255, 149, 0, 0.12); color: #c93400; }
-.badge-red { background: rgba(255, 59, 48, 0.12); color: #d70015; }
-.badge-blue { background: rgba(0, 122, 255, 0.12); color: #0040dd; }
-.badge-purple { background: rgba(175, 82, 222, 0.12); color: #8944ab; }
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-orange { background: var(--orange-bg); color: var(--orange); }
+.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
+.badge-purple { background: var(--purple-bg); color: var(--purple); }
 
 /* ============================================
    工具卡片网格
@@ -1228,7 +1234,7 @@ textarea {
     appearance: none;
     width: 36px;
     height: 20px;
-    background: #e5e5ea;
+    background: var(--border-strong);
     border: none;
     border-radius: 10px;
     position: relative;
@@ -1288,7 +1294,7 @@ textarea {
 }
 
 .skeleton {
-    background: linear-gradient(90deg, #f0f0f2 25%, #e8e8ec 50%, #f0f0f2 75%);
+    background: linear-gradient(90deg, var(--surface-secondary) 25%, var(--border) 50%, var(--surface-secondary) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     border-radius: var(--radius-xs);
