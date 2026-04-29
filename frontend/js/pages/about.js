@@ -5,6 +5,16 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.2.0',
+            date: '2026-04-29 16:20',
+            title: 'SOLO 对话回传 + 思考层评估',
+            changes: [
+                'AGENTS.md 指令驱动：SOLO 每次回复后自动回传对话摘要',
+                '思考层评估：架构/Bug/优化/新功能请求自动包含可行性+复杂度+风险评估',
+                '经验提炼：同类问题出现3次以上自动 add_learning 记录',
+                '三层架构：自动层(MCP拦截) + 指令层(AGENTS.md) + 提炼层(add_learning)',
+            ],
+        },        {
             version: '4.1.1',
             date: '2026-04-29 16:05',
             title: '时间修复 + SOLO 对话实时记录',
