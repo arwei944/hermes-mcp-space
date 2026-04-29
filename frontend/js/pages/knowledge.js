@@ -22,12 +22,11 @@ const KnowledgePage = (() => {
         startPolling();
     }
 
-    function destroy() {
-        stopPolling();
-    }
-
     function stopPolling() {
-        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+        if (_pollTimer) {
+            clearInterval(_pollTimer);
+            _pollTimer = null;
+        }
     }
 
     function startPolling() {
@@ -54,8 +53,13 @@ const KnowledgePage = (() => {
             _memory = memory || {};
             _skills = skills || [];
             _analysis = analysis || {};
-        } catch (err) {
-            _overview = {}; _sessions = []; _experiences = []; _memory = {}; _skills = []; _analysis = {};
+        } catch (_err) {
+            _overview = {};
+            _sessions = [];
+            _experiences = [];
+            _memory = {};
+            _skills = [];
+            _analysis = {};
         }
     }
 
@@ -72,13 +76,17 @@ const KnowledgePage = (() => {
         `;
     }
 
-    function onSSEEvent(type, data) {
+    function onSSEEvent(type, _data) {
         if (type === 'mcp.tool_complete') {
             // 工具调用完成后刷新概览数据
-            API.get('/api/knowledge/overview').then(o => {
-                _overview = o || {};
-                updateOverview();
-            }).catch(() => {});
+            API.get('/api/knowledge/overview')
+                .then((o) => {
+                    _overview = o || {};
+                    updateOverview();
+                })
+                .catch(() => {
+                    /* ignore */
+                });
         }
     }
 
@@ -102,14 +110,25 @@ const KnowledgePage = (() => {
         // Tab 栏
         const tabs = [
             { key: 'sessions', label: '会话记录', icon: Components.icon('messageCircle', 14), count: _sessions.length },
-            { key: 'experiences', label: '经验提炼', icon: Components.icon('lightbulb', 14), count: _experiences.length },
+            {
+                key: 'experiences',
+                label: '经验提炼',
+                icon: Components.icon('lightbulb', 14),
+                count: _experiences.length,
+            },
             { key: 'memory', label: '记忆内容', icon: Components.icon('brain', 14), count: _memory.chars || 0 },
             { key: 'skills', label: '技能库', icon: Components.icon('zap', 14), count: _skills.length },
-            { key: 'analysis', label: '自动分析', icon: Components.icon('microscope', 14), count: ((_analysis.errors||[]).length + (_analysis.patterns||[]).length) },
+            {
+                key: 'analysis',
+                label: '自动分析',
+                icon: Components.icon('microscope', 14),
+                count: (_analysis.errors || []).length + (_analysis.patterns || []).length,
+            },
         ];
 
-        let tabsHtml = '<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px">';
-        tabs.forEach(t => {
+        let tabsHtml =
+            '<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px">';
+        tabs.forEach((t) => {
             const active = _activeTab === t.key;
             const bg = active ? 'var(--accent)' : 'transparent';
             const color = active ? '#fff' : 'var(--text-secondary)';
@@ -135,26 +154,40 @@ const KnowledgePage = (() => {
 
     function buildTabContent() {
         switch (_activeTab) {
-            case 'sessions': return buildSessionsTab();
-            case 'experiences': return buildExperiencesTab();
-            case 'memory': return buildMemoryTab();
-            case 'skills': return buildSkillsTab();
-            case 'analysis': return buildAnalysisTab();
-            default: return buildSessionsTab();
+            case 'sessions':
+                return buildSessionsTab();
+            case 'experiences':
+                return buildExperiencesTab();
+            case 'memory':
+                return buildMemoryTab();
+            case 'skills':
+                return buildSkillsTab();
+            case 'analysis':
+                return buildAnalysisTab();
+            default:
+                return buildSessionsTab();
         }
     }
 
     function buildSessionsTab() {
-        if (_sessions.length === 0) return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无会话记录</div>';
+        if (_sessions.length === 0)
+            return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无会话记录</div>';
 
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">';
-        _sessions.forEach(s => {
+        _sessions.forEach((s) => {
             const time = Components.formatTime(s.created_at);
-            const statusColor = s.status === 'active' ? 'var(--green)' : 'var(--text-tertiary)';
-            const statusDot = s.status === 'active' ? Components.icon('checkCircle', 10) : Components.icon('circle', 10);
-            const sourceTag = s.source ? `<span style="font-size:10px;background:var(--bg-secondary);padding:1px 6px;border-radius:var(--radius-tag);color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>` : '';
-            const modelTag = s.model && s.model !== 'unknown' ? `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(s.model)}</span>` : '';
-            const lastMsg = s.last_message ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.last_message)}">${Components.escapeHtml(s.last_message)}</div>` : '';
+            const statusDot =
+                s.status === 'active' ? Components.icon('checkCircle', 10) : Components.icon('circle', 10);
+            const sourceTag = s.source
+                ? `<span style="font-size:10px;background:var(--bg-secondary);padding:1px 6px;border-radius:var(--radius-tag);color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>`
+                : '';
+            const modelTag =
+                s.model && s.model !== 'unknown'
+                    ? `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(s.model)}</span>`
+                    : '';
+            const lastMsg = s.last_message
+                ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.last_message)}">${Components.escapeHtml(s.last_message)}</div>`
+                : '';
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;cursor:default;transition:transform 0.15s,box-shadow 0.15s;border:1px solid var(--border)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -175,20 +208,21 @@ const KnowledgePage = (() => {
     }
 
     function buildExperiencesTab() {
-        if (_experiences.length === 0) return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无经验记录<br><span style="font-size:11px">经验会在同类问题出现多次后自动提炼</span></div>';
+        if (_experiences.length === 0)
+            return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无经验记录<br><span style="font-size:11px">经验会在同类问题出现多次后自动提炼</span></div>';
 
         let html = '<div style="display:flex;flex-direction:column;gap:10px">';
         _experiences.forEach((exp, i) => {
             const content = exp.content || '';
-            const lines = content.split("\n").filter(l => l.trim());
+            const lines = content.split('\n').filter((l) => l.trim());
             // 提取关键信息
             const title = exp.title || `经验 #${i + 1}`;
-            const preview = lines.slice(0, 4).join(" ").slice(0, 150);
+            const preview = lines.slice(0, 4).join(' ').slice(0, 150);
             const fullContent = content.slice(0, 500);
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--orange);cursor:default;transition:transform 0.15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    ${Components.icon("lightbulb", 14)}
+                    ${Components.icon('lightbulb', 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(title)}</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap" title="${Components.escapeHtml(fullContent)}">${Components.escapeHtml(preview)}${fullContent.length > 150 ? '...' : ''}</div>
@@ -200,29 +234,34 @@ const KnowledgePage = (() => {
 
     function buildMemoryTab() {
         const content = _memory.content || '';
-        if (!content.trim()) return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无记忆内容</div>';
+        if (!content.trim())
+            return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无记忆内容</div>';
 
         // 将 Markdown 内容分段展示为卡片
-        const sections = content.split("\n## ").filter(s => s.trim());
+        const sections = content.split('\n## ').filter((s) => s.trim());
         let html = '<div style="display:flex;flex-direction:column;gap:12px">';
 
         // 第一段（标题前）
-        if (sections[0] && !sections[0].startsWith("## ")) {
+        if (sections[0] && !sections[0].startsWith('## ')) {
             const first = sections.shift();
-            const lines = first.split("\n").filter(l => l.trim());
+            const lines = first.split('\n').filter((l) => l.trim());
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green)">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    ${Components.icon("brain", 14)}
+                    ${Components.icon('brain', 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">Agent 长期记忆</span>
                 </div>
-                <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${Components.escapeHtml(lines.slice(0, 8).join("\n"))}</div>
+                <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${Components.escapeHtml(lines.slice(0, 8).join('\n'))}</div>
             </div>`;
         }
 
-        sections.forEach(sec => {
-            const lines = sec.split("\n");
-            const title = "## " + (lines[0] || "").trim();
-            const body = lines.slice(1).filter(l => l.trim()).join("\n").slice(0, 300);
+        sections.forEach((sec) => {
+            const lines = sec.split('\n');
+            const title = '## ' + (lines[0] || '').trim();
+            const body = lines
+                .slice(1)
+                .filter((l) => l.trim())
+                .join('\n')
+                .slice(0, 300);
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green);cursor:default;transition:transform 0.15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
                 <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">${Components.escapeHtml(title)}</div>
                 <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${Components.escapeHtml(body)}${body.length >= 300 ? '\n...' : ''}</div>
@@ -234,16 +273,22 @@ const KnowledgePage = (() => {
     }
 
     function buildSkillsTab() {
-        if (_skills.length === 0) return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无技能</div>';
+        if (_skills.length === 0)
+            return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无技能</div>';
 
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
-        _skills.forEach(s => {
-            const tags = (s.tags || []).map(t => `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(t)}</span>`).join('');
+        _skills.forEach((s) => {
+            const tags = (s.tags || [])
+                .map(
+                    (t) =>
+                        `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(t)}</span>`,
+                )
+                .join('');
             const preview = (s.preview || s.description || '无描述').slice(0, 120);
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border:1px solid var(--border);cursor:default;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    ${Components.icon("zap", 14)}
+                    ${Components.icon('zap', 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(s.name)}</span>
                 </div>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${tags}</div>
@@ -273,12 +318,22 @@ const KnowledgePage = (() => {
         html += `<div style="margin-bottom:20px">
             <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">${Components.icon('alertCircle', 14)} 错误模式 (${errors.length})</div>`;
         if (errors.length === 0) {
-            html += '<div style="font-size:12px;color:var(--green);padding:8px">' + Components.icon('check', 12) + ' 没有检测到错误模式</div>';
+            html +=
+                '<div style="font-size:12px;color:var(--green);padding:8px">' +
+                Components.icon('check', 12) +
+                ' 没有检测到错误模式</div>';
         } else {
-            errors.slice(0, 8).forEach(e => {
+            errors.slice(0, 8).forEach((e) => {
                 const statusColor = e.is_fixed ? 'var(--green)' : 'var(--red)';
-                const statusText = e.is_fixed ? Components.icon('check', 10) + ' 已修复' : Components.icon('alertTriangle', 10) + ' 未修复';
-                const severityColor = e.severity === 'high' ? 'var(--red)' : e.severity === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
+                const statusText = e.is_fixed
+                    ? Components.icon('check', 10) + ' 已修复'
+                    : Components.icon('alertTriangle', 10) + ' 未修复';
+                const severityColor =
+                    e.severity === 'high'
+                        ? 'var(--red)'
+                        : e.severity === 'medium'
+                          ? 'var(--orange)'
+                          : 'var(--text-tertiary)';
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor}">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                         <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(e.tool)}</span>
@@ -301,7 +356,7 @@ const KnowledgePage = (() => {
         if (patterns.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
-            patterns.slice(0, 5).forEach(p => {
+            patterns.slice(0, 5).forEach((p) => {
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--green)">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                         <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(p.tool)}</span>
@@ -319,8 +374,13 @@ const KnowledgePage = (() => {
         if (prefs.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
-            prefs.forEach(p => {
-                const confColor = p.confidence === 'high' ? 'var(--green)' : p.confidence === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
+            prefs.forEach((p) => {
+                const confColor =
+                    p.confidence === 'high'
+                        ? 'var(--green)'
+                        : p.confidence === 'medium'
+                          ? 'var(--orange)'
+                          : 'var(--text-tertiary)';
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--blue)">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                         <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(p.category)}</span>
@@ -338,7 +398,7 @@ const KnowledgePage = (() => {
         if (suggestions.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无建议</div>';
         } else {
-            suggestions.slice(0, 5).forEach(s => {
+            suggestions.slice(0, 5).forEach((s) => {
                 const typeLabel = s.type === 'composite' ? '复合技能' : '快捷封装';
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--purple)">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
@@ -366,5 +426,5 @@ const KnowledgePage = (() => {
         }
     }
 
-    return { render, switchTab, runAutoLearn };
+    return { render, switchTab, runAutoLearn, onSSEEvent };
 })();

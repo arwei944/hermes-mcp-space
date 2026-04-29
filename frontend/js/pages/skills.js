@@ -17,7 +17,7 @@ const SkillsPage = (() => {
         try {
             const data = await API.skills.list();
             _skills = data.skills || data || [];
-        } catch (err) {
+        } catch (_err) {
             _skills = [];
         }
 
@@ -28,7 +28,7 @@ const SkillsPage = (() => {
     function buildPage() {
         const statsHtml = `<div class="stats">
             ${Components.renderStatCard('技能总数', _skills.length, '', Components.icon('zap', 16), 'purple')}
-            ${Components.renderStatCard('已激活', _skills.filter(s => s.status !== 'disabled').length, '', Components.icon('check', 14), 'green')}
+            ${Components.renderStatCard('已激活', _skills.filter((s) => s.status !== 'disabled').length, '', Components.icon('check', 14), 'green')}
         </div>`;
 
         const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px">
@@ -37,15 +37,23 @@ const SkillsPage = (() => {
 
         const editorHtml = _showEditor ? buildEditor() : '';
 
-        const skillsHtml = _skills.length === 0
-            ? Components.createEmptyState(Components.icon('zap', 16), '暂无技能', '点击「创建技能」添加第一个技能', '')
-            : `<div class="table-wrapper"><table class="table">
+        const skillsHtml =
+            _skills.length === 0
+                ? Components.createEmptyState(
+                      Components.icon('zap', 16),
+                      '暂无技能',
+                      '点击「创建技能」添加第一个技能',
+                      '',
+                  )
+                : `<div class="table-wrapper"><table class="table">
                 <thead><tr><th>名称</th><th>描述</th><th>标签</th><th>操作</th></tr></thead>
                 <tbody>
-                    ${_skills.map(s => `<tr>
+                    ${_skills
+                        .map(
+                            (s) => `<tr>
                         <td class="mono" style="color:var(--accent);font-weight:500">${Components.escapeHtml(s.name || '-')}</td>
                         <td style="font-size:12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.description || '-')}</td>
-                        <td>${(s.tags || []).map(t => Components.renderBadge(t, 'blue')).join(' ') || '-'}</td>
+                        <td>${(s.tags || []).map((t) => Components.renderBadge(t, 'blue')).join(' ') || '-'}</td>
                         <td>
                             <div style="display:flex;gap:4px">
                                 <button type="button" class="btn btn-sm btn-ghost" data-action="viewSkill" data-name="${Components.escapeHtml(s.name)}" title="查看">${Components.icon('eye', 14)}</button>
@@ -53,7 +61,9 @@ const SkillsPage = (() => {
                                 <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSkill" data-name="${Components.escapeHtml(s.name)}" title="删除">${Components.icon('trash', 16)}</button>
                             </div>
                         </td>
-                    </tr>`).join('')}
+                    </tr>`,
+                        )
+                        .join('')}
                 </tbody>
             </table></div>`;
 
@@ -61,7 +71,7 @@ const SkillsPage = (() => {
     }
 
     function buildEditor() {
-        const title = _isCreating ? '创建技能' : (_currentSkill ? `编辑: ${_currentSkill}` : '编辑技能');
+        const title = _isCreating ? '创建技能' : _currentSkill ? `编辑: ${_currentSkill}` : '编辑技能';
         return `<div class="modal-overlay" data-action="hideEditor">
             <div class="modal" style="max-width:800px;width:90%" onclick="event.stopPropagation()">
                 <div class="modal-header">
@@ -72,13 +82,16 @@ const SkillsPage = (() => {
                     ${_isCreating ? Components.formGroup('技能名称', `<input class="form-input" id="skillName" placeholder="例如: my-skill">`, '英文、数字、下划线') : ''}
                     ${Components.formGroup('描述', `<input class="form-input" id="skillDesc" placeholder="技能描述" value="${Components.escapeHtml(_currentSkill?.description || '')}">`)}
                     ${Components.formGroup('标签', `<input class="form-input" id="skillTags" placeholder="例如: 开发, 工具" value="${Components.escapeHtml((_currentSkill?.tags || []).join(', '))}">`, '逗号分隔')}
-                    ${Components.formGroup('内容', `
+                    ${Components.formGroup(
+                        '内容',
+                        `
                         <div style="display:flex;gap:8px;margin-bottom:8px">
                             <button type="button" class="btn btn-sm btn-ghost" data-action="previewContent">预览</button>
                             <button type="button" class="btn btn-sm btn-ghost" data-action="insertTemplate">插入模板</button>
                         </div>
                         <textarea class="form-input" id="skillContent" rows="12" placeholder="# 技能说明\n\n描述该技能的功能和使用方法..." style="font-family:var(--mono-font, monospace);font-size:13px">${Components.escapeHtml(_editorContent)}</textarea>
-                    `)}
+                    `,
+                    )}
                     <div id="skillPreview" style="display:none;margin-top:12px;padding:16px;border-radius:var(--radius-sm);background:var(--surface-secondary);border:1px solid var(--border)">
                         <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">预览</div>
                         <div class="markdown-body" id="skillPreviewContent"></div>
@@ -105,7 +118,7 @@ const SkillsPage = (() => {
         try {
             const data = await API.skills.content(name);
             _currentSkill = name;
-            _editorContent = typeof data === 'string' ? data : (data.content || '');
+            _editorContent = typeof data === 'string' ? data : data.content || '';
             _isCreating = false;
             _showEditor = true;
             document.getElementById('contentBody').innerHTML = buildPage();
@@ -118,7 +131,7 @@ const SkillsPage = (() => {
     async function viewSkill(name) {
         try {
             const data = await API.skills.content(name);
-            const content = typeof data === 'string' ? data : (data.content || '');
+            const content = typeof data === 'string' ? data : data.content || '';
             _currentSkill = name;
             _editorContent = content;
             _isCreating = false;
@@ -184,7 +197,10 @@ const SkillsPage = (() => {
                     Components.Toast.error('请填写技能名称');
                     return;
                 }
-                const tags = (document.getElementById('skillTags')?.value || '').split(',').map(t => t.trim()).filter(Boolean);
+                const tags = (document.getElementById('skillTags')?.value || '')
+                    .split(',')
+                    .map((t) => t.trim())
+                    .filter(Boolean);
                 await API.skills.create({ name, content, description: desc, tags });
                 Components.Toast.success('技能已创建');
             } else {
@@ -204,8 +220,10 @@ const SkillsPage = (() => {
             let skillData = '';
             try {
                 const data = await API.skills.content(name);
-                skillData = typeof data === 'string' ? data : (data.content || '');
-            } catch (e) { /* ignore */ }
+                skillData = typeof data === 'string' ? data : data.content || '';
+            } catch (_e) {
+                /* ignore */
+            }
 
             await API.skills.delete(name);
 
@@ -218,7 +236,9 @@ const SkillsPage = (() => {
                     data: skillData,
                     metadata: { description: '' },
                 });
-            } catch (e) { /* ignore */ }
+            } catch (_e) {
+                /* ignore */
+            }
 
             Components.Toast.success('技能已删除（可在回收站恢复）');
             await render();
@@ -239,17 +259,43 @@ const SkillsPage = (() => {
             const name = btn.dataset.name;
 
             switch (action) {
-                case 'showCreate': showCreate(); break;
-                case 'editSkill': editSkill(name); break;
-                case 'viewSkill': viewSkill(name); break;
-                case 'deleteSkill': deleteSkill(name); break;
-                case 'hideEditor': hideEditor(); break;
-                case 'saveSkill': saveSkill(); break;
-                case 'previewContent': previewContent(); break;
-                case 'insertTemplate': insertTemplate(); break;
+                case 'showCreate':
+                    showCreate();
+                    break;
+                case 'editSkill':
+                    editSkill(name);
+                    break;
+                case 'viewSkill':
+                    viewSkill(name);
+                    break;
+                case 'deleteSkill':
+                    deleteSkill(name);
+                    break;
+                case 'hideEditor':
+                    hideEditor();
+                    break;
+                case 'saveSkill':
+                    saveSkill();
+                    break;
+                case 'previewContent':
+                    previewContent();
+                    break;
+                case 'insertTemplate':
+                    insertTemplate();
+                    break;
             }
         });
     }
 
-    return { render, showCreate, editSkill, viewSkill, hideEditor, saveSkill, deleteSkill, previewContent, insertTemplate };
+    return {
+        render,
+        showCreate,
+        editSkill,
+        viewSkill,
+        hideEditor,
+        saveSkill,
+        deleteSkill,
+        previewContent,
+        insertTemplate,
+    };
 })();

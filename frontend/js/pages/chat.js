@@ -15,7 +15,7 @@ const ChatPage = (() => {
 
         try {
             _sessions = await API.sessions.list();
-        } catch (err) {
+        } catch (_err) {
             _sessions = [];
         }
 
@@ -35,7 +35,7 @@ const ChatPage = (() => {
         try {
             const data = await API.sessions.messages(sessionId);
             _messages = data.messages || data || [];
-        } catch (err) {
+        } catch (_err) {
             _messages = [];
         }
     }
@@ -45,12 +45,14 @@ const ChatPage = (() => {
         const statusColor = { active: 'green', completed: 'blue' };
 
         // 左侧会话列表
-        const sessionListHtml = _sessions.length === 0
-            ? `<div style="padding:20px;text-align:center;color:var(--text-tertiary)">暂无会话</div>`
-            : _sessions.map(s => {
-                const id = s.id || s.session_id;
-                const isActive = id === _currentSession;
-                return `<div class="session-item ${isActive ? 'active' : ''}" data-session-id="${id}" onclick="ChatPage.selectSession('${id}')">
+        const sessionListHtml =
+            _sessions.length === 0
+                ? `<div style="padding:20px;text-align:center;color:var(--text-tertiary)">暂无会话</div>`
+                : _sessions
+                      .map((s) => {
+                          const id = s.id || s.session_id;
+                          const isActive = id === _currentSession;
+                          return `<div class="session-item ${isActive ? 'active' : ''}" data-session-id="${id}" onclick="ChatPage.selectSession('${id}')">
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
@@ -62,42 +64,48 @@ const ChatPage = (() => {
                         ${Components.escapeHtml(s.model || '-')} · ${Components.formatDateTime(s.created_at || s.createdAt)}
                     </div>
                 </div>`;
-            }).join('');
+                      })
+                      .join('');
 
         // 右侧消息区域
         const filteredMessages = _searchKeyword
-            ? _messages.filter(m => (m.content || '').toLowerCase().includes(_searchKeyword.toLowerCase()))
+            ? _messages.filter((m) => (m.content || '').toLowerCase().includes(_searchKeyword.toLowerCase()))
             : _messages;
 
-        const messagesHtml = !_currentSession && !_searchKeyword
-            ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
+        const messagesHtml =
+            !_currentSession && !_searchKeyword
+                ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
                 <div style="font-size:32px;margin-bottom:12px">${Components.icon('messageCircle', 32)}</div>
                 <div style="font-size:14px;margin-bottom:8px">选择或创建一个会话开始</div>
                 <button class="btn btn-primary" onclick="ChatPage.showCreate()">创建新会话</button>
               </div>`
-            : filteredMessages.length === 0
-            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">${_searchKeyword ? '没有匹配的消息' : '暂无消息，发送第一条消息吧'}</div>`
-            : `<div class="chat-messages" id="chatMessages">
-                ${filteredMessages.map(m => {
-                    const isUser = m.role === 'user';
-                    const roleText = ({user:'用户',assistant:'助手',system:'系统'})[m.role] || m.role;
-                    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                    return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+                : filteredMessages.length === 0
+                  ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">${_searchKeyword ? '没有匹配的消息' : '暂无消息，发送第一条消息吧'}</div>`
+                  : `<div class="chat-messages" id="chatMessages">
+                ${filteredMessages
+                    .map((m) => {
+                        const isUser = m.role === 'user';
+                        const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
+                        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
                         <div class="chat-message-header">
                             <span class="chat-message-role">${roleText}</span>
                             <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
                         </div>
                         <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
                     </div>`;
-                }).join('')}
+                    })
+                    .join('')}
             </div>`;
 
         // 输入框
-        const inputHtml = _currentSession ? `
+        const inputHtml = _currentSession
+            ? `
             <div class="chat-input-bar">
                 <input type="text" class="form-input" id="chatInput" placeholder="输入消息..." style="flex:1" onkeydown="if(event.key==='Enter')ChatPage.sendMessage()">
                 <button class="btn btn-primary" onclick="ChatPage.sendMessage()" style="padding:8px 16px">发送</button>
-            </div>` : '';
+            </div>`
+            : '';
 
         return `<div class="chat-layout">
             <div class="chat-sidebar">
@@ -111,13 +119,17 @@ const ChatPage = (() => {
                 <div class="chat-sidebar-list">${sessionListHtml}</div>
             </div>
             <div class="chat-main">
-                ${_currentSession ? `<div class="chat-main-header">
+                ${
+                    _currentSession
+                        ? `<div class="chat-main-header">
                     <span style="font-weight:500">${Components.escapeHtml(getCurrentTitle())}</span>
                     <div style="display:flex;gap:8px;align-items:center">
                         <span style="font-size:12px;color:var(--text-tertiary)">${filteredMessages.length} 条消息</span>
                         <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="ChatPage.deleteSession('${_currentSession}')">删除会话</button>
                     </div>
-                </div>` : ''}
+                </div>`
+                        : ''
+                }
                 ${messagesHtml}
                 ${inputHtml}
             </div>
@@ -126,13 +138,16 @@ const ChatPage = (() => {
 
     function getCurrentTitle() {
         if (!_currentSession) return '';
-        const s = _sessions.find(s => (s.id || s.session_id) === _currentSession);
-        return s ? (s.title || s.id) : _currentSession;
+        const s = _sessions.find((s) => (s.id || s.session_id) === _currentSession);
+        return s ? s.title || s.id : _currentSession;
     }
 
     async function showCreate() {
         try {
-            const result = await API.sessions.create({ title: `会话 ${new Date().toLocaleString('zh-CN')}`, source: 'web' });
+            const result = await API.sessions.create({
+                title: `会话 ${new Date().toLocaleString('zh-CN')}`,
+                source: 'web',
+            });
             Components.Toast.success('会话已创建');
             const newId = result.session?.id;
             if (newId) {
@@ -169,7 +184,7 @@ const ChatPage = (() => {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         const isUser = msg.role === 'user';
-        const roleText = ({user:'用户',assistant:'助手',system:'系统'})[msg.role] || msg.role;
+        const roleText = { user: '用户', assistant: '助手', system: '系统' }[msg.role] || msg.role;
         const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
         const div = document.createElement('div');
         div.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
@@ -212,22 +227,25 @@ const ChatPage = (() => {
         const mainEl = document.querySelector('.chat-main');
         if (mainEl) {
             const filteredMessages = _searchKeyword
-                ? _messages.filter(m => (m.content || '').toLowerCase().includes(_searchKeyword.toLowerCase()))
+                ? _messages.filter((m) => (m.content || '').toLowerCase().includes(_searchKeyword.toLowerCase()))
                 : _messages;
-            const messagesHtml = filteredMessages.length === 0
-                ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">没有匹配的消息</div>`
-                : `<div class="chat-messages" id="chatMessages">
-                    ${filteredMessages.map(m => {
-                        const isUser = m.role === 'user';
-                        const roleText = ({user:'用户',assistant:'助手',system:'系统'})[m.role] || m.role;
-                        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+            const messagesHtml =
+                filteredMessages.length === 0
+                    ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">没有匹配的消息</div>`
+                    : `<div class="chat-messages" id="chatMessages">
+                    ${filteredMessages
+                        .map((m) => {
+                            const isUser = m.role === 'user';
+                            const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
+                            const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                            return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
                             <div class="chat-message-header">
                                 <span class="chat-message-role">${roleText}</span>
                             </div>
                             <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
                         </div>`;
-                    }).join('')}
+                        })
+                        .join('')}
                 </div>`;
             mainEl.innerHTML = messagesHtml;
         }

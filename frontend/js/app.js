@@ -4,23 +4,22 @@
  */
 
 const App = (() => {
-    const pages = {
-        dashboard: DashboardPage,
-        knowledge: KnowledgePage,
-        sessions: SessionsPage,
-        marketplace: MarketplacePage,
-        tools: ToolsPage,
-        skills: SkillsPage,
-        memory: MemoryPage,
-        plugins: PluginsPage,
-        cron: CronPage,
-        agents: AgentsPage,
-        config: ConfigPage,
-        mcp: McpPage,
-        logs: LogsPage,
-        about: AboutPage,
-        trash: TrashPage,
-    };
+    // 自动从全局变量收集所有页面（不再手动维护）
+    const pageNames = [
+        'dashboard', 'knowledge', 'sessions', 'marketplace',
+        'tools', 'skills', 'memory', 'plugins',
+        'cron', 'agents', 'config', 'mcp',
+        'logs', 'about', 'trash',
+    ];
+    const pages = {};
+    pageNames.forEach(name => {
+        const PageClass = window[name.charAt(0).toUpperCase() + name.slice(1) + 'Page'];
+        if (PageClass) {
+            pages[name] = PageClass;
+        } else {
+            console.warn(`[App] Page "${name}" not found (expected ${name.charAt(0).toUpperCase() + name.slice(1)}Page)`);
+        }
+    });
 
     const pageTitles = {
         dashboard: '仪表盘',
@@ -93,7 +92,7 @@ const App = (() => {
             await API.system.health();
             if (dot) dot.style.background = 'var(--green)';
             if (text) text.textContent = '已连接';
-        } catch (err) {
+        } catch (_err) {
             if (dot) dot.style.background = 'var(--orange)';
             if (text) text.textContent = '降级模式';
         }
@@ -113,7 +112,7 @@ const App = (() => {
                 try {
                     const data = JSON.parse(event.data);
                     handleSSEEvent(data);
-                } catch (err) {
+                } catch (_err) {
                     // 忽略解析错误
                 }
             };
@@ -122,7 +121,7 @@ const App = (() => {
                 // 5 秒后自动重连
                 setTimeout(connectSSE, 5000);
             };
-        } catch (err) {
+        } catch (_err) {
             // SSE 不可用时静默降级
             setTimeout(connectSSE, 10000);
         }
@@ -135,7 +134,11 @@ const App = (() => {
         // 传递给当前页面的 onSSEEvent 方法（实时增量更新）
         const page = pages[_currentPage];
         if (page && typeof page.onSSEEvent === 'function') {
-            try { page.onSSEEvent(type, data); } catch (e) { /* ignore */ }
+            try {
+                page.onSSEEvent(type, data);
+            } catch (_e) {
+                /* ignore */
+            }
         }
     }
 
@@ -163,9 +166,10 @@ const App = (() => {
         } catch (err) {
             console.error(`[App] 页面 ${pageName} 渲染失败:`, err);
             document.getElementById('contentBody').innerHTML = Components.createEmptyState(
-                Components.icon('alertTriangle', 14), '页面加载失败',
+                Components.icon('alertTriangle', 14),
+                '页面加载失败',
                 err.message || '未知错误',
-                `<button class="btn btn-primary" onclick="App.refresh()">重试</button>`
+                `<button class="btn btn-primary" onclick="App.refresh()">重试</button>`,
             );
         }
 
@@ -173,7 +177,7 @@ const App = (() => {
     }
 
     function updateNavActive(pageName) {
-        document.querySelectorAll('.nav-item').forEach(item => {
+        document.querySelectorAll('.nav-item').forEach((item) => {
             item.classList.toggle('active', item.dataset.page === pageName);
         });
     }
@@ -185,7 +189,7 @@ const App = (() => {
     }
 
     function replaceNavIcons() {
-        document.querySelectorAll('.nav-icon[data-icon]').forEach(el => {
+        document.querySelectorAll('.nav-icon[data-icon]').forEach((el) => {
             const name = el.getAttribute('data-icon');
             if (name) {
                 el.innerHTML = Components.icon(name, 16);
@@ -228,7 +232,7 @@ const App = (() => {
         });
 
         // 导航切换 (Mac 风格: .nav-item click -> .page active)
-        document.querySelectorAll('.nav-item').forEach(item => {
+        document.querySelectorAll('.nav-item').forEach((item) => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const page = item.dataset.page;
@@ -242,25 +246,45 @@ const App = (() => {
         window.addEventListener('hashchange', handleRoute);
 
         // 窗口大小变化
-        window.addEventListener('resize', Components.debounce(() => {
-            if (window.innerWidth > 768) closeMobileSidebar();
-        }, 200));
+        window.addEventListener(
+            'resize',
+            Components.debounce(() => {
+                if (window.innerWidth > 768) closeMobileSidebar();
+            }, 200),
+        );
     }
 
     function handleGlobalSearch(query) {
         if (!query.trim()) return;
         const term = query.toLowerCase().trim();
         const searchMap = {
-            '仪表盘': 'dashboard', '统计': 'dashboard', '概览': 'dashboard',
-            '会话': 'sessions', '对话': 'chat', '聊天': 'chat',
-            '工具': 'tools', '函数': 'tools',
-            '技能': 'skills', 'skill': 'skills',
-            '记忆': 'memory', 'memory': 'memory',
-            '定时': 'cron', '任务': 'cron', 'cron': 'cron', '调度': 'cron',
-            'agent': 'agents', '子agent': 'agents', '子代理': 'agents',
-            'mcp': 'mcp', '服务': 'mcp',
-            '日志': 'logs', 'log': 'logs', '操作': 'logs',
-            '配置': 'config', '设置': 'config', 'config': 'config',
+            仪表盘: 'dashboard',
+            统计: 'dashboard',
+            概览: 'dashboard',
+            会话: 'sessions',
+            对话: 'chat',
+            聊天: 'chat',
+            工具: 'tools',
+            函数: 'tools',
+            技能: 'skills',
+            skill: 'skills',
+            记忆: 'memory',
+            memory: 'memory',
+            定时: 'cron',
+            任务: 'cron',
+            cron: 'cron',
+            调度: 'cron',
+            agent: 'agents',
+            子agent: 'agents',
+            子代理: 'agents',
+            mcp: 'mcp',
+            服务: 'mcp',
+            日志: 'logs',
+            log: 'logs',
+            操作: 'logs',
+            配置: 'config',
+            设置: 'config',
+            config: 'config',
         };
         for (const [keyword, page] of Object.entries(searchMap)) {
             if (keyword.includes(term) || term.includes(keyword)) {

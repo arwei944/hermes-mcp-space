@@ -11,7 +11,7 @@ async function _getMeta() {
     try {
         const resp = await fetch('/api/meta');
         _metaCache = await resp.json();
-    } catch (e) {
+    } catch (_e) {
         _metaCache = { version: '?', build_time: '?', uptime_human: '', now: '' };
     }
     return _metaCache;
@@ -22,9 +22,10 @@ function getAppVersion() {
 }
 
 const API = (() => {
-    const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:3000'
-        : '';
+    const BASE_URL =
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : '';
 
     const TIMEOUT = 15000;
 
@@ -105,35 +106,69 @@ const API = (() => {
     // 会话管理 API（已对齐）
     // ==========================================
     const sessions = {
-        list(params) { return get('/api/sessions', params); },
-        create(data) { return post('/api/sessions', data); },
-        get(id) { return get(`/api/sessions/${id}`); },
-        messages(id, params) { return get(`/api/sessions/${id}/messages`, params); },
-        addMessage(id, role, content) { return post(`/api/sessions/${id}/messages`, { role, content }); },
-        delete(id) { return del(`/api/sessions/${id}`); },
-        compress(id) { return post(`/api/sessions/${id}/compress`); },
+        list(params) {
+            return get('/api/sessions', params);
+        },
+        create(data) {
+            return post('/api/sessions', data);
+        },
+        get(id) {
+            return get(`/api/sessions/${id}`);
+        },
+        messages(id, params) {
+            return get(`/api/sessions/${id}/messages`, params);
+        },
+        addMessage(id, role, content) {
+            return post(`/api/sessions/${id}/messages`, { role, content });
+        },
+        delete(id) {
+            return del(`/api/sessions/${id}`);
+        },
+        compress(id) {
+            return post(`/api/sessions/${id}/compress`);
+        },
     };
 
     // ==========================================
     // 工具管理 API（已对齐）
     // ==========================================
     const tools = {
-        list(params) { return get('/api/tools', params); },
-        get(name) { return get(`/api/tools/${encodeURIComponent(name)}`); },
-        toolsets() { return get('/api/toolsets'); },
-        toggle(name, enabled) { return post(`/api/tools/${encodeURIComponent(name)}/toggle`, { enabled }); },
+        list(params) {
+            return get('/api/tools', params);
+        },
+        get(name) {
+            return get(`/api/tools/${encodeURIComponent(name)}`);
+        },
+        toolsets() {
+            return get('/api/toolsets');
+        },
+        toggle(name, enabled) {
+            return post(`/api/tools/${encodeURIComponent(name)}/toggle`, { enabled });
+        },
     };
 
     // ==========================================
     // 技能系统 API（已对齐）
     // ==========================================
     const skills = {
-        list(params) { return get('/api/skills', params); },
-        get(name) { return get(`/api/skills/${encodeURIComponent(name)}`); },
-        content(name) { return get(`/api/skills/${encodeURIComponent(name)}`); },
-        create(data) { return post('/api/skills', data); },
-        update(name, data) { return put(`/api/skills/${encodeURIComponent(name)}`, data); },
-        delete(name) { return del(`/api/skills/${encodeURIComponent(name)}`); },
+        list(params) {
+            return get('/api/skills', params);
+        },
+        get(name) {
+            return get(`/api/skills/${encodeURIComponent(name)}`);
+        },
+        content(name) {
+            return get(`/api/skills/${encodeURIComponent(name)}`);
+        },
+        create(data) {
+            return post('/api/skills', data);
+        },
+        update(name, data) {
+            return put(`/api/skills/${encodeURIComponent(name)}`, data);
+        },
+        delete(name) {
+            return del(`/api/skills/${encodeURIComponent(name)}`);
+        },
     };
 
     // ==========================================
@@ -141,11 +176,21 @@ const API = (() => {
     // 后端 PUT /api/memory 接受 { memory, user }
     // ==========================================
     const memory = {
-        getMemory() { return get('/api/memory'); },
-        saveMemory(content) { return put('/api/memory', { memory: content }); },
-        getUser() { return get('/api/memory'); },
-        saveUser(content) { return put('/api/memory', { user: content }); },
-        stats() { return get('/api/memory'); },
+        getMemory() {
+            return get('/api/memory');
+        },
+        saveMemory(content) {
+            return put('/api/memory', { memory: content });
+        },
+        getUser() {
+            return get('/api/memory');
+        },
+        saveUser(content) {
+            return put('/api/memory', { user: content });
+        },
+        stats() {
+            return get('/api/memory');
+        },
     };
 
     // ==========================================
@@ -153,52 +198,96 @@ const API = (() => {
     // 后端路径: /api/cron/jobs
     // ==========================================
     const cron = {
-        list() { return get('/api/cron/jobs'); },
-        get(id) { return get(`/api/cron/jobs/${id}`); },
-        create(data) { return post('/api/cron/jobs', data); },
-        update(id, data) { return put(`/api/cron/jobs/${id}`, data); },
-        delete(id) { return del(`/api/cron/jobs/${id}`); },
-        trigger(id) { return post(`/api/cron/jobs/${id}/trigger`); },
-        history(id, params) { return get(`/api/cron/jobs/${id}/output`, params); },
+        list() {
+            return get('/api/cron/jobs');
+        },
+        get(id) {
+            return get(`/api/cron/jobs/${id}`);
+        },
+        create(data) {
+            return post('/api/cron/jobs', data);
+        },
+        update(id, data) {
+            return put(`/api/cron/jobs/${id}`, data);
+        },
+        delete(id) {
+            return del(`/api/cron/jobs/${id}`);
+        },
+        trigger(id) {
+            return post(`/api/cron/jobs/${id}/trigger`);
+        },
+        history(id, params) {
+            return get(`/api/cron/jobs/${id}/output`, params);
+        },
     };
 
     // ==========================================
     // 子 Agent API（已对齐）
     // ==========================================
     const agents = {
-        list() { return get('/api/agents'); },
-        get(id) { return get(`/api/agents/${id}`); },
-        terminate(id) { return del(`/api/agents/${id}`); },
+        list() {
+            return get('/api/agents');
+        },
+        get(id) {
+            return get(`/api/agents/${id}`);
+        },
+        terminate(id) {
+            return del(`/api/agents/${id}`);
+        },
     };
 
     // ==========================================
     // MCP 服务 API（已对齐）
     // ==========================================
     const mcp = {
-        status() { return get('/api/mcp'); },
-        tools() { return get('/api/mcp/tools'); },
-        restart() { return post('/api/mcp/restart'); },
-        connectionInfo() { return get('/api/mcp'); },
+        status() {
+            return get('/api/mcp');
+        },
+        tools() {
+            return get('/api/mcp/tools');
+        },
+        restart() {
+            return post('/api/mcp/restart');
+        },
+        connectionInfo() {
+            return get('/api/mcp');
+        },
     };
 
     // ==========================================
     // 系统配置 API（已对齐）
     // ==========================================
     const config = {
-        get() { return get('/api/config'); },
-        save(data, summary) { return put('/api/config', { config: data, summary: summary || '' }); },
-        reset() { return post('/api/config/reset'); },
-        versions() { return get('/api/config/versions'); },
-        rollback(index) { return post(`/api/config/rollback/${index}`); },
+        get() {
+            return get('/api/config');
+        },
+        save(data, summary) {
+            return put('/api/config', { config: data, summary: summary || '' });
+        },
+        reset() {
+            return post('/api/config/reset');
+        },
+        versions() {
+            return get('/api/config/versions');
+        },
+        rollback(index) {
+            return post(`/api/config/rollback/${index}`);
+        },
     };
 
     // ==========================================
     // 系统 API（已对齐）
     // ==========================================
     const system = {
-        status() { return get('/api/status'); },
-        dashboard() { return get('/api/dashboard'); },
-        health() { return get('/api/status'); },
+        status() {
+            return get('/api/status');
+        },
+        dashboard() {
+            return get('/api/dashboard');
+        },
+        health() {
+            return get('/api/status');
+        },
     };
 
     // ==========================================
@@ -226,7 +315,7 @@ const API = (() => {
                     window.location.reload();
                 }, 5000);
             }
-        } catch (err) {
+        } catch (_err) {
             // 静默失败，不影响用户体验
         }
     }
@@ -237,9 +326,20 @@ const API = (() => {
     }
 
     return {
-        request, get, post, put, del,
-        sessions, tools, skills, memory,
-        cron, agents, mcp, config, system,
+        request,
+        get,
+        post,
+        put,
+        del,
+        sessions,
+        tools,
+        skills,
+        memory,
+        cron,
+        agents,
+        mcp,
+        config,
+        system,
         meta: _getMeta,
         BASE_URL,
         checkForUpdate,
@@ -250,6 +350,8 @@ const API = (() => {
 
 // 兼容旧代码：APP_VERSION 改为动态 getter
 Object.defineProperty(window, 'APP_VERSION', {
-    get() { return getAppVersion(); },
+    get() {
+        return getAppVersion();
+    },
     configurable: true,
 });

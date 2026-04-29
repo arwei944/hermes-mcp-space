@@ -5,6 +5,20 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.9.0',
+            date: '2026-04-29 21:30',
+            title: '代码质量 + 自动化',
+            changes: [
+                'ESLint 零 error 零 warning 基线（从 57 warning 降到 0）',
+                '引入 Prettier 统一代码格式（4 空格缩进、单引号、120 字符行宽）',
+                'build_full_html 改为自动扫描 pages/*.js（不再手动维护列表）',
+                'app.js 页面注册改为自动从全局变量收集',
+                '新增全局错误边界（JS 报错显示友好提示，不再白屏）',
+                '修复 onSSEEvent 未暴露到 return（dashboard/knowledge）',
+                '删除死代码（destroy 函数、未使用变量）',
+            ],
+        },
+        {
             version: '4.8.0',
             date: '2026-04-29 20:00',
             title: '深色模式补全 + ESLint 引入',
@@ -19,7 +33,8 @@ const AboutPage = (() => {
                 'CI 新增 ESLint 检查步骤',
                 'pre-commit hook 新增 ESLint 检查',
             ],
-        },        {
+        },
+        {
             version: '4.7.0',
             date: '2026-04-29 19:00',
             title: '质量保障体系 + 图标修复',
@@ -31,7 +46,8 @@ const AboutPage = (() => {
                 '修复 dashboard.js 2 处图标未用 ${} 包裹',
                 'CI 通过后才部署到 HuggingFace Spaces',
             ],
-        },        {
+        },
+        {
             version: '4.6.1',
             date: '2026-04-29 18:30',
             title: '修复 JS 语法错误',
@@ -40,7 +56,8 @@ const AboutPage = (() => {
                 '修复普通字符串中误用 ${} 模板语法的问题',
                 '新增 node --check 语法验证流程',
             ],
-        },        {
+        },
+        {
             version: '4.6.0',
             date: '2026-04-29 18:00',
             title: '矢量图标 + UI 风格统一',
@@ -55,7 +72,8 @@ const AboutPage = (() => {
                 'Toast 通知图标改为 SVG',
                 'renderStatCard 支持图标名称自动转换',
             ],
-        },        {
+        },
+        {
             version: '4.5.0',
             date: '2026-04-29 17:10',
             title: '实时数据驱动',
@@ -67,7 +85,8 @@ const AboutPage = (() => {
                 '页面 destroy 生命周期：离开页面自动停止轮询',
                 'app.js SSE 不再全量刷新，改为调用页面 onSSEEvent 增量更新',
             ],
-        },        {
+        },
+        {
             version: '4.4.0',
             date: '2026-04-29 17:00',
             title: '自动提炼引擎',
@@ -79,7 +98,8 @@ const AboutPage = (() => {
                 '错误模式自动分类：SSL/超时/404/认证/语法等 13 种类型',
                 '智能去重：新旧学习记录自动合并，避免重复',
             ],
-        },        {
+        },
+        {
             version: '4.3.0',
             date: '2026-04-29 16:45',
             title: '知识库模块 + 北京时间',
@@ -90,7 +110,8 @@ const AboutPage = (() => {
                 '时间显示改为北京时间 UTC+8',
                 '卡片式布局：会话卡片显示标题/来源/模型/消息数/最后消息',
             ],
-        },        {
+        },
+        {
             version: '4.2.0',
             date: '2026-04-29 16:20',
             title: 'SOLO 对话回传 + 思考层评估',
@@ -100,7 +121,8 @@ const AboutPage = (() => {
                 '经验提炼：同类问题出现3次以上自动 add_learning 记录',
                 '三层架构：自动层(MCP拦截) + 指令层(AGENTS.md) + 提炼层(add_learning)',
             ],
-        },        {
+        },
+        {
             version: '4.1.1',
             date: '2026-04-29 16:05',
             title: '时间修复 + SOLO 对话实时记录',
@@ -111,7 +133,8 @@ const AboutPage = (() => {
                 '新增 _summarize_tool_args 智能参数摘要',
                 'add_session_message 支持 metadata 参数',
             ],
-        },        {
+        },
+        {
             version: '4.1.0',
             date: '2026-04-29 16:00',
             title: '仪表盘大改版 + Bug修复',
@@ -123,7 +146,8 @@ const AboutPage = (() => {
                 '修复 web_search/install_skill_hub SSL 降级处理',
                 '测试报告: 67 用例 97.0% 通过率',
             ],
-        },        {
+        },
+        {
             version: '4.0.0',
             date: '2026-04-29 14:30',
             title: '生态扩展',
@@ -135,7 +159,8 @@ const AboutPage = (() => {
                 'Webhook 管理: webhooks.json 持久化存储',
                 'MCP 工具 53 → 63 个',
             ],
-        },        {
+        },
+        {
             version: '3.3.0',
             date: '2026-04-29 14:00',
             title: '多 Agent 工作流',
@@ -147,7 +172,8 @@ const AboutPage = (() => {
                 'MCP 工具 52 → 53 个',
                 '内置技能 4 → 6 个',
             ],
-        },        {
+        },
+        {
             version: '3.2.0',
             date: '2026-04-29 13:00',
             title: '自动化与智能',
@@ -160,7 +186,8 @@ const AboutPage = (() => {
                 'list_skills 增强: 传递可用工具列表进行条件过滤',
                 'MCP 工具 48 → 52 个',
             ],
-        },        {
+        },
+        {
             version: '3.1.0',
             date: '2026-04-29 12:30',
             title: '工程层加固（AI 工程指南整合）',
@@ -173,7 +200,8 @@ const AboutPage = (() => {
                 'shell_execute 增强: 命令不存在/权限不足/超时智能建议',
                 'MCP 工具 44 → 48 个',
             ],
-        },        {
+        },
+        {
             version: '3.0.0',
             date: '2026-04-29 01:30',
             title: 'MCP 网关 - 工具聚合器',
@@ -187,7 +215,8 @@ const AboutPage = (() => {
                 'MCP 工具 40 → 44 个（+4 网关管理工具）',
                 '一个 MCP 入口访问所有 MCP 服务',
             ],
-        },        {
+        },
+        {
             version: '2.4.0',
             date: '2026-04-29 01:00',
             title: '数据能力增强',
@@ -202,7 +231,8 @@ const AboutPage = (() => {
                 '技能系统修复: description + tags 完整支持',
                 'MCP 工具 37 → 40 个',
             ],
-        },        {
+        },
+        {
             version: '2.3.0',
             date: '2026-04-29 00:30',
             title: '核心工具补齐 + 定时任务引擎',
@@ -216,7 +246,8 @@ const AboutPage = (() => {
                 '修复 about.js API 调用参数顺序错误',
                 '版本号三处不一致修复',
             ],
-        },        {
+        },
+        {
             version: '2.2.0',
             date: '2026-04-28 23:30',
             title: '多平台连接配置 + System Prompt',
@@ -228,7 +259,8 @@ const AboutPage = (() => {
                 '会话页面添加删除按钮',
                 '端到端验证 6/6 通过',
             ],
-        },        {
+        },
+        {
             version: '2.1.0',
             date: '2026-04-28 22:30',
             title: '第三方测试修复',
@@ -238,7 +270,8 @@ const AboutPage = (() => {
                 'install_plugin 移除 source 必填限制',
                 'MCP 工具描述更新（参数说明更准确）',
             ],
-        },        {
+        },
+        {
             version: '2.2.0',
             date: '2026-04-28 22:00',
             title: 'v2.0 正式版 - 实时对话同步 + 全面优化',
@@ -325,10 +358,7 @@ const AboutPage = (() => {
             version: '1.6.0',
             date: '2026-04-28',
             title: '配置版本管理 + 关于页面',
-            changes: [
-                '系统配置增加版本管理（每次保存自动记录）',
-                '新增关于页面（版本变更记录）',
-            ],
+            changes: ['系统配置增加版本管理（每次保存自动记录）', '新增关于页面（版本变更记录）'],
         },
         {
             version: '1.5.0',
@@ -365,11 +395,7 @@ const AboutPage = (() => {
             version: '1.2.0',
             date: '2026-04-28',
             title: '数据可视化 + API 文档',
-            changes: [
-                '仪表盘 5 种 SVG 图表',
-                'Swagger UI + ReDoc 自动生成',
-                '99 个 API 端点自动发现',
-            ],
+            changes: ['仪表盘 5 种 SVG 图表', 'Swagger UI + ReDoc 自动生成', '99 个 API 端点自动发现'],
         },
         {
             version: '1.1.0',
@@ -407,7 +433,7 @@ const AboutPage = (() => {
             var totalUptime = status.total_uptime || status.uptime || 0;
             var firstDeploy = status.first_deploy || '';
             var mcpToolCount = Array.isArray(toolsData) ? toolsData.length : (toolsData.tools || []).length;
-        } catch (err) {
+        } catch (_err) {
             var version = APP_VERSION;
             var totalUptime = 0;
             var firstDeploy = '';
@@ -418,7 +444,7 @@ const AboutPage = (() => {
         try {
             var routesRes = await API.request('GET', '/openapi.json').catch(() => null);
             var apiCount = routesRes ? Object.keys(routesRes.paths || {}).length : 0;
-        } catch (err) {
+        } catch (_err) {
             var apiCount = 0;
         }
 
@@ -434,7 +460,7 @@ const AboutPage = (() => {
     function formatDeployTime(isoStr) {
         if (!isoStr) return '';
         const d = new Date(isoStr);
-        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
 
     function buildPage(version, totalUptime, firstDeploy, mcpToolCount, apiCount) {
@@ -445,7 +471,9 @@ const AboutPage = (() => {
                 <!-- 左侧：关于 -->
                 <div>
                     ${Components.sectionTitle('关于 Hermes Agent')}
-                    ${Components.renderSection('', `
+                    ${Components.renderSection(
+                        '',
+                        `
                         <div style="text-align:center;padding:20px 0">
                             <div style="font-size:48px;margin-bottom:12px">${Components.icon('bot', 48)}</div>
                             <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Hermes Agent MCP Space</h2>
@@ -458,12 +486,15 @@ const AboutPage = (() => {
                                 <span>API 端点 <strong>${apiCount || '?'}</strong> 个</span>
                             </div>
                         </div>
-                    `)}
+                    `,
+                    )}
                 </div>
                 <!-- 右侧：技术栈 -->
                 <div>
                     ${Components.sectionTitle('技术栈')}
-                    ${Components.renderSection('', `
+                    ${Components.renderSection(
+                        '',
+                        `
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
                             <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
                                 <div style="font-weight:600;margin-bottom:6px">后端</div>
@@ -482,12 +513,13 @@ const AboutPage = (() => {
                                 <div style="color:var(--text-tertiary)">GitHub Actions → HF Spaces</div>
                             </div>
                         </div>
-                    `)}
+                    `,
+                    )}
                 </div>
             </div>
 
             ${Components.sectionTitle('版本变更记录')}
-            ${CHANGELOG.map(rel => {
+            ${CHANGELOG.map((rel) => {
                 const isCurrent = rel.version === version;
                 return `
                 <div style="margin-bottom:16px;${isCurrent ? 'background:var(--bg-secondary);padding:12px;border-radius:8px;border:1px solid var(--accent)' : ''}">
@@ -498,7 +530,7 @@ const AboutPage = (() => {
                         <span style="font-size:13px;font-weight:500">${rel.title}</span>
                     </div>
                     <ul style="margin:0;padding-left:20px;font-size:12px;color:var(--text-secondary);line-height:1.8">
-                        ${rel.changes.map(c => `<li>${c}</li>`).join('')}
+                        ${rel.changes.map((c) => `<li>${c}</li>`).join('')}
                     </ul>
                 </div>`;
             }).join('')}

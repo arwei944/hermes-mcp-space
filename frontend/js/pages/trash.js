@@ -13,37 +13,51 @@ const TrashPage = (() => {
         try {
             const data = await API.request('GET', '/api/trash');
             _items = data.items || [];
-        } catch (err) { _items = []; }
+        } catch (_err) {
+            _items = [];
+        }
         container.innerHTML = buildPage();
         bindEvents();
     }
 
     function getFiltered() {
         if (!_filterType) return _items;
-        return _items.filter(i => i.type === _filterType);
+        return _items.filter((i) => i.type === _filterType);
     }
 
     function buildPage() {
         const filtered = getFiltered();
         const typeCounts = {};
-        _items.forEach(i => { typeCounts[i.type] = (typeCounts[i.type] || 0) + 1; });
+        _items.forEach((i) => {
+            typeCounts[i.type] = (typeCounts[i.type] || 0) + 1;
+        });
         const typeLabels = { session: '会话', skill: '技能', memory: '记忆', plugin: '插件', config: '配置' };
 
         const filterHtml = `<div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
             <select id="trashFilter" style="padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
                 <option value="">全部 (${_items.length})</option>
-                ${Object.entries(typeCounts).map(([t, c]) => `<option value="${t}" ${_filterType === t ? 'selected' : ''}>${typeLabels[t] || t} (${c})</option>`).join('')}
+                ${Object.entries(typeCounts)
+                    .map(
+                        ([t, c]) =>
+                            `<option value="${t}" ${_filterType === t ? 'selected' : ''}>${typeLabels[t] || t} (${c})</option>`,
+                    )
+                    .join('')}
             </select>
             ${_items.length > 0 ? `<button type="button" class="btn btn-sm btn-ghost" style="color:var(--red);margin-left:auto" data-action="emptyTrash">清空回收站</button>` : ''}
         </div>`;
 
-        const listHtml = filtered.length === 0
-            ? Components.createEmptyState(Components.icon('trash', 16), '回收站为空', '删除的项目会出现在这里', '')
-            : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
-                ${filtered.map(item => {
-                    const typeLabel = typeLabels[item.type] || item.type;
-                    const typeColor = { session: 'blue', skill: 'purple', memory: 'green', plugin: 'orange', config: 'gray' }[item.type] || 'gray';
-                    return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px">
+        const listHtml =
+            filtered.length === 0
+                ? Components.createEmptyState(Components.icon('trash', 16), '回收站为空', '删除的项目会出现在这里', '')
+                : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
+                ${filtered
+                    .map((item) => {
+                        const typeLabel = typeLabels[item.type] || item.type;
+                        const typeColor =
+                            { session: 'blue', skill: 'purple', memory: 'green', plugin: 'orange', config: 'gray' }[
+                                item.type
+                            ] || 'gray';
+                        return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px">
                         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
                             <div>
                                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
@@ -59,7 +73,8 @@ const TrashPage = (() => {
                             <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="permDelete" data-id="${item.id}">永久删除</button>
                         </div>
                     </div>`;
-                }).join('')}
+                    })
+                    .join('')}
             </div>`;
 
         return Components.renderSection('回收站', filterHtml + listHtml);
@@ -70,7 +85,9 @@ const TrashPage = (() => {
             await API.request('POST', `/api/trash/restore/${id}`);
             Components.Toast.success('已恢复');
             await render();
-        } catch (err) { Components.Toast.error(`恢复失败: ${err.message}`); }
+        } catch (err) {
+            Components.Toast.error(`恢复失败: ${err.message}`);
+        }
     }
 
     async function permanentDelete(id) {
@@ -78,7 +95,9 @@ const TrashPage = (() => {
             await API.request('DELETE', `/api/trash/${id}`);
             Components.Toast.success('已永久删除');
             await render();
-        } catch (err) { Components.Toast.error(`删除失败: ${err.message}`); }
+        } catch (err) {
+            Components.Toast.error(`删除失败: ${err.message}`);
+        }
     }
 
     async function emptyTrash() {
@@ -86,7 +105,9 @@ const TrashPage = (() => {
             await API.request('DELETE', '/api/trash');
             Components.Toast.success('回收站已清空');
             await render();
-        } catch (err) { Components.Toast.error(`清空失败: ${err.message}`); }
+        } catch (err) {
+            Components.Toast.error(`.*${err.message}`);
+        }
     }
 
     function bindEvents() {
@@ -99,9 +120,15 @@ const TrashPage = (() => {
             const action = btn.dataset.action;
             const id = btn.dataset.id;
             switch (action) {
-                case 'restore': restoreItem(id); break;
-                case 'permDelete': permanentDelete(id); break;
-                case 'emptyTrash': emptyTrash(); break;
+                case 'restore':
+                    restoreItem(id);
+                    break;
+                case 'permDelete':
+                    permanentDelete(id);
+                    break;
+                case 'emptyTrash':
+                    emptyTrash();
+                    break;
             }
         });
 

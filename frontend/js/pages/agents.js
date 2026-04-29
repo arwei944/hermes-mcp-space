@@ -19,22 +19,29 @@ const AgentsPage = (() => {
         try {
             const data = await API.agents.list();
             _agents = data.agents || data || [];
-        } catch (err) {
+        } catch (_err) {
             _agents = [];
         }
     }
 
     function buildPage() {
-        const runningAgents = _agents.filter(a => a.status === 'running');
-        const completedAgents = _agents.filter(a => a.status !== 'running');
+        const runningAgents = _agents.filter((a) => a.status === 'running');
+        const completedAgents = _agents.filter((a) => a.status !== 'running');
 
-        const runningHtml = runningAgents.length > 0
-            ? `<div class="tool-grid">${runningAgents.map(a => renderAgentCard(a)).join('')}</div>`
-            : Components.createEmptyState(Components.icon('bot', 48), '没有运行中的 Agent', '当前没有活跃的子 Agent', '');
+        const runningHtml =
+            runningAgents.length > 0
+                ? `<div class="tool-grid">${runningAgents.map((a) => renderAgentCard(a)).join('')}</div>`
+                : Components.createEmptyState(
+                      Components.icon('bot', 48),
+                      '没有运行中的 Agent',
+                      '当前没有活跃的子 Agent',
+                      '',
+                  );
 
-        const completedHtml = completedAgents.length > 0
-            ? `<div class="tool-grid">${completedAgents.map(a => renderAgentCard(a)).join('')}</div>`
-            : '';
+        const completedHtml =
+            completedAgents.length > 0
+                ? `<div class="tool-grid">${completedAgents.map((a) => renderAgentCard(a)).join('')}</div>`
+                : '';
 
         return `${Components.sectionTitle('运行中')}<span style="font-size:12px;color:var(--text-tertiary);margin-left:12px">${runningAgents.length} 个活跃 Agent</span>
             ${runningHtml}
@@ -42,20 +49,29 @@ const AgentsPage = (() => {
     }
 
     function renderAgentCard(agent) {
-        const statusBadge = agent.status === 'running'
-            ? Components.renderBadge('运行中', 'green')
-            : agent.status === 'completed' ? Components.renderBadge('已完成', 'blue')
-            : agent.status === 'failed' ? Components.renderBadge('失败', 'red')
-            : Components.renderBadge(({idle:'空闲',pending:'等待中',stopped:'已停止'})[agent.status] || agent.status, 'orange');
+        const statusBadge =
+            agent.status === 'running'
+                ? Components.renderBadge('运行中', 'green')
+                : agent.status === 'completed'
+                  ? Components.renderBadge('已完成', 'blue')
+                  : agent.status === 'failed'
+                    ? Components.renderBadge('失败', 'red')
+                    : Components.renderBadge(
+                          { idle: '空闲', pending: '等待中', stopped: '已停止' }[agent.status] || agent.status,
+                          'orange',
+                      );
 
-        const progressHtml = agent.status === 'running' ? `
+        const progressHtml =
+            agent.status === 'running'
+                ? `
             <div style="margin-top:10px">
                 <div style="display:flex;justify-content:space-between;margin-bottom:4px">
                     <span style="font-size:11px;color:var(--text-tertiary)">进度</span>
                     <span style="font-size:11px;color:var(--accent)">${agent.progress || 0}%</span>
                 </div>
                 <div class="progress-bar"><div class="progress-bar-fill" style="width:${agent.progress || 0}%"></div></div>
-            </div>` : '';
+            </div>`
+                : '';
 
         return `<div class="tool-card" style="position:relative">
             <div class="tool-card-header">
@@ -79,13 +95,15 @@ const AgentsPage = (() => {
             Components.Toast.success('Agent 已终止');
             await loadAgents();
             document.getElementById('contentBody').innerHTML = buildPage();
-        } catch (err) { Components.Toast.error(`终止失败: ${err.message}`); }
+        } catch (err) {
+            Components.Toast.error(`.*${err.message}`);
+        }
     }
 
     function startAutoRefresh() {
         if (_refreshTimer) clearInterval(_refreshTimer);
         _refreshTimer = setInterval(async () => {
-            const hasRunning = _agents.some(a => a.status === 'running');
+            const hasRunning = _agents.some((a) => a.status === 'running');
             if (hasRunning) {
                 await loadAgents();
                 const container = document.getElementById('contentBody');
@@ -95,7 +113,10 @@ const AgentsPage = (() => {
     }
 
     function destroy() {
-        if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; }
+        if (_refreshTimer) {
+            clearInterval(_refreshTimer);
+            _refreshTimer = null;
+        }
     }
 
     return { render, terminate, destroy };

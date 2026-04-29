@@ -16,7 +16,7 @@ const SessionsPage = (() => {
 
         try {
             _sessions = await API.sessions.list();
-        } catch (err) {
+        } catch (_err) {
             _sessions = [];
         }
 
@@ -38,7 +38,7 @@ const SessionsPage = (() => {
         try {
             const data = await API.sessions.messages(id);
             _messages = data.messages || data || [];
-        } catch (err) {
+        } catch (_err) {
             _messages = [];
         }
     }
@@ -46,15 +46,16 @@ const SessionsPage = (() => {
     function getFilteredSessions() {
         let result = _sessions;
         if (_statusFilter) {
-            result = result.filter(s => (s.status || '') === _statusFilter);
+            result = result.filter((s) => (s.status || '') === _statusFilter);
         }
         if (_searchTerm) {
             const term = _searchTerm.toLowerCase();
-            result = result.filter(s =>
-                (s.id || '').toLowerCase().includes(term) ||
-                (s.title || '').toLowerCase().includes(term) ||
-                (s.source || '').toLowerCase().includes(term) ||
-                (s.model || '').toLowerCase().includes(term)
+            result = result.filter(
+                (s) =>
+                    (s.id || '').toLowerCase().includes(term) ||
+                    (s.title || '').toLowerCase().includes(term) ||
+                    (s.source || '').toLowerCase().includes(term) ||
+                    (s.model || '').toLowerCase().includes(term),
             );
         }
         return result;
@@ -62,19 +63,21 @@ const SessionsPage = (() => {
 
     function buildPage() {
         const filtered = getFilteredSessions();
-        const activeCount = _sessions.filter(s => s.status === 'active').length;
+        const activeCount = _sessions.filter((s) => s.status === 'active').length;
 
-        const listHtml = filtered.length === 0
-            ? `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)">
+        const listHtml =
+            filtered.length === 0
+                ? `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)">
                 <div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div>
                 <div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div>
                 <div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div>
               </div>`
-            : filtered.map(s => {
-                const id = s.id || s.session_id;
-                const isActive = id === _currentId;
-                const msgCount = s.message_count || s.messages || 0;
-                return `<div class="session-item ${isActive ? 'active' : ''}" data-action="select" data-id="${id}">
+                : filtered
+                      .map((s) => {
+                          const id = s.id || s.session_id;
+                          const isActive = id === _currentId;
+                          const msgCount = s.message_count || s.messages || 0;
+                          return `<div class="session-item ${isActive ? 'active' : ''}" data-action="select" data-id="${id}">
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
@@ -88,10 +91,12 @@ const SessionsPage = (() => {
                         <span>${msgCount} 条消息</span>
                     </div>
                 </div>`;
-            }).join('');
+                      })
+                      .join('');
 
-        const currentSession = _sessions.find(s => (s.id || s.session_id) === _currentId);
-        const headerHtml = currentSession ? `
+        const currentSession = _sessions.find((s) => (s.id || s.session_id) === _currentId);
+        const headerHtml = currentSession
+            ? `
             <div class="chat-main-header">
                 <div style="display:flex;align-items:center;gap:8px">
                     <span style="font-weight:500">${Components.escapeHtml(currentSession.title || currentSession.id)}</span>
@@ -101,7 +106,8 @@ const SessionsPage = (() => {
                     <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
                     <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
                 </div>
-            </div>` : '';
+            </div>`
+            : '';
 
         const messagesHtml = !_currentId
             ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
@@ -110,23 +116,25 @@ const SessionsPage = (() => {
                 <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
               </div>`
             : _messages.length === 0
-            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
+              ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
                 <div style="font-size:24px;margin-bottom:8px">${Components.icon('edit', 24)}</div>
                 <div>等待消息...</div>
               </div>`
-            : `<div class="chat-messages" id="chatMessages">
-                ${_messages.map(m => {
-                    const isUser = m.role === 'user';
-                    const roleText = ({user:'用户',assistant:'助手',system:'系统'})[m.role] || m.role;
-                    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                    return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+              : `<div class="chat-messages" id="chatMessages">
+                ${_messages
+                    .map((m) => {
+                        const isUser = m.role === 'user';
+                        const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
+                        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
                         <div class="chat-message-header">
                             <span class="chat-message-role">${roleText}</span>
                             <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
                         </div>
                         <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
                     </div>`;
-                }).join('')}
+                    })
+                    .join('')}
             </div>`;
 
         return `<div class="chat-layout">
@@ -141,8 +149,8 @@ const SessionsPage = (() => {
                 <div style="padding:4px 12px;display:flex;gap:4px">
                     <select id="statusFilter" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:11px;outline:none;color:var(--text-secondary)">
                         <option value="">全部 (${_sessions.length})</option>
-                        <option value="active" ${_statusFilter==='active'?'selected':''}>活跃 (${activeCount})</option>
-                        <option value="completed" ${_statusFilter==='completed'?'selected':''}>完成 (${_sessions.length - activeCount})</option>
+                        <option value="active" ${_statusFilter === 'active' ? 'selected' : ''}>活跃 (${activeCount})</option>
+                        <option value="completed" ${_statusFilter === 'completed' ? 'selected' : ''}>完成 (${_sessions.length - activeCount})</option>
                     </select>
                 </div>
                 <div class="chat-sidebar-list">${listHtml}</div>
@@ -159,16 +167,20 @@ const SessionsPage = (() => {
         const listEl = document.querySelector('.chat-sidebar-list');
         if (!listEl) return;
         const filtered = getFilteredSessions();
-        const activeCount = _sessions.filter(s => s.status === 'active').length;
+        const activeCount = _sessions.filter((s) => s.status === 'active').length;
 
         if (filtered.length === 0) {
-            listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">' + Components.icon('radio', 32) + '</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
+            listEl.innerHTML =
+                '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">' +
+                Components.icon('radio', 32) +
+                '</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
         } else {
-            listEl.innerHTML = filtered.map(s => {
-                const id = s.id || s.session_id;
-                const isActive = id === _currentId;
-                const msgCount = s.message_count || s.messages || 0;
-                return `<div class="session-item ${isActive ? 'active' : ''}" data-action="select" data-id="${id}">
+            listEl.innerHTML = filtered
+                .map((s) => {
+                    const id = s.id || s.session_id;
+                    const isActive = id === _currentId;
+                    const msgCount = s.message_count || s.messages || 0;
+                    return `<div class="session-item ${isActive ? 'active' : ''}" data-action="select" data-id="${id}">
                     <div style="display:flex;justify-content:space-between;align-items:center">
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
@@ -182,7 +194,8 @@ const SessionsPage = (() => {
                         <span>${msgCount} 条消息</span>
                     </div>
                 </div>`;
-            }).join('');
+                })
+                .join('');
         }
 
         // 更新筛选器计数
@@ -190,8 +203,8 @@ const SessionsPage = (() => {
         if (filterEl) {
             filterEl.innerHTML = `
                 <option value="">全部 (${_sessions.length})</option>
-                <option value="active" ${_statusFilter==='active'?'selected':''}>活跃 (${activeCount})</option>
-                <option value="completed" ${_statusFilter==='completed'?'selected':''}>完成 (${_sessions.length - activeCount})</option>
+                <option value="active" ${_statusFilter === 'active' ? 'selected' : ''}>活跃 (${activeCount})</option>
+                <option value="completed" ${_statusFilter === 'completed' ? 'selected' : ''}>完成 (${_sessions.length - activeCount})</option>
             `;
         }
     }
@@ -201,8 +214,9 @@ const SessionsPage = (() => {
         const mainEl = document.querySelector('.chat-main');
         if (!mainEl) return;
 
-        const currentSession = _sessions.find(s => (s.id || s.session_id) === _currentId);
-        const headerHtml = currentSession ? `
+        const currentSession = _sessions.find((s) => (s.id || s.session_id) === _currentId);
+        const headerHtml = currentSession
+            ? `
             <div class="chat-main-header">
                 <div style="display:flex;align-items:center;gap:8px">
                     <span style="font-weight:500">${Components.escapeHtml(currentSession.title || currentSession.id)}</span>
@@ -212,7 +226,8 @@ const SessionsPage = (() => {
                     <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
                     <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
                 </div>
-            </div>` : '';
+            </div>`
+            : '';
 
         const messagesHtml = !_currentId
             ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
@@ -221,23 +236,25 @@ const SessionsPage = (() => {
                 <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
               </div>`
             : _messages.length === 0
-            ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
+              ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
                 <div style="font-size:24px;margin-bottom:8px">${Components.icon('edit', 24)}</div>
                 <div>等待消息...</div>
               </div>`
-            : `<div class="chat-messages" id="chatMessages">
-                ${_messages.map(m => {
-                    const isUser = m.role === 'user';
-                    const roleText = ({user:'用户',assistant:'助手',system:'系统'})[m.role] || m.role;
-                    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                    return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+              : `<div class="chat-messages" id="chatMessages">
+                ${_messages
+                    .map((m) => {
+                        const isUser = m.role === 'user';
+                        const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
+                        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
                         <div class="chat-message-header">
                             <span class="chat-message-role">${roleText}</span>
                             <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
                         </div>
                         <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
                     </div>`;
-                }).join('')}
+                    })
+                    .join('')}
             </div>`;
 
         mainEl.innerHTML = headerHtml + messagesHtml;
@@ -246,7 +263,7 @@ const SessionsPage = (() => {
 
     async function select(id) {
         await loadMessages(id);
-        document.querySelectorAll('.session-item').forEach(el => {
+        document.querySelectorAll('.session-item').forEach((el) => {
             el.classList.toggle('active', el.dataset.id === id);
         });
         refreshMain();
@@ -256,7 +273,7 @@ const SessionsPage = (() => {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         const isUser = msg.role === 'user';
-        const roleText = ({user:'用户',assistant:'助手',system:'系统'})[msg.role] || msg.role;
+        const roleText = { user: '用户', assistant: '助手', system: '系统' }[msg.role] || msg.role;
         const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
         const div = document.createElement('div');
         div.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
@@ -279,7 +296,7 @@ const SessionsPage = (() => {
     async function deleteSession(id) {
         try {
             await API.sessions.delete(id);
-            _sessions = _sessions.filter(s => (s.id || s.session_id) !== id);
+            _sessions = _sessions.filter((s) => (s.id || s.session_id) !== id);
             if (_currentId === id) {
                 _currentId = null;
                 _messages = [];
@@ -317,10 +334,13 @@ const SessionsPage = (() => {
         // 搜索
         const searchInput = document.getElementById('sessionSearch');
         if (searchInput) {
-            searchInput.addEventListener('input', Components.debounce((e) => {
-                _searchTerm = e.target.value;
-                refreshSidebar();
-            }, 300));
+            searchInput.addEventListener(
+                'input',
+                Components.debounce((e) => {
+                    _searchTerm = e.target.value;
+                    refreshSidebar();
+                }, 300),
+            );
         }
 
         // 状态筛选
@@ -350,21 +370,27 @@ const SessionsPage = (() => {
                 scrollToBottom();
             } else {
                 // 其他会话有新消息 → 刷新侧边栏
-                const exists = _sessions.some(s => (s.id || s.session_id) === sid);
+                const exists = _sessions.some((s) => (s.id || s.session_id) === sid);
                 if (!exists) {
-                    API.sessions.list().then(list => {
-                        _sessions = list;
-                        refreshSidebar();
-                    }).catch(() => {});
+                    API.sessions
+                        .list()
+                        .then((list) => {
+                            _sessions = list;
+                            refreshSidebar();
+                        })
+                        .catch(() => {});
                 }
             }
         }
 
         if (type === 'session.updated' || type === 'session.deleted') {
-            API.sessions.list().then(list => {
-                _sessions = list;
-                refreshSidebar();
-            }).catch(() => {});
+            API.sessions
+                .list()
+                .then((list) => {
+                    _sessions = list;
+                    refreshSidebar();
+                })
+                .catch(() => {});
         }
     }
 

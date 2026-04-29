@@ -39,8 +39,11 @@ export default [
         rules: {
             // 放宽规则以适配项目风格
             "no-unused-vars": ["warn", {
+                args: "after-used",
                 argsIgnorePattern: "^_",
+                vars: "local",
                 varsIgnorePattern: "^_",
+                caughtErrorsIgnorePattern: "^_",
             }],
             "no-undef": "error",
             "no-redeclare": "off",

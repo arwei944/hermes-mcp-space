@@ -12,7 +12,11 @@ const LogsPage = (() => {
     let _refreshTimer = null;
 
     async function render() {
-        if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; _autoRefresh = false; }
+        if (_refreshTimer) {
+            clearInterval(_refreshTimer);
+            _refreshTimer = null;
+            _autoRefresh = false;
+        }
 
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
@@ -24,7 +28,7 @@ const LogsPage = (() => {
             ]);
             _logs = logsData || [];
             _stats = statsData;
-        } catch (err) {
+        } catch (_err) {
             _logs = [];
             _stats = null;
         }
@@ -37,12 +41,17 @@ const LogsPage = (() => {
         const levelOptions = ['全部', 'info', 'success', 'warning', 'error'];
         const sourceOptions = ['全部', 'system', 'user', 'mcp', 'cron'];
 
-        const filtered = _logs.filter(l => {
+        const filtered = _logs.filter((l) => {
             if (_filterLevel !== '全部' && l.level !== _filterLevel) return false;
             if (_filterSource !== '全部' && l.source !== _filterSource) return false;
             if (_searchKeyword) {
                 const kw = _searchKeyword.toLowerCase();
-                if (!(l.action || '').toLowerCase().includes(kw) && !(l.detail || '').toLowerCase().includes(kw) && !(l.target || '').toLowerCase().includes(kw)) return false;
+                if (
+                    !(l.action || '').toLowerCase().includes(kw) &&
+                    !(l.detail || '').toLowerCase().includes(kw) &&
+                    !(l.target || '').toLowerCase().includes(kw)
+                )
+                    return false;
             }
             return true;
         });
@@ -60,9 +69,9 @@ const LogsPage = (() => {
         const filterHtml = `<div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
             <input type="text" id="logSearchInput" placeholder="搜索操作/详情..." value="${Components.escapeHtml(_searchKeyword || '')}" style="flex:1;min-width:150px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none" oninput="LogsPage.search(this.value)">
             <span style="font-size:12px;color:var(--text-tertiary)">级别:</span>
-            ${levelOptions.map(l => `<button class="btn btn-sm ${_filterLevel === l ? 'btn-primary' : 'btn-ghost'}" onclick="LogsPage.setFilterLevel('${l}')">${l}</button>`).join('')}
+            ${levelOptions.map((l) => `<button class="btn btn-sm ${_filterLevel === l ? 'btn-primary' : 'btn-ghost'}" onclick="LogsPage.setFilterLevel('${l}')">${l}</button>`).join('')}
             <span style="font-size:12px;color:var(--text-tertiary)">来源:</span>
-            ${sourceOptions.map(s => `<button class="btn btn-sm ${_filterSource === s ? 'btn-primary' : 'btn-ghost'}" onclick="LogsPage.setFilterSource('${s}')">${s}</button>`).join('')}
+            ${sourceOptions.map((s) => `<button class="btn btn-sm ${_filterSource === s ? 'btn-primary' : 'btn-ghost'}" onclick="LogsPage.setFilterSource('${s}')">${s}</button>`).join('')}
             <label style="font-size:12px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px">
                 <input type="checkbox" id="autoRefresh" ${_autoRefresh ? 'checked' : ''} onchange="LogsPage.toggleAutoRefresh(this.checked)" style="accent-color:var(--accent)">
                 自动刷新
@@ -76,18 +85,23 @@ const LogsPage = (() => {
         const levelText = { info: '信息', success: '成功', warning: '警告', error: '错误' };
         const sourceText = { system: '系统', user: '用户', mcp: 'MCP', cron: '定时任务' };
 
-        const logsHtml = filtered.length === 0
-            ? Components.createEmptyState(Components.icon('clipboard', 48), '暂无日志', '没有匹配的操作日志', '')
-            : `<div class="table-wrapper"><table class="table">
+        const logsHtml =
+            filtered.length === 0
+                ? Components.createEmptyState(Components.icon('clipboard', 48), '暂无日志', '没有匹配的操作日志', '')
+                : `<div class="table-wrapper"><table class="table">
                 <thead><tr><th>时间</th><th>级别</th><th>来源</th><th>操作</th><th>详情</th></tr></thead>
                 <tbody>
-                    ${filtered.map(l => `<tr>
+                    ${filtered
+                        .map(
+                            (l) => `<tr>
                         <td style="white-space:nowrap;font-size:12px;color:var(--text-tertiary)">${Components.formatDateTime(l.timestamp)}</td>
                         <td>${Components.renderBadge(levelText[l.level] || l.level, levelBadge[l.level] || 'blue')}</td>
                         <td>${Components.renderBadge(sourceText[l.source] || l.source, 'orange')}</td>
                         <td style="font-weight:500">${Components.escapeHtml(l.action)}</td>
                         <td style="font-size:12px;color:var(--text-secondary);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(l.detail || l.target || '-')}</td>
-                    </tr>`).join('')}
+                    </tr>`,
+                        )
+                        .join('')}
                 </tbody>
             </table></div>`;
 
@@ -113,7 +127,6 @@ const LogsPage = (() => {
     }
 
     async function clearLogs() {
-
         try {
             await API.request('/api/logs', { method: 'DELETE' });
             _logs = [];

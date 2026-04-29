@@ -15,13 +15,15 @@ const MemoryPage = (() => {
 
         try {
             const [memoryData, userData, statsData] = await Promise.all([
-                API.memory.getMemory(), API.memory.getUser(), API.memory.stats(),
+                API.memory.getMemory(),
+                API.memory.getUser(),
+                API.memory.stats(),
             ]);
             // API 返回 {memory: "...", user: "..."} 或字符串
-            _memoryContent = typeof memoryData === 'string' ? memoryData : (memoryData.memory || '');
-            _userContent = typeof userData === 'string' ? userData : (userData.user || '');
+            _memoryContent = typeof memoryData === 'string' ? memoryData : memoryData.memory || '';
+            _userContent = typeof userData === 'string' ? userData : userData.user || '';
             _stats = statsData;
-        } catch (err) {
+        } catch (_err) {
             _memoryContent = '';
             _userContent = '';
             _stats = null;
@@ -33,8 +35,12 @@ const MemoryPage = (() => {
 
     function buildPage() {
         const tabs = Components.createTabs(
-            [{ key: 'memory', label: 'MEMORY.md' }, { key: 'user', label: 'USER.md' }],
-            _activeTab, 'MemoryPage.switchTab'
+            [
+                { key: 'memory', label: 'MEMORY.md' },
+                { key: 'user', label: 'USER.md' },
+            ],
+            _activeTab,
+            'MemoryPage.switchTab',
         );
 
         const content = _activeTab === 'memory' ? _memoryContent : _userContent;
@@ -98,10 +104,17 @@ const MemoryPage = (() => {
         if (!editor) return;
         const content = editor.value;
         try {
-            if (_activeTab === 'memory') { await API.memory.saveMemory(content); _memoryContent = content; }
-            else { await API.memory.saveUser(content); _userContent = content; }
+            if (_activeTab === 'memory') {
+                await API.memory.saveMemory(content);
+                _memoryContent = content;
+            } else {
+                await API.memory.saveUser(content);
+                _userContent = content;
+            }
             Components.Toast.success('保存成功');
-        } catch (err) { Components.Toast.error(`保存失败: ${err.message}`); }
+        } catch (err) {
+            Components.Toast.error(`.*${err.message}`);
+        }
     }
 
     function bindEvents() {
@@ -109,7 +122,10 @@ const MemoryPage = (() => {
         if (editor) editor.addEventListener('input', Components.debounce(updatePreview, 300));
         if (_globalKeyHandler) document.removeEventListener('keydown', _globalKeyHandler);
         _globalKeyHandler = function handler(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveContent(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveContent();
+            }
         };
         document.addEventListener('keydown', _globalKeyHandler);
     }

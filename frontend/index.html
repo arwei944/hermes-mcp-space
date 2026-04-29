@@ -171,5 +171,25 @@
 <script src="/js/pages/trash.js"></script>
 <script src="/js/app.js"></script>
 
+<!-- 全局错误边界：JS 报错时显示友好提示而不是白屏 -->
+<script>
+window.onerror = function(msg, url, line, col, err) {
+    console.error('[JS Error]', msg, url, line, col, err);
+    var content = document.getElementById('contentBody');
+    if (content && !content.querySelector('.js-error-boundary')) {
+        content.innerHTML = '<div class="js-error-boundary" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center">' +
+            '<div style="font-size:40px;margin-bottom:16px;opacity:0.5">' + (typeof Components !== 'undefined' ? Components.icon('alertTriangle', 40) : '⚠️') + '</div>' +
+            '<div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px">页面加载出错</div>' +
+            '<div style="font-size:13px;color:var(--text-tertiary);max-width:500px;margin-bottom:16px">' + (msg || '未知错误') + '</div>' +
+            '<div style="font-size:11px;color:var(--text-quaternary)">' + (url || '') + ':' + (line || '') + '</div>' +
+            '</div>';
+    }
+    return true;
+};
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('[Promise Error]', e.reason);
+});
+</script>
+
 </body>
 </html>

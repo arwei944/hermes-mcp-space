@@ -15,13 +15,10 @@ const McpPage = (() => {
         container.innerHTML = Components.createLoading();
 
         try {
-            const [statusData, apiStatus] = await Promise.all([
-                API.mcp.status(),
-                API.system.status(),
-            ]);
+            const [statusData, apiStatus] = await Promise.all([API.mcp.status(), API.system.status()]);
             _status = statusData;
             _apiStatus = apiStatus;
-        } catch (err) {
+        } catch (_err) {
             _status = { status: 'unknown' };
             _apiStatus = { status: '降级模式', hermes_available: false };
         }
@@ -30,14 +27,14 @@ const McpPage = (() => {
             const mcpBaseUrl = window.location.origin;
             const resp = await fetch(`${mcpBaseUrl}/mcp`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
             });
             if (resp.ok) {
                 const data = await resp.json();
                 _mcpTools = data.result?.tools || [];
             }
-        } catch (err) {
+        } catch (_err) {
             _mcpTools = [];
         }
 
@@ -52,11 +49,15 @@ const McpPage = (() => {
                 label: 'Trae',
                 icon: Components.icon('zap', 16),
                 description: 'Trae IDE 内置 MCP 客户端',
-                config: JSON.stringify({
-                    mcpServers: {
-                        hermes: { url: `${baseUrl}/mcp` }
-                    }
-                }, null, 2),
+                config: JSON.stringify(
+                    {
+                        mcpServers: {
+                            hermes: { url: `${baseUrl}/mcp` },
+                        },
+                    },
+                    null,
+                    2,
+                ),
                 steps: [
                     '打开 Trae → 设置 → MCP',
                     '点击「添加 MCP Server」',
@@ -68,14 +69,18 @@ const McpPage = (() => {
                 label: 'Claude Desktop',
                 icon: Components.icon('bot', 16),
                 description: 'Claude 桌面版 MCP 客户端',
-                config: JSON.stringify({
-                    mcpServers: {
-                        hermes: {
-                            url: `${baseUrl}/mcp`,
-                            type: 'streamable-http',
-                        }
-                    }
-                }, null, 2),
+                config: JSON.stringify(
+                    {
+                        mcpServers: {
+                            hermes: {
+                                url: `${baseUrl}/mcp`,
+                                type: 'streamable-http',
+                            },
+                        },
+                    },
+                    null,
+                    2,
+                ),
                 steps: [
                     '打开 Claude Desktop 配置文件',
                     '路径: ~/Library/Application Support/Claude/claude_desktop_config.json',
@@ -87,36 +92,34 @@ const McpPage = (() => {
                 label: 'VS Code (Copilot)',
                 icon: Components.icon('monitor', 16),
                 description: 'VS Code + GitHub Copilot MCP',
-                config: JSON.stringify({
-                    servers: {
-                        hermes: {
-                            url: `${baseUrl}/mcp`,
-                            type: 'streamable-http',
-                        }
-                    }
-                }, null, 2),
-                steps: [
-                    '打开 VS Code 设置 (JSON)',
-                    '添加 mcp.servers 配置',
-                    '粘贴上方 JSON 配置',
-                    '重新加载窗口',
-                ],
+                config: JSON.stringify(
+                    {
+                        servers: {
+                            hermes: {
+                                url: `${baseUrl}/mcp`,
+                                type: 'streamable-http',
+                            },
+                        },
+                    },
+                    null,
+                    2,
+                ),
+                steps: ['打开 VS Code 设置 (JSON)', '添加 mcp.servers 配置', '粘贴上方 JSON 配置', '重新加载窗口'],
             },
             cursor: {
                 label: 'Cursor',
                 icon: '🖱️',
                 description: 'Cursor IDE MCP 客户端',
-                config: JSON.stringify({
-                    mcpServers: {
-                        hermes: { url: `${baseUrl}/mcp` }
-                    }
-                }, null, 2),
-                steps: [
-                    '打开 Cursor → Settings → MCP',
-                    '点击「Add MCP Server」',
-                    '粘贴上方 JSON 配置',
-                    '重启 Cursor',
-                ],
+                config: JSON.stringify(
+                    {
+                        mcpServers: {
+                            hermes: { url: `${baseUrl}/mcp` },
+                        },
+                    },
+                    null,
+                    2,
+                ),
+                steps: ['打开 Cursor → Settings → MCP', '点击「Add MCP Server」', '粘贴上方 JSON 配置', '重启 Cursor'],
             },
         };
     }
@@ -171,31 +174,43 @@ const McpPage = (() => {
         </div>`;
 
         // MCP 测试结果
-        const testResultHtml = _mcpTestResult ? `
+        const testResultHtml = _mcpTestResult
+            ? `
             <div style="margin-bottom:16px;padding:12px 16px;border-radius:var(--radius-sm);background:${_mcpTestResult.ok ? 'var(--green-bg)' : 'var(--red-bg)'};border:1px solid ${_mcpTestResult.ok ? 'var(--green)' : 'var(--red)'}">
                 <div style="font-size:13px;font-weight:600;color:${_mcpTestResult.ok ? 'var(--green)' : 'var(--red)'}">${_mcpTestResult.ok ? '✅ MCP 连接正常' : '❌ MCP 连接失败'}</div>
                 ${_mcpTestResult.detail ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${_mcpTestResult.detail}</div>` : ''}
             </div>
-        ` : '';
+        `
+            : '';
 
         // 工具列表
-        const toolsHtml = Components.renderSection('MCP 暴露的工具', `
+        const toolsHtml = Components.renderSection(
+            'MCP 暴露的工具',
+            `
             <table class="table">
                 <thead><tr><th>工具名称</th><th>描述</th></tr></thead>
                 <tbody>
-                    ${_mcpTools.length === 0 ? `<tr><td colspan="2" style="text-align:center;padding:40px;color:var(--text-tertiary)">没有暴露的工具</td></tr>` :
-                    _mcpTools.map(t => `<tr>
+                    ${
+                        _mcpTools.length === 0
+                            ? `<tr><td colspan="2" style="text-align:center;padding:40px;color:var(--text-tertiary)">没有暴露的工具</td></tr>`
+                            : _mcpTools
+                                  .map(
+                                      (t) => `<tr>
                         <td class="mono" style="color:var(--accent)">${Components.escapeHtml(t.name)}</td>
                         <td>${Components.escapeHtml(t.description || '无描述')}</td>
-                    </tr>`).join('')}
+                    </tr>`,
+                                  )
+                                  .join('')
+                    }
                 </tbody>
             </table>
-        `);
+        `,
+        );
 
         // 平台 Tab 切换
         const tabKeys = Object.keys(configs);
         const tabHtml = `<div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap">
-            ${tabKeys.map(k => `<button type="button" class="btn btn-sm ${_activeTab === k ? 'btn-primary' : 'btn-ghost'}" data-action="switchTab" data-tab="${k}">${configs[k].icon} ${configs[k].label}</button>`).join('')}
+            ${tabKeys.map((k) => `<button type="button" class="btn btn-sm ${_activeTab === k ? 'btn-primary' : 'btn-ghost'}" data-action="switchTab" data-tab="${k}">${configs[k].icon} ${configs[k].label}</button>`).join('')}
             <button type="button" class="btn btn-sm ${_activeTab === 'prompt' ? 'btn-primary' : 'btn-ghost'}" data-action="switchTab" data-tab="prompt">${Components.icon('clipboard', 14)} System Prompt</button>
         </div>`;
 
@@ -203,17 +218,22 @@ const McpPage = (() => {
         let configContentHtml = '';
         if (_activeTab === 'prompt') {
             const prompt = getSystemPrompt();
-            configContentHtml = Components.renderSection('System Prompt 模板', `
+            configContentHtml = Components.renderSection(
+                'System Prompt 模板',
+                `
                 <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">将以下内容添加到 Trae / Claude / Cursor 的 System Prompt 或自定义指令中：</p>
                 <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
                     <button type="button" class="btn btn-sm btn-ghost" data-action="copyPrompt">${Components.icon('clipboard', 14)} 复制 Prompt</button>
                 </div>
                 <div class="schema-display" id="systemPromptDisplay" style="white-space:pre-wrap;font-size:13px;line-height:1.7">${Components.escapeHtml(prompt)}</div>
-            `);
+            `,
+            );
         } else {
             const cfg = configs[_activeTab];
             if (cfg) {
-                configContentHtml = Components.renderSection(`${cfg.icon} ${cfg.label} 配置`, `
+                configContentHtml = Components.renderSection(
+                    `${cfg.icon} ${cfg.label} 配置`,
+                    `
                     <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">${cfg.description}</p>
                     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
                         <button type="button" class="btn btn-sm btn-ghost" data-action="copyConfig">${Components.icon('clipboard', 14)} 复制配置</button>
@@ -222,22 +242,26 @@ const McpPage = (() => {
                     <div style="margin-top:16px">
                         <div style="font-size:13px;font-weight:600;margin-bottom:8px">配置步骤</div>
                         <ol style="margin:0;padding-left:20px;font-size:12px;color:var(--text-secondary);line-height:2">
-                            ${cfg.steps.map(s => `<li>${s}</li>`).join('')}
+                            ${cfg.steps.map((s) => `<li>${s}</li>`).join('')}
                         </ol>
                     </div>
-                `);
+                `,
+                );
             }
         }
 
         // 服务端点信息
-        const endpointHtml = Components.renderSection('服务端点', `
+        const endpointHtml = Components.renderSection(
+            '服务端点',
+            `
             <div class="connection-info">
                 <div><span class="info-label">Streamable HTTP:</span><span class="info-value mono">${baseUrl}/mcp</span></div>
                 <div><span class="info-label">SSE (兼容):</span><span class="info-value mono">${baseUrl}/sse</span></div>
                 <div><span class="info-label">协议版本:</span><span class="info-value">MCP 2025-03-26</span></div>
                 <div><span class="info-label">Hermes 可用:</span><span class="info-value">${hermesOk ? '是' : '否（使用降级数据）'}</span></div>
             </div>
-        `);
+        `,
+        );
 
         return `${statsHtml}${actionsHtml}${testResultHtml}${toolsHtml}
             ${Components.renderSection('连接配置', `${tabHtml}${configContentHtml}`)}
@@ -250,11 +274,16 @@ const McpPage = (() => {
             const baseUrl = window.location.origin;
             const resp = await fetch(`${baseUrl}/mcp`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 body: JSON.stringify({
-                    jsonrpc: '2.0', id: 1,
+                    jsonrpc: '2.0',
+                    id: 1,
                     method: 'initialize',
-                    params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test', version: '1.0' } }
+                    params: {
+                        protocolVersion: '2025-03-26',
+                        capabilities: {},
+                        clientInfo: { name: 'test', version: '1.0' },
+                    },
                 }),
             });
             if (resp.ok) {
@@ -283,7 +312,9 @@ const McpPage = (() => {
             await API.mcp.restart();
             Components.Toast.success('MCP 服务已重启');
             render();
-        } catch (err) { Components.Toast.error(`重启失败: ${err.message}`); }
+        } catch (err) {
+            Components.Toast.error(`.*${err.message}`);
+        }
     }
 
     function copyConfig() {
@@ -299,17 +330,20 @@ const McpPage = (() => {
     }
 
     function copyText(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            Components.Toast.success('已复制到剪贴板');
-        }).catch(() => {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            Components.Toast.success('已复制到剪贴板');
-        });
+        navigator.clipboard
+            .writeText(text)
+            .then(() => {
+                Components.Toast.success('已复制到剪贴板');
+            })
+            .catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                Components.Toast.success('已复制到剪贴板');
+            });
     }
 
     function bindEvents() {
@@ -321,10 +355,18 @@ const McpPage = (() => {
             if (!btn) return;
             const action = btn.dataset.action;
             switch (action) {
-                case 'testConnection': testConnection(); break;
-                case 'restartService': restartService(); break;
-                case 'copyConfig': copyConfig(); break;
-                case 'copyPrompt': copyPrompt(); break;
+                case 'testConnection':
+                    testConnection();
+                    break;
+                case 'restartService':
+                    restartService();
+                    break;
+                case 'copyConfig':
+                    copyConfig();
+                    break;
+                case 'copyPrompt':
+                    copyPrompt();
+                    break;
                 case 'switchTab':
                     _activeTab = btn.dataset.tab;
                     document.getElementById('contentBody').innerHTML = buildPage();

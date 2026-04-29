@@ -16,11 +16,7 @@ const MarketplacePage = (() => {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
-        await Promise.all([
-            loadMCPServers(),
-            loadSkills(),
-            loadTools(),
-        ]);
+        await Promise.all([loadMCPServers(), loadSkills(), loadTools()]);
 
         container.innerHTML = buildPage();
         bindEvents();
@@ -30,21 +26,29 @@ const MarketplacePage = (() => {
     async function loadMCPServers() {
         try {
             _mcpServers = await API.request('/api/mcp/servers');
-        } catch { _mcpServers = []; }
+        } catch {
+            _mcpServers = [];
+        }
     }
 
     async function loadSkills() {
         try {
             _skills = await API.skills.list();
-        } catch { _skills = []; }
+        } catch {
+            _skills = [];
+        }
     }
 
     async function loadTools() {
         try {
             _allTools = await API.tools.list();
-            _localTools = _allTools.filter(t => !t.name.startsWith('mcp_'));
-            _externalTools = _allTools.filter(t => t.name.startsWith('mcp_'));
-        } catch { _allTools = []; _localTools = []; _externalTools = []; }
+            _localTools = _allTools.filter((t) => !t.name.startsWith('mcp_'));
+            _externalTools = _allTools.filter((t) => t.name.startsWith('mcp_'));
+        } catch {
+            _allTools = [];
+            _localTools = [];
+            _externalTools = [];
+        }
     }
 
     // ---- 页面构建 ----
@@ -56,13 +60,17 @@ const MarketplacePage = (() => {
         ];
 
         const tabHtml = `<div class="marketplace-tabs">
-            ${tabs.map(t => `
+            ${tabs
+                .map(
+                    (t) => `
                 <button type="button" class="marketplace-tab ${_activeTab === t.key ? 'active' : ''}" data-action="switchTab" data-tab="${t.key}">
                     <span>${t.icon}</span>
                     <span>${t.label}</span>
                     <span class="tab-count">${t.count}</span>
                 </button>
-            `).join('')}
+            `,
+                )
+                .join('')}
         </div>`;
 
         let contentHtml = '';
@@ -86,14 +94,17 @@ const MarketplacePage = (() => {
                 </div>
             </div>`;
 
-        const serverListHtml = _mcpServers.length === 0
-            ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
+        const serverListHtml =
+            _mcpServers.length === 0
+                ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
                 <div style="font-size:32px;margin-bottom:8px">${Components.icon('globe', 32)}</div>
                 <div>暂无外部 MCP 服务器</div>
                 <div style="font-size:12px;margin-top:4px">添加外部服务器后，其工具将自动聚合到工具列表</div>
               </div>`
-            : `<div class="mp-server-list">
-                ${_mcpServers.map(s => `
+                : `<div class="mp-server-list">
+                ${_mcpServers
+                    .map(
+                        (s) => `
                     <div class="mp-server-card">
                         <div style="display:flex;justify-content:space-between;align-items:center">
                             <div>
@@ -110,7 +121,9 @@ const MarketplacePage = (() => {
                         ${s.prefix ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">前缀: <code style="background:var(--bg-secondary);padding:1px 4px;border-radius:var(--radius-tag)">${Components.escapeHtml(s.prefix)}</code></div>` : ''}
                         ${s.last_check ? `<div style="font-size:11px;color:var(--text-tertiary)">最后检查: ${s.last_check}</div>` : ''}
                     </div>
-                `).join('')}
+                `,
+                    )
+                    .join('')}
             </div>`;
 
         return addFormHtml + serverListHtml;
@@ -124,20 +137,23 @@ const MarketplacePage = (() => {
                 <button type="button" class="btn btn-primary btn-sm" data-action="createSkill">+ 创建技能</button>
             </div>`;
 
-        const skillListHtml = _skills.length === 0
-            ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
+        const skillListHtml =
+            _skills.length === 0
+                ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
                 <div style="font-size:32px;margin-bottom:8px">${Components.icon('zap', 32)}</div>
                 <div>暂无技能</div>
               </div>`
-            : `<div class="mp-skill-list">
-                ${_skills.map(s => `
+                : `<div class="mp-skill-list">
+                ${_skills
+                    .map(
+                        (s) => `
                     <div class="mp-skill-card" data-action="viewSkill" data-name="${Components.escapeHtml(s.name)}">
                         <div style="display:flex;justify-content:space-between;align-items:start">
                             <div style="flex:1;min-width:0">
                                 <div style="font-weight:600;font-size:14px">${Components.escapeHtml(s.name)}</div>
                                 <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.description || '无描述')}</div>
                                 <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
-                                    ${(s.tags || []).map(t => `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--bg-secondary);color:var(--text-tertiary)">${Components.escapeHtml(t)}</span>`).join('')}
+                                    ${(s.tags || []).map((t) => `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--bg-secondary);color:var(--text-tertiary)">${Components.escapeHtml(t)}</span>`).join('')}
                                     ${s.category ? `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--accent-bg, var(--blue-bg));color:var(--accent)">${Components.escapeHtml(s.category)}</span>` : ''}
                                     ${s.version ? `<span style="font-size:10px;padding:1px 6px;border-radius:10px;background:var(--bg-secondary);color:var(--text-tertiary)">v${Components.escapeHtml(s.version)}</span>` : ''}
                                 </div>
@@ -148,7 +164,9 @@ const MarketplacePage = (() => {
                             </div>
                         </div>
                     </div>
-                `).join('')}
+                `,
+                    )
+                    .join('')}
             </div>`;
 
         return addBtnHtml + skillListHtml;
@@ -166,19 +184,19 @@ const MarketplacePage = (() => {
                 </select>
             </div>`;
 
-        const toolsHtml = _allTools.length === 0
-            ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
+        const toolsHtml =
+            _allTools.length === 0
+                ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
                 <div style="font-size:32px;margin-bottom:8px">${Components.icon('wrench', 32)}</div>
                 <div>暂无工具</div>
               </div>`
-            : `<div class="mp-tool-list">
-                ${_allTools.map(t => {
-                    const isExternal = t.name.startsWith('mcp_');
-                    const source = isExternal
-                        ? t.description?.match(/^\[(.*?)\]/)?.[1] || '外部'
-                        : '本地';
-                    const desc = t.description?.replace(/^\[.*?\]\s*/, '') || '无描述';
-                    return `<div class="mp-tool-card" data-source="${isExternal ? 'external' : 'local'}" data-name="${Components.escapeHtml(t.name)}">
+                : `<div class="mp-tool-list">
+                ${_allTools
+                    .map((t) => {
+                        const isExternal = t.name.startsWith('mcp_');
+                        const source = isExternal ? t.description?.match(/^\[(.*?)\]/)?.[1] || '外部' : '本地';
+                        const desc = t.description?.replace(/^\[.*?\]\s*/, '') || '无描述';
+                        return `<div class="mp-tool-card" data-source="${isExternal ? 'external' : 'local'}" data-name="${Components.escapeHtml(t.name)}">
                         <div style="display:flex;justify-content:space-between;align-items:center">
                             <div style="flex:1;min-width:0">
                                 <code style="font-size:13px;color:var(--accent)">${Components.escapeHtml(t.name)}</code>
@@ -187,7 +205,8 @@ const MarketplacePage = (() => {
                             ${Components.renderBadge(source, isExternal ? 'purple' : 'blue')}
                         </div>
                     </div>`;
-                }).join('')}
+                    })
+                    .join('')}
             </div>`;
 
         return filterHtml + toolsHtml;
@@ -244,13 +263,16 @@ const MarketplacePage = (() => {
         // 工具搜索
         const searchInput = document.getElementById('toolSearch');
         if (searchInput) {
-            searchInput.addEventListener('input', Components.debounce((e) => {
-                const term = e.target.value.toLowerCase();
-                document.querySelectorAll('.mp-tool-card').forEach(card => {
-                    const name = (card.dataset.name || '').toLowerCase();
-                    card.style.display = name.includes(term) ? '' : 'none';
-                });
-            }, 200));
+            searchInput.addEventListener(
+                'input',
+                Components.debounce((e) => {
+                    const term = e.target.value.toLowerCase();
+                    document.querySelectorAll('.mp-tool-card').forEach((card) => {
+                        const name = (card.dataset.name || '').toLowerCase();
+                        card.style.display = name.includes(term) ? '' : 'none';
+                    });
+                }, 200),
+            );
         }
 
         // 工具过滤
@@ -258,9 +280,12 @@ const MarketplacePage = (() => {
         if (filterSelect) {
             filterSelect.addEventListener('change', (e) => {
                 const val = e.target.value;
-                document.querySelectorAll('.mp-tool-card').forEach(card => {
-                    if (val === 'all') { card.style.display = ''; }
-                    else { card.style.display = card.dataset.source === val ? '' : 'none'; }
+                document.querySelectorAll('.mp-tool-card').forEach((card) => {
+                    if (val === 'all') {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = card.dataset.source === val ? '' : 'none';
+                    }
                 });
             });
         }
@@ -271,7 +296,10 @@ const MarketplacePage = (() => {
         const name = document.getElementById('mcpServerName')?.value.trim();
         const url = document.getElementById('mcpServerUrl')?.value.trim();
         const prefix = document.getElementById('mcpServerPrefix')?.value.trim();
-        if (!name || !url) { Components.Toast.error('名称和 URL 不能为空'); return; }
+        if (!name || !url) {
+            Components.Toast.error('名称和 URL 不能为空');
+            return;
+        }
 
         Components.Toast.info('正在连接...');
         try {
@@ -331,7 +359,7 @@ const MarketplacePage = (() => {
 
     async function showSkillModal(mode, name) {
         const title = mode === 'create' ? '创建技能' : mode === 'edit' ? `编辑技能: ${name}` : `查看技能: ${name}`;
-        const skill = mode !== 'create' ? _skills.find(s => s.name === name) : null;
+        const skill = mode !== 'create' ? _skills.find((s) => s.name === name) : null;
         const isView = mode === 'view';
 
         const html = `
@@ -340,7 +368,9 @@ const MarketplacePage = (() => {
                 <button type="button" class="btn btn-ghost btn-sm" data-action="closeModal">${Components.icon('x', 14)}</button>
             </div>
             <div class="modal-body">
-                ${isView ? `
+                ${
+                    isView
+                        ? `
                     <div style="margin-bottom:12px">
                         <label style="font-size:12px;color:var(--text-tertiary)">名称</label>
                         <div style="font-weight:600">${Components.escapeHtml(skill?.name || '')}</div>
@@ -351,9 +381,10 @@ const MarketplacePage = (() => {
                     </div>
                     <div style="margin-bottom:12px">
                         <label style="font-size:12px;color:var(--text-tertiary)">标签</label>
-                        <div>${(skill?.tags || []).map(t => `<span style="display:inline-block;padding:2px 8px;margin:2px;border-radius:10px;background:var(--bg-secondary);font-size:12px">${Components.escapeHtml(t)}</span>`).join('') || '无'}</div>
+                        <div>${(skill?.tags || []).map((t) => `<span style="display:inline-block;padding:2px 8px;margin:2px;border-radius:10px;background:var(--bg-secondary);font-size:12px">${Components.escapeHtml(t)}</span>`).join('') || '无'}</div>
                     </div>
-                ` : `
+                `
+                        : `
                     <div style="margin-bottom:12px">
                         <label style="font-size:12px;color:var(--text-tertiary)">名称</label>
                         <input type="text" id="skillName" value="${Components.escapeHtml(mode === 'edit' ? name : '')}" ${mode === 'edit' ? 'readonly style="opacity:0.6"' : ''} style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);color:var(--text);outline:none;margin-top:4px">
@@ -366,18 +397,23 @@ const MarketplacePage = (() => {
                         <label style="font-size:12px;color:var(--text-tertiary)">标签（逗号分隔）</label>
                         <input type="text" id="skillTags" value="${Components.escapeHtml((skill?.tags || []).join(', '))}" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);color:var(--text);outline:none;margin-top:4px">
                     </div>
-                `}
+                `
+                }
                 <div>
                     <label style="font-size:12px;color:var(--text-tertiary)">内容（Markdown）</label>
                     <textarea id="skillContent" rows="12" ${isView ? 'readonly style="opacity:0.8"' : ''} style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);color:var(--text);outline:none;margin-top:4px;font-family:monospace;font-size:12px;resize:vertical">${isView ? '' : Components.escapeHtml(skill?.content || '# ' + (name || '技能名称') + '\n\n技能描述')}</textarea>
                 </div>
             </div>
-            ${!isView ? `
+            ${
+                !isView
+                    ? `
                 <div class="modal-footer">
                     <button type="button" class="btn btn-ghost" data-action="closeModal">取消</button>
                     <button type="button" class="btn btn-primary" data-action="saveSkill" data-mode="${mode}" data-name="${Components.escapeHtml(name || '')}">保存</button>
                 </div>
-            ` : ''}
+            `
+                    : ''
+            }
         `;
 
         Components.Modal.show(html);
@@ -402,7 +438,9 @@ const MarketplacePage = (() => {
                 const data = await API.skills.get(name);
                 const contentEl = document.getElementById('skillContent');
                 if (contentEl && data) contentEl.value = typeof data === 'string' ? data : data.content || '';
-            } catch {}
+            } catch (_err) {
+                /* ignore */
+            }
         }
     }
 
@@ -411,9 +449,15 @@ const MarketplacePage = (() => {
         const content = document.getElementById('skillContent')?.value || '';
         const description = document.getElementById('skillDesc')?.value.trim() || '';
         const tagsStr = document.getElementById('skillTags')?.value || '';
-        const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+        const tags = tagsStr
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean);
 
-        if (!skillName) { Components.Toast.error('名称不能为空'); return; }
+        if (!skillName) {
+            Components.Toast.error('名称不能为空');
+            return;
+        }
 
         try {
             if (mode === 'create') {
@@ -432,14 +476,16 @@ const MarketplacePage = (() => {
     }
 
     // ---- SSE ----
-    function onSSEEvent(type, data) {
+    function onSSEEvent(type, _data) {
         if (type === 'skill.created' || type === 'skill.updated' || type === 'skill.deleted') {
-            loadSkills().then(() => {
-                if (_activeTab === 'skills') {
-                    document.getElementById('contentBody').innerHTML = buildPage();
-                    bindEvents();
-                }
-            }).catch(() => {});
+            loadSkills()
+                .then(() => {
+                    if (_activeTab === 'skills') {
+                        document.getElementById('contentBody').innerHTML = buildPage();
+                        bindEvents();
+                    }
+                })
+                .catch(() => {});
         }
     }
 

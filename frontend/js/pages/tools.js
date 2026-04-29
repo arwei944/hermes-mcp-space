@@ -15,14 +15,14 @@ const ToolsPage = (() => {
             const [toolsData, toolsetsData] = await Promise.all([API.tools.list(), API.tools.toolsets()]);
             // 后端返回 {name, description, schema, status} 或 {name, description, toolset, enabled}
             const rawTools = toolsData.tools || toolsData || [];
-            _tools = rawTools.map(t => ({
+            _tools = rawTools.map((t) => ({
                 ...t,
                 enabled: t.enabled !== undefined ? t.enabled : t.status !== 'inactive',
                 toolset: t.toolset || t.name.split('_')[0] || 'default',
             }));
             const rawToolsets = toolsetsData.toolsets || toolsetsData || [];
-            _toolsets = rawToolsets.map(ts => typeof ts === 'string' ? ts : ts.name).filter(Boolean);
-        } catch (err) {
+            _toolsets = rawToolsets.map((ts) => (typeof ts === 'string' ? ts : ts.name)).filter(Boolean);
+        } catch (_err) {
             const mock = { tools: [], toolsets: [] };
             _tools = mock.tools;
             _toolsets = mock.toolsets;
@@ -34,17 +34,20 @@ const ToolsPage = (() => {
 
     function getFilteredTools() {
         if (_activeFilter === '全部') return _tools;
-        return _tools.filter(t => t.toolset === _activeFilter);
+        return _tools.filter((t) => t.toolset === _activeFilter);
     }
 
     function buildPage() {
         const filtered = getFilteredTools();
-        const filterTags = ['全部', ..._toolsets.filter(t => t !== '全部')];
+        const filterTags = ['全部', ..._toolsets.filter((t) => t !== '全部')];
         const filterHtml = Components.createFilterGroup(filterTags, _activeFilter, 'ToolsPage.setFilter');
 
-        const toolsHtml = filtered.length === 0
-            ? Components.createEmptyState(Components.icon('wrench', 16), '暂无工具', '没有匹配的工具', '')
-            : `<div class="tool-grid">${filtered.map(tool => `
+        const toolsHtml =
+            filtered.length === 0
+                ? Components.createEmptyState(Components.icon('wrench', 16), '暂无工具', '没有匹配的工具', '')
+                : `<div class="tool-grid">${filtered
+                      .map(
+                          (tool) => `
                 <div class="tool-card">
                     <div class="tool-card-header" style="cursor:pointer" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')">
                         <span class="tool-name">${Components.escapeHtml(tool.name)}</span>
@@ -59,7 +62,9 @@ const ToolsPage = (() => {
                         <button class="btn btn-sm btn-ghost" onclick="ToolsPage.viewTool('${Components.escapeHtml(tool.name)}')" style="margin-left:auto">详情</button>
                     </div>
                 </div>
-            `).join('')}</div>`;
+            `,
+                      )
+                      .join('')}</div>`;
 
         return `${filterHtml}
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -86,7 +91,12 @@ const ToolsPage = (() => {
                 ${Components.renderJson(tool.schema || tool.inputSchema || tool.parameters || {})}
             `;
         } catch (err) {
-            document.getElementById('modalBody').innerHTML = Components.createEmptyState(Components.icon('wrench', 16), '加载失败', err.message, '');
+            document.getElementById('modalBody').innerHTML = Components.createEmptyState(
+                Components.icon('wrench', 16),
+                '加载失败',
+                err.message,
+                '',
+            );
         }
     }
 
@@ -94,7 +104,7 @@ const ToolsPage = (() => {
         try {
             await API.tools.toggle(name, enabled);
             Components.Toast.success(`工具 ${name} 已${enabled ? '启用' : '禁用'}`);
-            const tool = _tools.find(t => t.name === name);
+            const tool = _tools.find((t) => t.name === name);
             if (tool) tool.enabled = enabled;
             document.getElementById('contentBody').innerHTML = buildPage();
             bindEvents();

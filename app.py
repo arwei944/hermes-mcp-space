@@ -27,7 +27,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "4.8.0")
+APP_VERSION = os.environ.get("APP_VERSION", "4.9.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", datetime.now().strftime("%Y-%m-%d %H:%M"))
 START_TIME = time.time()  # 进程启动时间戳
 
@@ -50,17 +50,16 @@ def build_full_html():
 
     css = load_file(frontend_dir / "css" / "style.css")
 
-    js_files = [
-        "js/api.js", "js/components.js",
-        "js/pages/dashboard.js", "js/pages/knowledge.js", "js/pages/sessions.js", "js/pages/chat.js",
-        "js/pages/tools.js", "js/pages/skills.js", "js/pages/memory.js",
-        "js/pages/plugins.js",
-        "js/pages/cron.js", "js/pages/agents.js", "js/pages/config.js",
-        "js/pages/about.js",
-        "js/pages/trash.js",
-        "js/pages/mcp.js", "js/pages/marketplace.js", "js/pages/logs.js",
-        "js/app.js",
-    ]
+    # 自动扫描 JS 文件（不再手动维护列表）
+    core_js = ["js/api.js", "js/components.js"]
+    pages_dir = frontend_dir / "js" / "pages"
+    page_files = sorted(
+        f"js/pages/{f.name}" for f in pages_dir.glob("*.js")
+    )
+    app_js = ["js/app.js"]
+    js_files = core_js + page_files + app_js
+
+    logger.info(f"Auto-discovered {len(page_files)} page files: {[f.split('/')[-1] for f in page_files]}")
 
     all_js = ""
     for jsf in js_files:

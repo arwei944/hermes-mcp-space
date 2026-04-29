@@ -15,7 +15,7 @@ const CronPage = (() => {
         try {
             const data = await API.cron.list();
             _jobs = data.jobs || data || [];
-        } catch (err) {
+        } catch (_err) {
             _jobs = [];
         }
 
@@ -27,7 +27,7 @@ const CronPage = (() => {
         const statusMap = { active: '运行中', paused: '暂停', disabled: '已禁用', idle: '空闲' };
         const statusColor = { active: 'green', paused: 'orange', disabled: 'red', idle: 'blue' };
 
-        const activeCount = _jobs.filter(j => j.status === 'active').length;
+        const activeCount = _jobs.filter((j) => j.status === 'active').length;
 
         // 统计
         const statsHtml = `<div class="stats">
@@ -45,12 +45,20 @@ const CronPage = (() => {
         const formHtml = _showForm ? buildForm() : '';
 
         // 任务列表
-        const jobsHtml = _jobs.length === 0
-            ? Components.createEmptyState(Components.icon('clock', 48), '暂无定时任务', '点击「创建任务」添加第一个定时任务', '')
-            : `<div class="table-wrapper"><table class="table">
+        const jobsHtml =
+            _jobs.length === 0
+                ? Components.createEmptyState(
+                      Components.icon('clock', 48),
+                      '暂无定时任务',
+                      '点击「创建任务」添加第一个定时任务',
+                      '',
+                  )
+                : `<div class="table-wrapper"><table class="table">
                 <thead><tr><th>名称</th><th>调度</th><th>命令</th><th>状态</th><th>上次执行</th><th>操作</th></tr></thead>
                 <tbody>
-                    ${_jobs.map(j => `<tr>
+                    ${_jobs
+                        .map(
+                            (j) => `<tr>
                         <td style="font-weight:500">${Components.escapeHtml(j.name || '-')}</td>
                         <td class="mono" style="font-size:12px">${Components.escapeHtml(j.schedule || j.cron || '-')}</td>
                         <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(j.command || j.action || '-')}</td>
@@ -63,7 +71,9 @@ const CronPage = (() => {
                                 <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="CronPage.deleteJob('${j.id}')" title="删除">${Components.icon('trash', 16)}</button>
                             </div>
                         </td>
-                    </tr>`).join('')}
+                    </tr>`,
+                        )
+                        .join('')}
                 </tbody>
             </table></div>`;
 
@@ -72,7 +82,7 @@ const CronPage = (() => {
 
     function buildForm() {
         const isEdit = _editingJob !== null;
-        const job = isEdit ? _jobs.find(j => j.id === _editingJob) : {};
+        const job = isEdit ? _jobs.find((j) => j.id === _editingJob) : {};
         return `<div class="modal-overlay" onclick="CronPage.hideForm()">
             <div class="modal" onclick="event.stopPropagation()">
                 <div class="modal-header">
@@ -83,10 +93,13 @@ const CronPage = (() => {
                     ${Components.formGroup('任务名称', `<input class="form-input" id="cronName" placeholder="例如: 每日备份" value="${Components.escapeHtml(job.name || '')}">`)}
                     ${Components.formGroup('Cron 表达式', `<input class="form-input" id="cronSchedule" placeholder="例如: 0 9 * * *" value="${Components.escapeHtml(job.schedule || job.cron || '')}">`, '分 时 日 月 周')}
                     ${Components.formGroup('执行命令', `<textarea class="form-input" id="cronCommand" rows="3" placeholder="描述任务要执行的操作...">${Components.escapeHtml(job.command || job.action || '')}</textarea>`)}
-                    ${Components.formGroup('状态', `<select class="form-input" id="cronStatus">
+                    ${Components.formGroup(
+                        '状态',
+                        `<select class="form-input" id="cronStatus">
                         <option value="active" ${job.status === 'active' ? 'selected' : ''}>运行中</option>
                         <option value="paused" ${job.status === 'paused' ? 'selected' : ''}>暂停</option>
-                    </select>`)}
+                    </select>`,
+                    )}
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-ghost" onclick="CronPage.hideForm()">取消</button>
