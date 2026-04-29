@@ -2202,12 +2202,24 @@ async def mcp_endpoint(request: Request):
                 result_text = await _call_tool(tool_name, arguments)
                 latency = int((time.time() - start) * 1000)
                 eval_service.record_tool_call(tool_name, arguments, True, latency, "", "mcp")
+                # 自动增量学习（成功调用）
+                try:
+                    from backend.services.auto_learner import run_incremental_learning
+                    run_incremental_learning(tool_name, True)
+                except Exception:
+                    pass
                 return JSONResponse(content=_jsonrpc_response(req_id, {
                     "content": [{"type": "text", "text": result_text}]
                 }))
             except Exception as e:
                 latency = int((time.time() - start) * 1000)
                 eval_service.record_tool_call(tool_name, arguments, False, latency, str(e), "mcp")
+                # 自动增量学习（失败调用 — 更积极触发）
+                try:
+                    from backend.services.auto_learner import run_incremental_learning
+                    run_incremental_learning(tool_name, False, str(e))
+                except Exception:
+                    pass
                 raise
         except Exception as e:
             # 记录 MCP 调用失败

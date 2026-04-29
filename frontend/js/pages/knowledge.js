@@ -1,5 +1,5 @@
 /**
- * 知识库页面 — 会话/经验/记忆/技能 卡片式管理
+ * 知识库页面 — 会话/经验/记忆/技能/自动分析 卡片式管理
  */
 
 const KnowledgePage = (() => {
@@ -8,6 +8,7 @@ const KnowledgePage = (() => {
     let _experiences = [];
     let _memory = null;
     let _skills = [];
+    let _analysis = null;
     let _activeTab = 'sessions';
 
     async function render() {
@@ -15,18 +16,20 @@ const KnowledgePage = (() => {
         container.innerHTML = Components.createLoading();
 
         try {
-            const [overview, sessions, experiences, memory, skills] = await Promise.all([
+            const [overview, sessions, experiences, memory, skills, analysis] = await Promise.all([
                 API.get('/api/knowledge/overview'),
                 API.get('/api/knowledge/sessions'),
                 API.get('/api/knowledge/experiences'),
                 API.get('/api/knowledge/memory'),
                 API.get('/api/knowledge/skills'),
+                API.get('/api/knowledge/analysis'),
             ]);
             _overview = overview || {};
             _sessions = sessions || [];
             _experiences = experiences || [];
             _memory = memory || {};
             _skills = skills || [];
+            _analysis = analysis || {};
         } catch (err) {
             _overview = {}; _sessions = []; _experiences = []; _memory = {}; _skills = [];
         }
@@ -57,6 +60,7 @@ const KnowledgePage = (() => {
             { key: 'experiences', label: '经验提炼', icon: '💡', count: _experiences.length },
             { key: 'memory', label: '记忆内容', icon: '🧠', count: _memory.chars || 0 },
             { key: 'skills', label: '技能库', icon: '⚡', count: _skills.length },
+            { key: 'analysis', label: '自动分析', icon: '🔬', count: ((_analysis.errors||[]).length + (_analysis.patterns||[]).length) },
         ];
 
         let tabsHtml = '<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px">';
@@ -90,6 +94,7 @@ const KnowledgePage = (() => {
             case 'experiences': return buildExperiencesTab();
             case 'memory': return buildMemoryTab();
             case 'skills': return buildSkillsTab();
+            case 'analysis': return buildAnalysisTab();
             default: return buildSessionsTab();
         }
     }
@@ -204,5 +209,117 @@ const KnowledgePage = (() => {
         return html;
     }
 
-    return { render, switchTab };
+    function buildAnalysisTab() {
+        const a = _analysis || {};
+        const errors = a.errors || [];
+        const patterns = a.patterns || [];
+        const prefs = a.preferences || [];
+        const suggestions = a.skill_suggestions || [];
+
+        let html = '';
+
+        // 操作按钮
+        html += `<div style="margin-bottom:16px;display:flex;gap:8px">
+            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:#fff;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">🧠 执行全量学习（写入文件）</button>
+            <span style="font-size:11px;color:var(--text-tertiary);display:flex;align-items:center">自动分析当前数据，将结果写入 learnings.md 和 MEMORY.md</span>
+        </div>`;
+
+        // 错误模式
+        html += `<div style="margin-bottom:20px">
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">🔴 错误模式 (${errors.length})</div>`;
+        if (errors.length === 0) {
+            html += '<div style="font-size:12px;color:var(--green);padding:8px">✓ 没有检测到错误模式</div>';
+        } else {
+            errors.slice(0, 8).forEach(e => {
+                const statusColor = e.is_fixed ? 'var(--green)' : 'var(--red)';
+                const statusText = e.is_fixed ? '✅ 已修复' : '⚠️ 未修复';
+                const severityColor = e.severity === 'high' ? 'var(--red)' : e.severity === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
+                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor}">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                        <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(e.tool)}</span>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <span style="font-size:10px;color:${severityColor};background:${severityColor}15;padding:2px 6px;border-radius:4px">${e.severity}</span>
+                            <span style="font-size:10px;color:${statusColor}">${statusText}</span>
+                            <span style="font-size:10px;color:var(--text-tertiary)">${e.count}次</span>
+                        </div>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">${Components.escapeHtml(e.error_type)}</div>
+                    <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(e.latest_err)}">${Components.escapeHtml(e.latest_err)}</div>
+                </div>`;
+            });
+        }
+        html += '</div>';
+
+        // 最佳实践
+        html += `<div style="margin-bottom:20px">
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">🟢 最佳实践 (${patterns.length})</div>`;
+        if (patterns.length === 0) {
+            html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
+        } else {
+            patterns.slice(0, 5).forEach(p => {
+                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--green)">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                        <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(p.tool)}</span>
+                        <span style="font-size:10px;color:var(--green)">${p.success_rate}% 成功 · ${p.avg_latency_ms}ms</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">${Components.escapeHtml(p.recommendation)}</div>
+                </div>`;
+            });
+        }
+        html += '</div>';
+
+        // 用户偏好
+        html += `<div style="margin-bottom:20px">
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">📊 用户偏好 (${prefs.length})</div>`;
+        if (prefs.length === 0) {
+            html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
+        } else {
+            prefs.forEach(p => {
+                const confColor = p.confidence === 'high' ? 'var(--green)' : p.confidence === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
+                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--blue)">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                        <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(p.category)}</span>
+                        <span style="font-size:9px;color:${confColor};background:${confColor}15;padding:1px 5px;border-radius:3px">${p.confidence}</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">${Components.escapeHtml(p.content)}</div>
+                </div>`;
+            });
+        }
+        html += '</div>';
+
+        // 技能建议
+        html += `<div style="margin-bottom:20px">
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">💡 技能建议 (${suggestions.length})</div>`;
+        if (suggestions.length === 0) {
+            html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无建议</div>';
+        } else {
+            suggestions.slice(0, 5).forEach(s => {
+                const typeLabel = s.type === 'composite' ? '复合技能' : '快捷封装';
+                html += `<div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--purple)">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                        <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(s.name)}</span>
+                        <span style="font-size:9px;background:rgba(168,85,247,0.1);padding:1px 5px;border-radius:3px;color:var(--purple)">${typeLabel}</span>
+                        <span style="font-size:10px;color:var(--text-tertiary);margin-left:auto">${s.frequency}次</span>
+                    </div>
+                    <div style="font-size:11px;color:var(--text-secondary)">${Components.escapeHtml(s.description)}</div>
+                </div>`;
+            });
+        }
+        html += '</div>';
+
+        return html;
+    }
+
+    async function runAutoLearn() {
+        try {
+            const result = await API.get('/api/knowledge/auto-learn');
+            const msg = `学习完成！错误:${result.errors_found} 模式:${result.patterns_found} 偏好:${result.preferences_found} 建议:${result.skills_suggested}`;
+            Components.Toast.show(msg, 'success');
+            render(); // 刷新页面
+        } catch (err) {
+            Components.Toast.show('学习失败: ' + (err.message || '未知错误'), 'error');
+        }
+    }
+
+    return { render, switchTab, runAutoLearn };
 })();

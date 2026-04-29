@@ -148,3 +148,23 @@ async def knowledge_skills():
             "preview": content,
         })
     return result
+
+
+@router.get("/knowledge/auto-learn")
+async def trigger_auto_learn():
+    """手动触发全量自动学习"""
+    from backend.services.auto_learner import run_full_learning
+    result = run_full_learning()
+    return result
+
+
+@router.get("/knowledge/analysis")
+async def knowledge_analysis():
+    """获取自动分析结果（不写入文件，只预览）"""
+    from backend.services.auto_learner import analyze_errors, analyze_patterns, analyze_preferences, suggest_skills
+    return {
+        "errors": analyze_errors(),
+        "patterns": analyze_patterns(),
+        "preferences": analyze_preferences(),
+        "skill_suggestions": suggest_skills(),
+    }

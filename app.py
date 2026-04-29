@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "4.3.0")
+APP_VERSION = os.environ.get("APP_VERSION", "4.4.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
 
 
