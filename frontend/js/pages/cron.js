@@ -158,6 +158,14 @@ const CronPage = (() => {
     }
 
     async function deleteJob(id) {
+        const ok = await Components.Modal.confirm({
+            title: '删除任务',
+            message: '确定要删除此定时任务吗？此操作不可撤销。',
+            confirmText: '删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.cron.delete(id);
             Components.Toast.success('任务已删除');
@@ -168,6 +176,14 @@ const CronPage = (() => {
     }
 
     async function triggerJob(id) {
+        const ok = await Components.Modal.confirm({
+            title: '立即执行任务',
+            message: '确定要立即触发此定时任务吗？',
+            confirmText: '执行',
+            type: 'warning',
+        });
+        if (!ok) return;
+
         try {
             await API.cron.trigger(id);
             Components.Toast.success('任务已触发');

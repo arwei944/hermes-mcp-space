@@ -205,6 +205,14 @@ const ConfigPage = (() => {
     }
 
     async function resetConfig() {
+        const ok = await Components.Modal.confirm({
+            title: '重置默认配置',
+            message: '确定要将所有配置恢复为默认值吗？当前配置将被覆盖，此操作不可撤销。',
+            confirmText: '重置',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.config.reset();
             Components.Toast.success('配置已重置');
@@ -217,6 +225,15 @@ const ConfigPage = (() => {
     async function rollback(index) {
         const version = _versions[index];
         if (!version) return;
+
+        const ok = await Components.Modal.confirm({
+            title: '回滚配置',
+            message: `确定要回滚到版本 v${version.version || index + 1}（${Components.formatDateTime(version.timestamp)}）吗？当前配置将被替换。`,
+            confirmText: '回滚',
+            type: 'warning',
+        });
+        if (!ok) return;
+
         try {
             await API.config.rollback(index);
             Components.Toast.success('已回滚');

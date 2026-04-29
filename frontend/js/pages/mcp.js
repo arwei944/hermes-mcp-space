@@ -307,6 +307,14 @@ const McpPage = (() => {
     }
 
     async function restartService() {
+        const ok = await Components.Modal.confirm({
+            title: '重启 MCP 服务',
+            message: '确定要重启 MCP 服务吗？重启期间服务将暂时不可用。',
+            confirmText: '重启',
+            type: 'warning',
+        });
+        if (!ok) return;
+
         try {
             Components.Toast.info('正在重启 MCP 服务...');
             await API.mcp.restart();

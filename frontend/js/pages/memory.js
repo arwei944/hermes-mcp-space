@@ -146,6 +146,15 @@ const MemoryPage = (() => {
     }
 
     async function resetContent() {
+        const tabLabel = _activeTab === 'memory' ? 'MEMORY.md' : 'USER.md';
+        const ok = await Components.Modal.confirm({
+            title: '重置内容',
+            message: `确定要将「${tabLabel}」重置为默认内容吗？当前未保存的编辑内容将丢失。`,
+            confirmText: '重置',
+            type: 'warning',
+        });
+        if (!ok) return;
+
         const defaults = {
             memory: '# Agent 长期记忆\n\n## 用户偏好\n\n## 项目上下文\n\n## 重要记录\n',
             user: '# 用户画像\n\n## 基本信息\n\n## 技术栈\n\n## 偏好\n',

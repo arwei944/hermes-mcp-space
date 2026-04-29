@@ -127,6 +127,14 @@ const LogsPage = (() => {
     }
 
     async function clearLogs() {
+        const ok = await Components.Modal.confirm({
+            title: '清空日志',
+            message: '确定要清空所有操作日志吗？此操作不可撤销。',
+            confirmText: '清空',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.request('/api/logs', { method: 'DELETE' });
             _logs = [];

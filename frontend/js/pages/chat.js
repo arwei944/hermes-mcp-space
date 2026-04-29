@@ -67,46 +67,6 @@ const ChatPage = (() => {
                       })
                       .join('');
 
-        // 右侧消息区域
-        const filteredMessages = _searchKeyword
-            ? _messages.filter((m) => (m.content || '').toLowerCase().includes(_searchKeyword.toLowerCase()))
-            : _messages;
-
-        const messagesHtml =
-            !_currentSession && !_searchKeyword
-                ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">${Components.icon('messageCircle', 32)}</div>
-                <div style="font-size:14px;margin-bottom:8px">选择或创建一个会话开始</div>
-                <button class="btn btn-primary" onclick="ChatPage.showCreate()">创建新会话</button>
-              </div>`
-                : filteredMessages.length === 0
-                  ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">${_searchKeyword ? '没有匹配的消息' : '暂无消息，发送第一条消息吧'}</div>`
-                  : `<div class="chat-messages" id="chatMessages">
-                ${filteredMessages
-                    .map((m) => {
-                        const isUser = m.role === 'user';
-                        const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
-                        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
-                        <div class="chat-message-header">
-                            <span class="chat-message-role">${roleText}</span>
-                            <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
-                        </div>
-                        <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
-                    </div>`;
-                    })
-                    .join('')}
-            </div>`;
-
-        // 输入框
-        const inputHtml = _currentSession
-            ? `
-            <div class="chat-input-bar">
-                <input type="text" class="form-input" id="chatInput" placeholder="输入消息..." style="flex:1" onkeydown="if(event.key==='Enter')ChatPage.sendMessage()">
-                <button class="btn btn-primary" onclick="ChatPage.sendMessage()" style="padding:8px 16px">发送</button>
-            </div>`
-            : '';
-
         return `<div class="chat-layout">
             <div class="chat-sidebar">
                 <div class="chat-sidebar-header">
@@ -116,23 +76,73 @@ const ChatPage = (() => {
                 <div class="chat-sidebar-search">
                     <input type="text" class="form-input" placeholder="搜索消息..." value="${Components.escapeHtml(_searchKeyword)}" id="chatSearchInput" oninput="ChatPage.search(this.value)">
                 </div>
-                <div class="chat-sidebar-list">${sessionListHtml}</div>
+                <div class="chat-sidebar-list" id="chatSessionList">${sessionListHtml}</div>
             </div>
-            <div class="chat-main">
-                ${
-                    _currentSession
-                        ? `<div class="chat-main-header">
+            <div class="chat-main" id="chatMain">
+                ${buildMainContent()}
+            </div>
+        </div>`;
+    }
+
+    function buildMainContent() {
+        const filteredMessages = _searchKeyword
+            ? _messages.filter((m) => (m.content || '').toLowerCase().includes(_searchKeyword.toLowerCase()))
+            : _messages;
+
+        // 头部
+        const headerHtml = _currentSession
+            ? `<div class="chat-main-header" id="chatMainHeader">
                     <span style="font-weight:500">${Components.escapeHtml(getCurrentTitle())}</span>
                     <div style="display:flex;gap:8px;align-items:center">
-                        <span style="font-size:12px;color:var(--text-tertiary)">${filteredMessages.length} 条消息</span>
+                        <span class="chat-msg-count" style="font-size:12px;color:var(--text-tertiary)">${filteredMessages.length} 条消息</span>
                         <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="ChatPage.deleteSession('${_currentSession}')">删除会话</button>
                     </div>
                 </div>`
-                        : ''
-                }
-                ${messagesHtml}
-                ${inputHtml}
-            </div>
+            : '';
+
+        // 消息区域
+        const messagesHtml = buildMessagesHtml(filteredMessages);
+
+        // 输入框
+        const inputHtml = _currentSession
+            ? `
+            <div class="chat-input-bar" id="chatInputBar">
+                <input type="text" class="form-input" id="chatInput" placeholder="输入消息..." style="flex:1" onkeydown="if(event.key==='Enter')ChatPage.sendMessage()">
+                <button class="btn btn-primary" onclick="ChatPage.sendMessage()" style="padding:8px 16px">发送</button>
+            </div>`
+            : '';
+
+        return `${headerHtml}${messagesHtml}${inputHtml}`;
+    }
+
+    function buildMessagesHtml(filteredMessages) {
+        if (!_currentSession && !_searchKeyword) {
+            return `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
+                <div style="font-size:32px;margin-bottom:12px">${Components.icon('messageCircle', 32)}</div>
+                <div style="font-size:14px;margin-bottom:8px">选择或创建一个会话开始</div>
+                <button class="btn btn-primary" onclick="ChatPage.showCreate()">创建新会话</button>
+              </div>`;
+        }
+
+        if (filteredMessages.length === 0) {
+            return `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">${_searchKeyword ? '没有匹配的消息' : '暂无消息，发送第一条消息吧'}</div>`;
+        }
+
+        return `<div class="chat-messages" id="chatMessages">
+            ${filteredMessages
+                .map((m) => {
+                    const isUser = m.role === 'user';
+                    const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
+                    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+                    return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+                        <div class="chat-message-header">
+                            <span class="chat-message-role">${roleText}</span>
+                            <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
+                        </div>
+                        <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
+                    </div>`;
+                })
+                .join('')}
         </div>`;
     }
 
@@ -140,6 +150,25 @@ const ChatPage = (() => {
         if (!_currentSession) return '';
         const s = _sessions.find((s) => (s.id || s.session_id) === _currentSession);
         return s ? s.title || s.id : _currentSession;
+    }
+
+    function updateSessionListActive() {
+        // 更新侧边栏会话列表的 active 状态
+        const sessionItems = document.querySelectorAll('.session-item');
+        sessionItems.forEach((item) => {
+            const id = item.dataset.sessionId;
+            if (id === _currentSession) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    function updateMainContent() {
+        const mainEl = document.getElementById('chatMain');
+        if (!mainEl) return;
+        mainEl.innerHTML = buildMainContent();
     }
 
     async function showCreate() {
@@ -204,6 +233,14 @@ const ChatPage = (() => {
     }
 
     async function deleteSession(id) {
+        const ok = await Components.Modal.confirm({
+            title: '删除会话',
+            message: '确定要删除此会话吗？会话中的所有消息将被删除，此操作不可撤销。',
+            confirmText: '删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.sessions.delete(id);
             Components.Toast.success('会话已删除');
@@ -216,39 +253,22 @@ const ChatPage = (() => {
     }
 
     async function selectSession(id) {
+        if (id === _currentSession) return;
         await loadSession(id);
-        document.getElementById('contentBody').innerHTML = buildPage();
-        bindEvents();
+        // 只更新右侧主内容区域和侧边栏 active 状态，不重建整个页面
+        updateSessionListActive();
+        updateMainContent();
         scrollToBottom();
     }
 
     function search(keyword) {
         _searchKeyword = keyword;
-        const mainEl = document.querySelector('.chat-main');
-        if (mainEl) {
-            const filteredMessages = _searchKeyword
-                ? _messages.filter((m) => (m.content || '').toLowerCase().includes(_searchKeyword.toLowerCase()))
-                : _messages;
-            const messagesHtml =
-                filteredMessages.length === 0
-                    ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">没有匹配的消息</div>`
-                    : `<div class="chat-messages" id="chatMessages">
-                    ${filteredMessages
-                        .map((m) => {
-                            const isUser = m.role === 'user';
-                            const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
-                            const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                            return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
-                            <div class="chat-message-header">
-                                <span class="chat-message-role">${roleText}</span>
-                            </div>
-                            <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
-                        </div>`;
-                        })
-                        .join('')}
-                </div>`;
-            mainEl.innerHTML = messagesHtml;
-        }
+        // 只更新消息区域，保留搜索框状态和焦点
+        const mainEl = document.getElementById('chatMain');
+        if (!mainEl) return;
+
+        // 替换主内容区域（保留搜索框在侧边栏不受影响）
+        mainEl.innerHTML = buildMainContent();
     }
 
     function bindEvents() {}

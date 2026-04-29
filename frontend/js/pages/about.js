@@ -5,6 +5,19 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.0.0',
+            date: '2026-04-29 22:00',
+            title: '功能增强 — 确认弹窗 + 搜索 + 聊天优化',
+            changes: [
+                '新增 Components.Modal.confirm() / alert() 确认弹窗组件',
+                '12 个页面 16 处破坏性操作全部接入确认弹窗',
+                'tools.js 新增搜索功能（按名称/描述实时过滤）',
+                'skills.js 新增搜索功能（按名称/描述实时过滤）',
+                'chat.js 修复 DOM 重建问题（搜索/切换会话不再丢失状态）',
+                'chat.js 消息搜索框状态保留，不再被整页重建打断',
+            ],
+        },
+        {
             version: '4.9.0',
             date: '2026-04-29 21:30',
             title: '代码质量 + 自动化',

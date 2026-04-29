@@ -191,6 +191,85 @@ const Components = (() => {
                 this._onClose = null;
             }
         },
+
+        /**
+         * 确认弹窗 — 用于删除/重置等破坏性操作
+         * @param {Object} options
+         * @param {string} options.title - 标题
+         * @param {string} options.message - 描述文字（支持 HTML）
+         * @param {string} [options.confirmText='确认'] - 确认按钮文字
+         * @param {string} [options.cancelText='取消'] - 取消按钮文字
+         * @param {string} [options.type='danger'] - 类型：danger / warning / info
+         * @returns {Promise<boolean>} true=确认, false=取消
+         */
+        confirm({ title, message, confirmText, cancelText, type }) {
+            return new Promise((resolve) => {
+                const iconMap = { danger: 'alertTriangle', warning: 'alertTriangle', info: 'info' };
+                const colorMap = { danger: 'var(--red)', warning: 'var(--orange)', info: 'var(--accent)' };
+                const t = type || 'danger';
+                const icon = iconMap[t] || 'alertTriangle';
+                const color = colorMap[t] || 'var(--red)';
+
+                const footer = `<div style="display:flex;gap:8px;justify-content:flex-end">
+                    <button class="btn btn-ghost" id="modalCancel">${cancelText || '取消'}</button>
+                    <button class="btn" id="modalConfirm" style="background:${color};color:#fff">${confirmText || '确认'}</button>
+                </div>`;
+
+                this.open({
+                    title: title || '确认操作',
+                    content: `<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0">
+                        <div style="flex-shrink:0;color:${color};margin-top:2px">${Components.icon(icon, 20)}</div>
+                        <div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">${message || '确定要执行此操作吗？'}</div>
+                    </div>`,
+                    footer,
+                });
+
+                const cleanup = (result) => {
+                    this.close();
+                    resolve(result);
+                };
+
+                document.getElementById('modalCancel').onclick = () => cleanup(false);
+                document.getElementById('modalConfirm').onclick = () => cleanup(true);
+            });
+        },
+
+        /**
+         * 提示弹窗 — 用于信息展示
+         * @param {Object} options
+         * @param {string} options.title - 标题
+         * @param {string} options.message - 内容（支持 HTML）
+         * @param {string} [options.buttonText='知道了'] - 按钮文字
+         * @param {string} [options.type='info'] - 类型：info / success / warning / danger
+         * @returns {Promise<void>}
+         */
+        alert({ title, message, buttonText, type }) {
+            return new Promise((resolve) => {
+                const iconMap = { info: 'info', success: 'checkCircle', warning: 'alertTriangle', danger: 'xCircle' };
+                const colorMap = { info: 'var(--accent)', success: 'var(--green)', warning: 'var(--orange)', danger: 'var(--red)' };
+                const t = type || 'info';
+                const icon = iconMap[t] || 'info';
+                const color = colorMap[t] || 'var(--accent)';
+
+                const footer = `<div style="display:flex;justify-content:flex-end">
+                    <button class="btn" id="modalOk" style="background:${color};color:#fff">${buttonText || '知道了'}</button>
+                </div>`;
+
+                this.open({
+                    title: title || '提示',
+                    content: `<div style="display:flex;align-items:flex-start;gap:12px;padding:8px 0">
+                        <div style="flex-shrink:0;color:${color};margin-top:2px">${Components.icon(icon, 20)}</div>
+                        <div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">${message || ''}</div>
+                    </div>`,
+                    footer,
+                });
+
+                document.getElementById('modalOk').onclick = () => {
+                    this.close();
+                    resolve();
+                };
+            });
+        },
     };
 
     // ==========================================

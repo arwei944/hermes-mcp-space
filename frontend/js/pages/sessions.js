@@ -294,6 +294,14 @@ const SessionsPage = (() => {
 
     // ---- 删除会话 ----
     async function deleteSession(id) {
+        const ok = await Components.Modal.confirm({
+            title: '删除会话',
+            message: '确定要删除此会话吗？会话中的所有消息将被删除，此操作不可撤销。',
+            confirmText: '删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.sessions.delete(id);
             _sessions = _sessions.filter((s) => (s.id || s.session_id) !== id);

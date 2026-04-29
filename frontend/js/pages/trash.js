@@ -91,6 +91,14 @@ const TrashPage = (() => {
     }
 
     async function permanentDelete(id) {
+        const ok = await Components.Modal.confirm({
+            title: '永久删除',
+            message: '确定要永久删除此项吗？此操作不可撤销，删除后将无法恢复。',
+            confirmText: '永久删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.request('DELETE', `/api/trash/${id}`);
             Components.Toast.success('已永久删除');
@@ -101,6 +109,14 @@ const TrashPage = (() => {
     }
 
     async function emptyTrash() {
+        const ok = await Components.Modal.confirm({
+            title: '清空回收站',
+            message: `确定要清空回收站吗？共 ${_items.length} 项将被永久删除，此操作不可撤销。`,
+            confirmText: '清空',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.request('DELETE', '/api/trash');
             Components.Toast.success('回收站已清空');

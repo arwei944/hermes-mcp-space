@@ -9,6 +9,7 @@ const SkillsPage = (() => {
     let _editorContent = '';
     let _showEditor = false;
     let _isCreating = false;
+    let _searchKeyword = '';
 
     async function render() {
         const container = document.getElementById('contentBody');
@@ -25,6 +26,14 @@ const SkillsPage = (() => {
         bindEvents();
     }
 
+    function getFilteredSkills() {
+        if (!_searchKeyword) return _skills;
+        const kw = _searchKeyword.toLowerCase();
+        return _skills.filter(
+            (s) => (s.name || '').toLowerCase().includes(kw) || (s.description || '').toLowerCase().includes(kw),
+        );
+    }
+
     function buildPage() {
         const statsHtml = `<div class="stats">
             ${Components.renderStatCard('技能总数', _skills.length, '', Components.icon('zap', 16), 'purple')}
@@ -35,20 +44,36 @@ const SkillsPage = (() => {
             <button type="button" class="btn btn-primary" data-action="showCreate">创建技能</button>
         </div>`;
 
+        const searchHtml = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+            <div style="position:relative;flex:1">
+                ${Components.icon('search', 14, 'var(--text-tertiary)', 'position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none')}
+                <input type="text" id="skillSearchInput" placeholder="搜索技能名称或描述..." value="${Components.escapeHtml(_searchKeyword)}" style="width:100%;padding:7px 10px 7px 30px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
+            </div>
+        </div>`;
+
         const editorHtml = _showEditor ? buildEditor() : '';
 
-        const skillsHtml =
-            _skills.length === 0
-                ? Components.createEmptyState(
-                      Components.icon('zap', 16),
-                      '暂无技能',
-                      '点击「创建技能」添加第一个技能',
-                      '',
-                  )
-                : `<div class="table-wrapper"><table class="table">
+        const skillsHtml = buildSkillsTable();
+
+        return `${statsHtml}${actionsHtml}${searchHtml}${editorHtml}<div id="skillListContainer">${skillsHtml}</div>`;
+    }
+
+    function buildSkillsTable() {
+        const filtered = getFilteredSkills();
+
+        if (filtered.length === 0) {
+            return Components.createEmptyState(
+                Components.icon('zap', 16),
+                '暂无技能',
+                _searchKeyword ? '没有匹配的技能' : '点击「创建技能」添加第一个技能',
+                '',
+            );
+        }
+
+        return `<div class="table-wrapper"><table class="table">
                 <thead><tr><th>名称</th><th>描述</th><th>标签</th><th>操作</th></tr></thead>
                 <tbody>
-                    ${_skills
+                    ${filtered
                         .map(
                             (s) => `<tr>
                         <td class="mono" style="color:var(--accent);font-weight:500">${Components.escapeHtml(s.name || '-')}</td>
@@ -66,8 +91,17 @@ const SkillsPage = (() => {
                         .join('')}
                 </tbody>
             </table></div>`;
+    }
 
-        return `${statsHtml}${actionsHtml}${editorHtml}${skillsHtml}`;
+    function updateSkillList() {
+        const container = document.getElementById('skillListContainer');
+        if (!container) return;
+        container.innerHTML = buildSkillsTable();
+    }
+
+    function search(keyword) {
+        _searchKeyword = keyword;
+        updateSkillList();
     }
 
     function buildEditor() {
@@ -215,6 +249,14 @@ const SkillsPage = (() => {
     }
 
     async function deleteSkill(name) {
+        const ok = await Components.Modal.confirm({
+            title: '删除技能',
+            message: `确定要删除技能「${name}」吗？删除后可在回收站恢复。`,
+            confirmText: '删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             // 先获取技能内容用于回收站
             let skillData = '';
@@ -285,6 +327,17 @@ const SkillsPage = (() => {
                     break;
             }
         });
+
+        // 搜索框事件
+        const searchInput = document.getElementById('skillSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener(
+                'input',
+                Components.debounce((e) => {
+                    search(e.target.value);
+                }, 300),
+            );
+        }
     }
 
     return {
@@ -297,5 +350,6 @@ const SkillsPage = (() => {
         deleteSkill,
         previewContent,
         insertTemplate,
+        search,
     };
 })();

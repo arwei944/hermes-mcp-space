@@ -319,6 +319,14 @@ const MarketplacePage = (() => {
     }
 
     async function removeMCPServer(name) {
+        const ok = await Components.Modal.confirm({
+            title: '删除 MCP 服务器',
+            message: `确定要删除 MCP 服务器「${name}」吗？该服务器提供的所有工具将被移除。`,
+            confirmText: '删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.request(`/api/mcp/servers/${encodeURIComponent(name)}`, { method: 'DELETE' });
             Components.Toast.success(`已移除 ${name}`);
@@ -346,6 +354,14 @@ const MarketplacePage = (() => {
 
     // ---- 技能操作 ----
     async function deleteSkill(name) {
+        const ok = await Components.Modal.confirm({
+            title: '删除技能',
+            message: `确定要删除技能「${name}」吗？此操作不可撤销。`,
+            confirmText: '删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+
         try {
             await API.skills.delete(name);
             Components.Toast.success(`技能 ${name} 已删除`);

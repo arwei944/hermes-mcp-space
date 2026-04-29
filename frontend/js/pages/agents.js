@@ -90,6 +90,14 @@ const AgentsPage = (() => {
     }
 
     async function terminate(id) {
+        const ok = await Components.Modal.confirm({
+            title: '终止 Agent',
+            message: '确定要终止此 Agent 吗？Agent 将立即停止运行。',
+            confirmText: '终止',
+            type: 'warning',
+        });
+        if (!ok) return;
+
         try {
             await API.agents.terminate(id);
             Components.Toast.success('Agent 已终止');
