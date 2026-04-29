@@ -5,6 +5,19 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '3.2.0',
+            date: '2026-04-29 13:00',
+            title: '自动化与智能',
+            changes: [
+                '上下文压缩: compress_session（保留首尾+中间摘要）',
+                'Agent 自创技能: suggest_skill（分析工具调用模式）',
+                'Skills Hub: search_skills_hub / install_skill_hub（在线市场）',
+                '技能条件激活: requires_toolsets / fallback_for_toolsets',
+                '对话统计 API: /api/stats/messages|sessions|tools',
+                'list_skills 增强: 传递可用工具列表进行条件过滤',
+                'MCP 工具 48 → 52 个',
+            ],
+        },        {
             version: '3.1.0',
             date: '2026-04-29 12:30',
             title: '工程层加固（AI 工程指南整合）',

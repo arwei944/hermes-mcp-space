@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "3.1.0")
+APP_VERSION = os.environ.get("APP_VERSION", "3.2.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
 
 
@@ -126,7 +126,7 @@ def _patched_create_app(blocks, **kwargs):
     # Mount all backend API routers
     try:
         from backend.routers import (
-            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard, logs, events, plugins, trash, evals
+            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard, logs, events, plugins, trash, evals, stats
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -142,6 +142,7 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(plugins.router)
         app.include_router(trash.router)
         app.include_router(evals.router, prefix="/api", tags=["evals"])
+        app.include_router(stats.router, prefix="/api", tags=["stats"])
         logger.info("Backend API routers mounted successfully")
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")
@@ -178,7 +179,7 @@ def _patched_create_app(blocks, **kwargs):
         async def custom_openapi():
             return get_openapi(
                 title="Hermes Agent API",
-                version=os.environ.get("APP_VERSION", "3.1.0"),
+                version=os.environ.get("APP_VERSION", "3.2.0"),
                 routes=app.routes,
             )
         logger.info("API docs mounted (/docs + /redoc)")

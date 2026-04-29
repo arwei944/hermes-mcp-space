@@ -7,7 +7,9 @@ Hermes Agent - MCP Server (manual implementation)
 import json
 import logging
 import os
+import re
 import time
+import urllib.parse
 import uuid
 from typing import Any, Dict
 
@@ -478,6 +480,56 @@ def _get_tools():
                 "required": ["content"]
             }
         },
+        {
+            "name": "compress_session",
+            "description": "压缩会话历史（保留最近3轮+最早1轮，中间由摘要替代）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "会话 ID"},
+                    "keep_recent": {"type": "integer", "default": 3, "description": "保留最近 N 轮"},
+                    "keep_first": {"type": "integer", "default": 1, "description": "保留最早 N 轮"},
+                    "summary_max_chars": {"type": "integer", "default": 500, "description": "摘要最大字符数"}
+                },
+                "required": ["session_id"]
+            }
+        },
+        {
+            "name": "suggest_skill",
+            "description": "分析会话中的工具调用模式，建议创建可复用技能",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "要分析的会话 ID（可选，默认最近会话）"},
+                    "min_calls": {"type": "integer", "default": 3, "description": "最少调用次数才触发建议"}
+                },
+                "required": []
+            }
+        },
+        {
+            "name": "search_skills_hub",
+            "description": "搜索在线技能市场（skills.sh）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索关键词"},
+                    "limit": {"type": "integer", "default": 10, "description": "最大结果数"}
+                },
+                "required": ["query"]
+            }
+        },
+        {
+            "name": "install_skill_hub",
+            "description": "从在线市场安装技能到本地",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "技能名称（如 python-debug）"},
+                    "source": {"type": "string", "description": "来源 URL 或市场名称（默认 skills.sh）"}
+                },
+                "required": ["name"]
+            }
+        },
         # ---- Phase 3: MCP 网关管理 ----
         {
             "name": "add_mcp_server",
@@ -643,11 +695,27 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         return f"共 {len(tools)} 个工具:\n" + "\n".join(lines)
 
     elif name == "list_skills":
-        skills = hermes_service.list_skills()
-        if not skills:
-            return "当前没有可用技能"
-        lines = [f"- {s.get('name', '?')}: {s.get('description', '无描述')}" for s in skills]
-        return f"共 {len(skills)} 个技能:\n" + "\n".join(lines)
+        # 传递当前可用工具列表用于条件激活
+        try:
+            all_tools = _get_tools()
+            available_tool_names = [t["name"] for t in all_tools]
+            result = hermes_service.list_skills(available_tool_names)
+        except Exception:
+            result = hermes_service.list_skills()
+    
+        if not result:
+            return "当前没有可用技能。使用 create_skill 创建新技能。"
+        output = [f"可用技能 ({len(result)} 个)\n{'='*50}"]
+        for s in result:
+            desc = s.get("description", "无描述")
+            tags = ", ".join(s.get("tags", []))
+            line = f"  {s['name']}"
+            if desc:
+                line += f" - {desc[:60]}"
+            if tags:
+                line += f" [{tags}]"
+            output.append(line)
+        return "\n".join(output)
 
     elif name == "get_skill_content":
         skill = hermes_service.get_skill(arguments["skill_name"])
@@ -709,7 +777,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '3.1.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '3.2.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -1315,6 +1383,218 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             return f"学习记录已添加 ({tool_name or '通用'})"
         except Exception as e:
             raise ValueError(f"❌ 添加学习记录失败: {e}\n建议：\n1. 检查 ~/.hermes/ 目录的写入权限\n2. 确认磁盘空间充足\n3. 如果 learnings.md 文件损坏，可手动删除后重试")
+
+    elif name == "compress_session":
+        session_id = arguments.get("session_id", "")
+        if not session_id:
+            raise ValueError("❌ 请提供会话 ID。\n建议：\n1. 使用 list_sessions 获取会话 ID\n2. 确认 session_id 参数拼写正确")
+        keep_recent = int(arguments.get("keep_recent", 3))
+        keep_first = int(arguments.get("keep_first", 1))
+        summary_max = int(arguments.get("summary_max_chars", 500))
+
+        # 从 hermes_service 获取消息
+        messages = hermes_service.get_session_messages(session_id)
+        if not messages:
+            raise ValueError(f"❌ 会话 {session_id} 没有消息。\n建议：\n1. 确认会话 ID 正确\n2. 使用 list_sessions 查看可用会话")
+
+        total = len(messages)
+        if total <= (keep_recent + keep_first):
+            return f"会话只有 {total} 条消息，无需压缩（阈值: {keep_recent + keep_first}）"
+
+        # 保留最早 N 条
+        first_msgs = messages[:keep_first]
+        # 保留最近 N 条
+        recent_msgs = messages[-keep_recent:]
+        # 中间部分生成摘要
+        middle_msgs = messages[keep_first:-keep_recent]
+
+        # 简单摘要：提取每条消息的前 50 字符
+        summary_parts = []
+        for m in middle_msgs:
+            role = m.get("role", "?")
+            content = m.get("content", "")
+            preview = content[:80].replace("\n", " ")
+            summary_parts.append(f"[{role}] {preview}")
+
+        summary = " | ".join(summary_parts)
+        if len(summary) > summary_max:
+            summary = summary[:summary_max] + "..."
+
+        # 计算压缩率
+        original_chars = sum(len(m.get("content", "")) for m in messages)
+        compressed_chars = sum(len(m.get("content", "")) for m in first_msgs) + len(summary) + sum(len(m.get("content", "")) for m in recent_msgs)
+        ratio = (1 - compressed_chars / max(original_chars, 1)) * 100
+
+        # 保存摘要到会话元数据（通过 hermes_service）
+        try:
+            hermes_service.update_session_summary(session_id, summary)
+        except Exception:
+            pass  # 如果方法不存在，跳过
+
+        return f"""会话压缩完成
+原始: {total} 条消息 ({original_chars} 字符)
+压缩后: {keep_first} + 摘要 + {keep_recent} 条 ({compressed_chars} 字符)
+压缩率: {ratio:.1f}%
+
+--- 最早 {keep_first} 条 ---
+""" + "\n".join(f"[{m.get('role','?')}] {m.get('content','')[:100]}" for m in first_msgs) + f"""
+
+--- 摘要 ({len(middle_msgs)} 条) ---
+{summary}
+
+--- 最近 {keep_recent} 条 ---
+""" + "\n".join(f"[{m.get('role','?')}] {m.get('content','')[:100]}" for m in recent_msgs)
+
+    elif name == "suggest_skill":
+        session_id = arguments.get("session_id", "")
+        min_calls = int(arguments.get("min_calls", 3))
+
+        # 获取会话列表
+        sessions = hermes_service.list_sessions()
+        if not sessions:
+            return "暂无会话数据，无法分析工具调用模式。"
+
+        # 使用指定会话或最近会话
+        target_id = session_id or sessions[0].get("id", "")
+        messages = hermes_service.get_session_messages(target_id)
+        if not messages:
+            return f"会话 {target_id} 没有消息。"
+
+        # 分析工具调用模式（从消息中提取 tool_call 模式）
+        tool_pattern = {}
+        for msg in messages:
+            content = msg.get("content", "")
+            # 简单匹配工具调用模式
+            tool_calls = re.findall(r'(?:调用|使用|执行)\s*(\w+)', content)
+            for t in tool_calls:
+                tool_pattern[t] = tool_pattern.get(t, 0) + 1
+
+        # 也从 eval_service 获取真实调用数据
+        try:
+            from backend.services.eval_service import eval_service
+            tool_stats = eval_service.get_tool_stats()
+            for stat in tool_stats:
+                tool_name = stat.get("tool", "")
+                count = stat.get("calls", 0)
+                if count >= min_calls:
+                    tool_pattern[tool_name] = max(tool_pattern.get(tool_name, 0), count)
+        except Exception:
+            pass
+
+        if not tool_pattern:
+            return "未发现重复的工具调用模式。建议：\n1. 多使用工具后再次分析\n2. 降低 min_calls 阈值"
+
+        # 生成技能建议
+        suggestions = []
+        for tool, count in sorted(tool_pattern.items(), key=lambda x: -x[1]):
+            if count >= min_calls:
+                suggestions.append(f"  - {tool}: 调用 {count} 次")
+
+        if not suggestions:
+            return f"未发现调用次数 >= {min_calls} 的工具模式。当前模式：\n" + "\n".join(f"  - {t}: {c} 次" for t, c in sorted(tool_pattern.items(), key=lambda x: -x[1])[:5])
+
+        # 生成技能草案
+        skill_name = f"auto-{target_id[:8]}"
+        draft = f"""# 建议技能: {skill_name}
+
+## 触发条件
+以下工具被频繁调用：
+{chr(10).join(suggestions)}
+
+## 建议操作
+1. 审查上述工具调用是否构成可复用工作流
+2. 如果是，使用 create_skill 创建技能
+3. 技能内容应包含：触发条件、执行步骤、预期输出
+
+## 草案内容
+```markdown
+# {skill_name}
+## 描述
+自动生成的技能（基于会话 {target_id[:12]} 的工具调用模式）
+
+## 触发条件
+当需要频繁使用以下工具时激活：
+{chr(10).join(suggestions)}
+
+## 执行步骤
+1. 按照工具调用顺序执行
+2. 检查每步输出是否符合预期
+3. 记录结果到学习记录
+```
+
+使用 create_skill 创建此技能，或调整内容后创建。"""
+
+        return draft
+
+    elif name == "search_skills_hub":
+        query = arguments.get("query", "")
+        if not query:
+            raise ValueError("❌ 请提供搜索关键词。\n建议：\n1. 使用英文关键词效果更好\n2. 尝试具体技能名如 'python'、'git'、'docker'")
+        limit = int(arguments.get("limit", 10))
+
+        try:
+            import urllib.request
+            url = f"https://skills.sh/api/search?q={urllib.parse.quote(query)}&limit={limit}"
+            req = urllib.request.Request(url, headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+
+            if not data:
+                return f"未找到匹配 '{query}' 的技能。建议：\n1. 尝试更通用的关键词\n2. 检查网络连接"
+
+            output = [f"搜索: {query} | 找到 {len(data)} 个技能\n{'='*50}"]
+            for skill in data[:limit]:
+                name = skill.get("name", "?")
+                desc = skill.get("description", "无描述")[:80]
+                author = skill.get("author", "")
+                installs = skill.get("installs", 0)
+                output.append(f"  {name} (by {author}, {installs} 安装)")
+                output.append(f"    {desc}")
+
+            return "\n".join(output)
+        except Exception as e:
+            # 降级：返回内置技能列表
+            skills = hermes_service.list_skills()
+            matched = [s for s in skills if query.lower() in s.get("name", "").lower() or query.lower() in s.get("description", "").lower()]
+            if matched:
+                output = [f"在线搜索不可用，显示本地匹配结果 ({len(matched)} 个)\n{'='*50}"]
+                for s in matched:
+                    output.append(f"  {s['name']}: {s.get('description', '无描述')[:80]}")
+                return "\n".join(output)
+            raise ValueError(f"❌ 搜索失败: {e}\n建议：\n1. 检查网络连接\n2. 稍后重试")
+
+    elif name == "install_skill_hub":
+        skill_name = arguments.get("name", "")
+        if not skill_name:
+            raise ValueError("❌ 请提供技能名称。\n建议：\n1. 先用 search_skills_hub 搜索\n2. 使用技能的精确名称")
+        source = arguments.get("source", "")
+
+        try:
+            import urllib.request
+            if not source:
+                source = f"https://skills.sh/api/skills/{urllib.parse.quote(skill_name)}"
+
+            req = urllib.request.Request(source, headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+
+            content = data.get("content", "")
+            if not content:
+                raise ValueError(f"技能 '{skill_name}' 内容为空")
+
+            # 使用 hermes_service 创建技能
+            desc = data.get("description", f"从市场安装: {skill_name}")
+            tags = data.get("tags", ["hub"])
+            result = hermes_service.create_skill(skill_name, content, desc, tags)
+
+            if result.get("success"):
+                return f"技能 '{skill_name}' 安装成功！\n描述: {desc}\n标签: {', '.join(tags)}\n使用 get_skill_content('{skill_name}') 查看内容"
+            else:
+                raise ValueError(f"❌ 安装失败: {result.get('message', '未知错误')}\n建议：\n1. 技能可能已存在，使用 update_skill 更新\n2. 检查技能名称")
+        except ValueError:
+            raise
+        except Exception as e:
+            raise ValueError(f"❌ 安装失败: {e}\n建议：\n1. 检查网络连接\n2. 确认技能名称正确\n3. 使用 search_skills_hub 先搜索")
 
     # ---- Phase 3: MCP 网关管理 ----
     elif name == "add_mcp_server":

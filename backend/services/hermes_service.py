@@ -403,7 +403,7 @@ class HermesService:
 
     # ==================== 技能管理 ====================
 
-    def list_skills(self) -> List[Dict[str, Any]]:
+    def list_skills(self, available_tools: list = None) -> List[Dict[str, Any]]:
         """列出所有技能（支持目录和文件两种格式，含插件技能）"""
         skills_dir = get_skills_dir()
         if not skills_dir.exists():
@@ -465,6 +465,60 @@ class HermesService:
                 })
         except Exception:
             pass
+
+        # 条件激活：根据可用工具集过滤
+        if available_tools is not None:
+            available_set = set(available_tools)
+            filtered = []
+            for skill in skills:
+                meta = self._read_skill_meta(skill["name"])
+                requires = meta.get("requires_toolsets", [])
+                fallback_for = meta.get("fallback_for_toolsets", [])
+                
+                # 如果技能没有条件要求，始终显示
+                if not requires and not fallback_for:
+                    filtered.append(skill)
+                    continue
+                
+                # 检查 requires：所有必需的工具集都必须可用
+                if requires:
+                    # requires 中的工具名需要在 available_tools 中存在
+                    # 支持 "terminal" 映射到 ["shell_execute", "read_file", "write_file"] 等
+                    toolset_map = {
+                        "terminal": ["shell_execute", "read_file", "write_file", "list_directory", "search_files"],
+                        "web": ["web_search", "web_fetch"],
+                        "mcp": ["add_mcp_server", "remove_mcp_server", "list_mcp_servers"],
+                        "memory": ["read_memory", "write_memory"],
+                        "skills": ["list_skills", "create_skill", "update_skill", "delete_skill"],
+                    }
+                    required_tools = set()
+                    for ts in requires:
+                        required_tools.update(toolset_map.get(ts, [ts]))
+                    
+                    if required_tools.issubset(available_set):
+                        filtered.append(skill)
+                    continue
+                
+                # 检查 fallback_for：当指定工具集不可用时显示
+                if fallback_for:
+                    toolset_map = {
+                        "terminal": ["shell_execute", "read_file", "write_file", "list_directory", "search_files"],
+                        "web": ["web_search", "web_fetch"],
+                        "mcp": ["add_mcp_server", "remove_mcp_server", "list_mcp_servers"],
+                        "memory": ["read_memory", "write_memory"],
+                        "skills": ["list_skills", "create_skill", "update_skill", "delete_skill"],
+                    }
+                    fallback_tools = set()
+                    for ts in fallback_for:
+                        fallback_tools.update(toolset_map.get(ts, [ts]))
+                    
+                    if not fallback_tools.issubset(available_set):
+                        filtered.append(skill)
+                    continue
+                
+                filtered.append(skill)
+            
+            skills = filtered
 
         return skills
 
