@@ -1,0 +1,147 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check JS syntax (all files)
+        run: |
+          echo "=== Checking JS files ==="
+          ERRORS=0
+          for f in frontend/js/app.js frontend/js/components.js frontend/js/pages/*.js; do
+            if [ -f "$f" ]; then
+              if ! node --check "$f" 2>&1; then
+                ERRORS=$((ERRORS + 1))
+              fi
+            else
+              echo "MISSING: $f"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ $ERRORS -gt 0 ]; then
+            echo "❌ $ERRORS JS file(s) failed syntax check"
+            exit 1
+          fi
+          echo "✅ All JS files passed syntax check"
+
+      - name: Check Python syntax (all files)
+        run: |
+          echo "=== Checking Python files ==="
+          ERRORS=0
+          for f in app.py backend/*.py backend/routers/*.py backend/services/*.py; do
+            if [ -f "$f" ]; then
+              if ! python3 -m py_compile "$f" 2>&1; then
+                ERRORS=$((ERRORS + 1))
+              fi
+            else
+              echo "MISSING: $f"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ $ERRORS -gt 0 ]; then
+            echo "❌ $ERRORS Python file(s) failed syntax check"
+            exit 1
+          fi
+          echo "✅ All Python files passed syntax check"
+
+      - name: Verify frontend file consistency
+        run: |
+          echo "=== Checking build_full_html file list ==="
+          python3 << 'SCRIPT'
+          import re, os, sys
+
+          # 读取 app.py 中的 js_files 列表
+          with open("app.py") as f:
+              content = f.read()
+          match = re.search(r'js_files\s*=\s*\[(.*?)\]', content, re.DOTALL)
+          if not match:
+              print("❌ Cannot find js_files in app.py")
+              sys.exit(1)
+          js_files = re.findall(r'"(js/[^"]+)"', match.group(1))
+          print(f"  Found {len(js_files)} files in js_files list")
+
+          # 检查每个文件是否存在
+          missing = []
+          for jf in js_files:
+              path = os.path.join("frontend", jf)
+              if not os.path.exists(path):
+                  missing.append(path)
+          if missing:
+              print(f"❌ Missing files: {missing}")
+              sys.exit(1)
+
+          # 读取 app.js 中的 pages 对象
+          with open("frontend/js/app.js") as f:
+              app_js = f.read()
+          pages_match = re.search(r'const pages\s*=\s*\{(.*?)\}', app_js, re.DOTALL)
+          if pages_match:
+              page_keys = re.findall(r'(\w+):', pages_match.group(1))
+              # 从 js_files 提取页面名
+              page_files = [os.path.basename(f).replace('.js','') for f in js_files if '/pages/' in f]
+              for pf in page_files:
+                  # 页面名可能是 camelCase
+                  camel = ''.join(w.capitalize() for w in pf.split('_'))
+                  if camel not in page_keys and pf not in page_keys:
+                      print(f"⚠️  Page '{pf}' (as '{camel}') not found in app.js pages object")
+          print("✅ Frontend file consistency check passed")
+          SCRIPT
+
+  deploy:
+    needs: lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to HF Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          pip install huggingface_hub
+          python3 << 'SCRIPT'
+          import os
+          from huggingface_hub import HfApi, create_repo
+
+          token = os.environ["HF_TOKEN"]
+          repo_id = "arwei944/hermes-mcp-space"
+
+          create_repo(
+              repo_id=repo_id,
+              repo_type="space",
+              space_sdk="gradio",
+              exist_ok=True,
+              token=token
+          )
+
+          api = HfApi(token=token)
+          folder_path = os.environ.get("GITHUB_WORKSPACE", ".")
+          api.upload_folder(
+              folder_path=folder_path,
+              repo_id=repo_id,
+              repo_type="space",
+              commit_message=f"deploy: {__import__('datetime').datetime.utcnow().isoformat()}",
+              delete_patterns=["*.pyc", "__pycache__/*", ".github/*", "Dockerfile", "ms_deploy.json", "config.yaml.example"],
+              ignore_patterns=[".git/*", "__pycache__/*", "*.pyc", "Dockerfile", "ms_deploy.json", "config.yaml.example", ".gitignore"],
+          )
+          print(f"Deployed to https://huggingface.co/spaces/{repo_id}")
+          SCRIPT

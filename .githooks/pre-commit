@@ -1,0 +1,41 @@
+#!/bin/bash
+# Pre-commit hook: JS + Python 语法检查
+# 安装: cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. JS 语法检查
+JS_ERRORS=0
+for f in frontend/js/app.js frontend/js/components.js frontend/js/pages/*.js; do
+    if [ -f "$f" ]; then
+        if ! node --check "$f" 2>/dev/null; then
+            echo "❌ JS syntax error: $f"
+            node --check "$f" 2>&1 | head -3
+            JS_ERRORS=$((JS_ERRORS + 1))
+        fi
+    fi
+done
+
+# 2. Python 语法检查
+PY_ERRORS=0
+for f in app.py backend/*.py backend/routers/*.py backend/services/*.py; do
+    if [ -f "$f" ]; then
+        if ! python3 -m py_compile "$f" 2>/dev/null; then
+            echo "❌ Python syntax error: $f"
+            PY_ERRORS=$((PY_ERRORS + 1))
+        fi
+    fi
+done
+
+# 3. 结果
+TOTAL=$((JS_ERRORS + PY_ERRORS))
+if [ $TOTAL -gt 0 ]; then
+    echo ""
+    echo "❌ Pre-commit check failed: $JS_ERRORS JS error(s), $PY_ERRORS Python error(s)"
+    echo "   Fix the errors above before committing."
+    exit 1
+fi
+
+echo "✅ Pre-commit checks passed"

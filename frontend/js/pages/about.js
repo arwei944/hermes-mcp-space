@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.7.0',
+            date: '2026-04-29 19:00',
+            title: '质量保障体系 + 图标修复',
+            changes: [
+                '新增 CI 质量门禁：JS/Python 语法检查 + 前端文件一致性验证',
+                '新增 pre-commit hook：提交前自动检查语法',
+                '修复 build_full_html 静默失败（改为抛出异常）',
+                '修复 knowledge.js 8 处图标未用 ${} 包裹',
+                '修复 dashboard.js 2 处图标未用 ${} 包裹',
+                'CI 通过后才部署到 HuggingFace Spaces',
+            ],
+        },        {
             version: '4.6.1',
             date: '2026-04-29 18:30',
             title: '修复 JS 语法错误',

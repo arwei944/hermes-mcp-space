@@ -349,8 +349,8 @@ const DashboardPage = (() => {
                 ${buildGauge(s.totalToolCalls || 0, Math.max(s.totalToolCalls * 1.2, 100), '总调用', 'var(--accent)', '')}
             </div>
             <div style="display:flex;justify-content:center;gap:20px;margin-top:8px;font-size:11px;color:var(--text-tertiary)">
-                <span>Components.icon('clock', 12) + ' 运行 ${sys.uptime || '-'}</span>
-                <span>Components.icon('package', 12) + ' v${sys.version || '-'}</span>
+                <span>${Components.icon('clock', 12)} 运行 ${sys.uptime || '-'}</span>
+                <span>${Components.icon('package', 12)} v${sys.version || '-'}</span>
             </div>
         `);
 

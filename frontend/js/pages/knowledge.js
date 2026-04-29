@@ -188,7 +188,7 @@ const KnowledgePage = (() => {
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--orange);cursor:default;transition:transform 0.15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    Components.icon("lightbulb", 14)
+                    ${Components.icon("lightbulb", 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(title)}</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap" title="${Components.escapeHtml(fullContent)}">${Components.escapeHtml(preview)}${fullContent.length > 150 ? '...' : ''}</div>
@@ -212,7 +212,7 @@ const KnowledgePage = (() => {
             const lines = first.split("\n").filter(l => l.trim());
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green)">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    Components.icon("brain", 14)
+                    ${Components.icon("brain", 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">Agent 长期记忆</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${Components.escapeHtml(lines.slice(0, 8).join("\n"))}</div>
@@ -243,7 +243,7 @@ const KnowledgePage = (() => {
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border:1px solid var(--border);cursor:default;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    Components.icon("zap", 14)
+                    ${Components.icon("zap", 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(s.name)}</span>
                 </div>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${tags}</div>
@@ -265,13 +265,13 @@ const KnowledgePage = (() => {
 
         // 操作按钮
         html += `<div style="margin-bottom:16px;display:flex;gap:8px">
-            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:var(--surface);transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Components.icon('brain', 14) + ' 执行全量学习（写入文件）</button>
+            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:var(--surface);transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">${Components.icon('brain', 14)} 执行全量学习（写入文件）</button>
             <span style="font-size:11px;color:var(--text-tertiary);display:flex;align-items:center">自动分析当前数据，将结果写入 learnings.md 和 MEMORY.md</span>
         </div>`;
 
         // 错误模式
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('alertCircle', 14) + ' 错误模式 (${errors.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">${Components.icon('alertCircle', 14)} 错误模式 (${errors.length})</div>`;
         if (errors.length === 0) {
             html += '<div style="font-size:12px;color:var(--green);padding:8px">' + Components.icon('check', 12) + ' 没有检测到错误模式</div>';
         } else {
@@ -297,7 +297,7 @@ const KnowledgePage = (() => {
 
         // 最佳实践
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('checkCircle', 14) + ' 最佳实践 (${patterns.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">${Components.icon('checkCircle', 14)} 最佳实践 (${patterns.length})</div>`;
         if (patterns.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
@@ -315,7 +315,7 @@ const KnowledgePage = (() => {
 
         // 用户偏好
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('chart', 14) + ' 用户偏好 (${prefs.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">${Components.icon('chart', 14)} 用户偏好 (${prefs.length})</div>`;
         if (prefs.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
@@ -334,7 +334,7 @@ const KnowledgePage = (() => {
 
         // 技能建议
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('lightbulb', 14) + ' 技能建议 (${suggestions.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">${Components.icon('lightbulb', 14)} 技能建议 (${suggestions.length})</div>`;
         if (suggestions.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无建议</div>';
         } else {

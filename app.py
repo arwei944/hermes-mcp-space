@@ -27,7 +27,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "4.6.1")
+APP_VERSION = os.environ.get("APP_VERSION", "4.7.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", datetime.now().strftime("%Y-%m-%d %H:%M"))
 START_TIME = time.time()  # 进程启动时间戳
 
@@ -36,9 +36,12 @@ def load_file(path):
     try:
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
+    except FileNotFoundError:
+        logger.error(f"CRITICAL: Frontend file not found: {path}")
+        raise RuntimeError(f"Frontend file missing: {path}") from None
     except Exception as e:
-        logger.warning(f"Failed to load {path}: {e}")
-        return ""
+        logger.error(f"CRITICAL: Failed to load {path}: {e}")
+        raise RuntimeError(f"Failed to load frontend file: {path}") from None
 
 
 def build_full_html():
