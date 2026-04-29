@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.1.0',
+            date: '2026-04-29 16:00',
+            title: '仪表盘大改版 + Bug修复',
+            changes: [
+                '仪表盘 v2 实时监控台: 活动流/热力图/工具排行/错误追踪/系统心跳',
+                '新增 5 个 Dashboard API: activity/heatmap/ranking/errors/trend',
+                '修复 search_skills_hub unhashable type: slice (API返回字典兼容)',
+                '修复 create_skill 重复创建未抛出错误',
+                '修复 web_search/install_skill_hub SSL 降级处理',
+                '测试报告: 67 用例 97.0% 通过率',
+            ],
+        },        {
             version: '4.0.0',
             date: '2026-04-29 14:30',
             title: '生态扩展',
