@@ -5,6 +5,15 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.6.1',
+            date: '2026-04-29 18:30',
+            title: '修复 JS 语法错误',
+            changes: [
+                '修复 Python 批量替换 emoji 时产生的引号嵌套语法错误（dashboard.js/knowledge.js/sessions.js）',
+                '修复普通字符串中误用 ${} 模板语法的问题',
+                '新增 node --check 语法验证流程',
+            ],
+        },        {
             version: '4.6.0',
             date: '2026-04-29 18:00',
             title: '矢量图标 + UI 风格统一',

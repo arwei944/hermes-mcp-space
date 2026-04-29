@@ -64,11 +64,11 @@ const KnowledgePage = (() => {
         if (!el || !_overview) return;
         const o = _overview;
         el.innerHTML = `
-            ${buildOverviewCard('Components.icon('messageCircle', 20), '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
-            ${buildOverviewCard('Components.icon('lightbulb', 20), '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
-            ${buildOverviewCard('Components.icon('brain', 20), '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
-            ${buildOverviewCard('Components.icon('zap', 20), '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
-            ${buildOverviewCard('Components.icon('ghost', 20), '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
+            ${buildOverviewCard(Components.icon('messageCircle', 20), '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
+            ${buildOverviewCard(Components.icon('lightbulb', 20), '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
+            ${buildOverviewCard(Components.icon('brain', 20), '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
+            ${buildOverviewCard(Components.icon('zap', 20), '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
+            ${buildOverviewCard(Components.icon('ghost', 20), '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
         `;
     }
 
@@ -92,20 +92,20 @@ const KnowledgePage = (() => {
 
         // 概览统计卡片
         const overviewHtml = `<div id="kbOverview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
-            ${buildOverviewCard('Components.icon('messageCircle', 20), '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
-            ${buildOverviewCard('Components.icon('lightbulb', 20), '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
-            ${buildOverviewCard('Components.icon('brain', 20), '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
-            ${buildOverviewCard('Components.icon('zap', 20), '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
-            ${buildOverviewCard('Components.icon('ghost', 20), '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
+            ${buildOverviewCard(Components.icon('messageCircle', 20), '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
+            ${buildOverviewCard(Components.icon('lightbulb', 20), '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
+            ${buildOverviewCard(Components.icon('brain', 20), '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
+            ${buildOverviewCard(Components.icon('zap', 20), '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
+            ${buildOverviewCard(Components.icon('ghost', 20), '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
         </div>`;
 
         // Tab 栏
         const tabs = [
-            { key: 'sessions', label: '会话记录', icon: 'Components.icon('messageCircle', 20), count: _sessions.length },
-            { key: 'experiences', label: '经验提炼', icon: 'Components.icon('lightbulb', 20), count: _experiences.length },
-            { key: 'memory', label: '记忆内容', icon: 'Components.icon('brain', 20), count: _memory.chars || 0 },
-            { key: 'skills', label: '技能库', icon: 'Components.icon('zap', 20), count: _skills.length },
-            { key: 'analysis', label: '自动分析', icon: 'Components.icon('microscope', 14), count: ((_analysis.errors||[]).length + (_analysis.patterns||[]).length) },
+            { key: 'sessions', label: '会话记录', icon: Components.icon('messageCircle', 14), count: _sessions.length },
+            { key: 'experiences', label: '经验提炼', icon: Components.icon('lightbulb', 14), count: _experiences.length },
+            { key: 'memory', label: '记忆内容', icon: Components.icon('brain', 14), count: _memory.chars || 0 },
+            { key: 'skills', label: '技能库', icon: Components.icon('zap', 14), count: _skills.length },
+            { key: 'analysis', label: '自动分析', icon: Components.icon('microscope', 14), count: ((_analysis.errors||[]).length + (_analysis.patterns||[]).length) },
         ];
 
         let tabsHtml = '<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px">';
@@ -151,7 +151,7 @@ const KnowledgePage = (() => {
         _sessions.forEach(s => {
             const time = Components.formatTime(s.created_at);
             const statusColor = s.status === 'active' ? 'var(--green)' : 'var(--text-tertiary)';
-            const statusDot = s.status === 'active' ? 'Components.icon('checkCircle', 10) : 'Components.icon('circle', 10);
+            const statusDot = s.status === 'active' ? Components.icon('checkCircle', 10) : Components.icon('circle', 10);
             const sourceTag = s.source ? `<span style="font-size:10px;background:var(--bg-secondary);padding:1px 6px;border-radius:var(--radius-tag);color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>` : '';
             const modelTag = s.model && s.model !== 'unknown' ? `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(s.model)}</span>` : '';
             const lastMsg = s.last_message ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.last_message)}">${Components.escapeHtml(s.last_message)}</div>` : '';
@@ -273,11 +273,11 @@ const KnowledgePage = (() => {
         html += `<div style="margin-bottom:20px">
             <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('alertCircle', 14) + ' 错误模式 (${errors.length})</div>`;
         if (errors.length === 0) {
-            html += '<div style="font-size:12px;color:var(--green);padding:8px">Components.icon('check', 12) + ' 没有检测到错误模式'</div>';
+            html += '<div style="font-size:12px;color:var(--green);padding:8px">' + Components.icon('check', 12) + ' 没有检测到错误模式</div>';
         } else {
             errors.slice(0, 8).forEach(e => {
                 const statusColor = e.is_fixed ? 'var(--green)' : 'var(--red)';
-                const statusText = e.is_fixed ? 'Components.icon('check', 10) + ' 已修复'' : 'Components.icon('alertTriangle', 10) + ' 未修复'';
+                const statusText = e.is_fixed ? Components.icon('check', 10) + ' 已修复' : Components.icon('alertTriangle', 10) + ' 未修复';
                 const severityColor = e.severity === 'high' ? 'var(--red)' : e.severity === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor}">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">

@@ -72,12 +72,12 @@ const DashboardPage = (() => {
         const el = document.getElementById('dashStats');
         if (!el) return;
         el.innerHTML = `
-            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'Components.icon('chart', 20), 'blue')}
-            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'Components.icon('zap', 20), 'green')}
-            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'Components.icon('messageCircle', 20), 'purple')}
-            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'Components.icon('wrench', 20), 'orange')}
-            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'Components.icon('check', 20), 'green')}
-            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'Components.icon('plug', 20), s.mcpConnected ? 'green' : 'red')}
+            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'chart', 'blue')}
+            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'zap', 'green')}
+            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'messageCircle', 'purple')}
+            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'wrench', 'orange')}
+            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'check', 'green')}
+            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'plug', s.mcpConnected ? 'green' : 'red')}
         `;
     }
 
@@ -261,7 +261,7 @@ const DashboardPage = (() => {
         activities.forEach(a => {
             const time = a.ts ? Components.formatTime(a.ts) : '';
             if (a.type === 'tool_call') {
-                const icon = a.ok ? 'Components.icon('check', 20) : Components.icon('x', 14);
+                const icon = a.ok ? Components.icon('check', 20) : Components.icon('x', 14);
                 const iconColor = a.ok ? 'var(--green)' : 'var(--red)';
                 const bgHover = a.ok ? 'var(--green-bg)' : 'var(--red-bg)';
                 const errTip = a.err ? ` title="${Components.escapeHtml(a.err)}"` : '';
@@ -273,7 +273,7 @@ const DashboardPage = (() => {
                     <span style="color:var(--text-tertiary);font-size:10px;flex-shrink:0;min-width:50px;text-align:right">${time}</span>
                 </div>`;
             } else if (a.type === 'solo_message') {
-                const roleIcon = a.role === 'user' ? 'Components.icon('user', 12) : 'Components.icon('bot', 12);
+                const roleIcon = a.role === 'user' ? Components.icon('user', 12) : Components.icon('bot', 12);
                 const roleLabel = a.role === 'user' ? '用户' : 'SOLO';
                 const roleColor = a.role === 'user' ? 'var(--blue)' : 'var(--accent)';
                 html += `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:default;transition:background 0.15s;border-left:2px solid ${roleColor}" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
@@ -289,7 +289,7 @@ const DashboardPage = (() => {
                 </div>`;
             } else {
                 const levelColor = { info: 'var(--blue)', success: 'var(--green)', warning: 'var(--orange)', error: 'var(--red)' }[a.level] || 'var(--text-tertiary)';
-                const levelIcon = { info: Components.icon('info', 16), success: 'Components.icon('check', 20), warning: Components.icon('alertTriangle', 14), error: Components.icon('x', 14) }[a.level] || '•';
+                const levelIcon = { info: Components.icon('info', 16), success: Components.icon('check', 20), warning: Components.icon('alertTriangle', 14), error: Components.icon('x', 14) }[a.level] || '•';
                 html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:default;transition:background 0.15s" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
                     <span style="color:${levelColor};font-weight:700;font-size:13px;flex-shrink:0;width:16px;text-align:center">${levelIcon}</span>
                     <span style="color:var(--text-secondary);flex-shrink:0;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(a.action || '')}</span>
@@ -304,7 +304,7 @@ const DashboardPage = (() => {
 
     function buildErrorCards(errors) {
         if (!errors || errors.length === 0) {
-            return '<div style="text-align:center;color:var(--green);padding:16px;font-size:13px">Components.icon('check', 14) + ' 最近没有错误'</div>';
+            return '<div style="text-align:center;color:var(--green);padding:16px;font-size:13px">' + Components.icon('check', 14) + ' 最近没有错误</div>';
         }
         let html = '';
         errors.slice(0, 8).forEach(e => {
@@ -331,12 +331,12 @@ const DashboardPage = (() => {
 
         // --- 顶部统计卡片（6 张） ---
         const statsHtml = `<div id="dashStats" class="stats">
-            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'Components.icon('chart', 20), 'blue')}
-            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'Components.icon('zap', 20), 'green')}
-            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'Components.icon('messageCircle', 20), 'purple')}
-            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'Components.icon('wrench', 20), 'orange')}
-            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'Components.icon('check', 20), 'green')}
-            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'Components.icon('plug', 20), s.mcpConnected ? 'green' : 'red')}
+            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'chart', 'blue')}
+            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'zap', 'green')}
+            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'messageCircle', 'purple')}
+            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'wrench', 'orange')}
+            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'check', 'green')}
+            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'plug', s.mcpConnected ? 'green' : 'red')}
         </div>`;
 
         // --- 系统心跳 ---

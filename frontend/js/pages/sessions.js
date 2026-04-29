@@ -162,7 +162,7 @@ const SessionsPage = (() => {
         const activeCount = _sessions.filter(s => s.status === 'active').length;
 
         if (filtered.length === 0) {
-            listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
+            listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">' + Components.icon('radio', 32) + '</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
         } else {
             listEl.innerHTML = filtered.map(s => {
                 const id = s.id || s.session_id;
