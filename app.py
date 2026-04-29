@@ -46,7 +46,7 @@ def build_full_html():
 
     js_files = [
         "js/api.js", "js/components.js",
-        "js/pages/dashboard.js", "js/pages/sessions.js", "js/pages/chat.js",
+        "js/pages/dashboard.js", "js/pages/knowledge.js", "js/pages/sessions.js", "js/pages/chat.js",
         "js/pages/tools.js", "js/pages/skills.js", "js/pages/memory.js",
         "js/pages/plugins.js",
         "js/pages/cron.js", "js/pages/agents.js", "js/pages/config.js",
