@@ -61,6 +61,7 @@ const AboutPage = (() => {
                 'add_session_message 支持 metadata 参数',
             ],
         },        {
+            version: '4.1.0',
             date: '2026-04-29 16:00',
             title: '仪表盘大改版 + Bug修复',
             changes: [
@@ -435,18 +436,21 @@ const AboutPage = (() => {
             </div>
 
             ${Components.sectionTitle('版本变更记录')}
-            ${CHANGELOG.map(rel => `
-                <div style="margin-bottom:16px">
+            ${CHANGELOG.map(rel => {
+                const isCurrent = rel.version === version;
+                return `
+                <div style="margin-bottom:16px;${isCurrent ? 'background:var(--bg-secondary);padding:12px;border-radius:8px;border:1px solid var(--accent)' : ''}">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
                         <span class="mono" style="font-size:13px;font-weight:600;color:var(--accent)">v${rel.version}</span>
                         <span style="font-size:12px;color:var(--text-tertiary)">${rel.date}</span>
+                        ${isCurrent ? '<span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px">当前版本</span>' : ''}
                         <span style="font-size:13px;font-weight:500">${rel.title}</span>
                     </div>
                     <ul style="margin:0;padding-left:20px;font-size:12px;color:var(--text-secondary);line-height:1.8">
                         ${rel.changes.map(c => `<li>${c}</li>`).join('')}
                     </ul>
-                </div>
-            `).join('')}
+                </div>`;
+            }).join('')}
 
             <div style="text-align:center;padding:24px 0;color:var(--text-tertiary);font-size:12px">
                 <p>© 2026 Hermes Agent · MIT License</p>

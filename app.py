@@ -13,6 +13,8 @@ os.environ["GRADIO_SSR_MODE"] = "false"
 import json
 import logging
 import re
+import time
+from datetime import datetime
 from pathlib import Path
 from fastapi import Request
 from fastapi.responses import HTMLResponse
@@ -26,7 +28,8 @@ logging.basicConfig(
 logger = logging.getLogger("hermes-space")
 
 APP_VERSION = os.environ.get("APP_VERSION", "4.5.0")
-BUILD_TIME = os.environ.get("BUILD_TIME", "2026-04-28")
+BUILD_TIME = os.environ.get("BUILD_TIME", datetime.now().strftime("%Y-%m-%d %H:%M"))
+START_TIME = time.time()  # 进程启动时间戳
 
 
 def load_file(path):
@@ -114,7 +117,21 @@ def _patched_create_app(blocks, **kwargs):
             }
         )
 
-    # Inject version/health endpoints
+    # Inject version/health/meta endpoints
+    @app.get("/api/meta")
+    async def get_meta():
+        """统一的元数据端点：版本号、构建时间、运行时长等动态信息"""
+        uptime = int(time.time() - START_TIME)
+        hours, remainder = divmod(uptime, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return {
+            "version": APP_VERSION,
+            "build_time": BUILD_TIME,
+            "uptime_seconds": uptime,
+            "uptime_human": f"{hours}h {minutes}m {seconds}s" if hours else f"{minutes}m {seconds}s",
+            "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
     @app.get("/api/version")
     async def get_version():
         return {"version": APP_VERSION, "build_time": BUILD_TIME}
@@ -180,7 +197,7 @@ def _patched_create_app(blocks, **kwargs):
         async def custom_openapi():
             return get_openapi(
                 title="Hermes Agent API",
-                version=os.environ.get("APP_VERSION", "4.0.0"),
+                version=APP_VERSION,
                 routes=app.routes,
             )
         logger.info("API docs mounted (/docs + /redoc)")

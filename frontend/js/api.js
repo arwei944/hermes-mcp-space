@@ -3,7 +3,23 @@
  * 统一处理所有 API 请求、错误处理、响应解析
  */
 
-const APP_VERSION = '4.5.0';
+// 版本号从后端动态获取，不硬编码
+let _metaCache = null;
+
+async function getMeta() {
+    if (_metaCache) return _metaCache;
+    try {
+        const resp = await fetch('/api/meta');
+        _metaCache = await resp.json();
+    } catch (e) {
+        _metaCache = { version: '?', build_time: '?', uptime_human: '', now: '' };
+    }
+    return _metaCache;
+}
+
+function getAppVersion() {
+    return _metaCache ? _metaCache.version : '...';
+}
 
 const API = (() => {
     const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -227,5 +243,12 @@ const API = (() => {
         BASE_URL,
         checkForUpdate,
         startUpdateCheck,
+        rawGet: request,  // 无包装的 get（用于 meta 等非标准响应）
     };
 })();
+
+// 兼容旧代码：APP_VERSION 改为动态 getter
+Object.defineProperty(window, 'APP_VERSION', {
+    get() { return getAppVersion(); },
+    configurable: true,
+});

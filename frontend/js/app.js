@@ -49,6 +49,9 @@ const App = (() => {
         bindGlobalEvents();
         initTheme();
 
+        // 预加载版本元数据
+        getMeta();
+
         // 启动热更新检查
         API.checkForUpdate();
         API.startUpdateCheck(30000);
