@@ -9,6 +9,7 @@ build/
 venv/
 .DS_Store
 *.log
+node_modules/
 # 忽略用户运行时数据（不忽略代码仓库内的 backend/data/）
 /data/
 ~/.hermes/data/
