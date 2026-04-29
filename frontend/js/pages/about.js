@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '3.3.0',
+            date: '2026-04-29 14:00',
+            title: '多 Agent 工作流',
+            changes: [
+                'micro-squad 技能: THINK→PLAN→BUILD→VERIFY→SHIP 工作流',
+                'review-skill 技能: 双盲评审（用户视角+工程视角）',
+                'delegate_task: 子 Agent 委派工具',
+                '种子数据: micro-squad + review-skill 内置技能',
+                'MCP 工具 52 → 53 个',
+                '内置技能 4 → 6 个',
+            ],
+        },        {
             version: '3.2.0',
             date: '2026-04-29 13:00',
             title: '自动化与智能',

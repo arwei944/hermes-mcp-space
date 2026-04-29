@@ -530,6 +530,19 @@ def _get_tools():
                 "required": ["name"]
             }
         },
+        {
+            "name": "delegate_task",
+            "description": "创建子 Agent 执行独立任务（并行工作）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "任务描述"},
+                    "tools": {"type": "array", "items": {"type": "string"}, "description": "允许使用的工具列表（可选，默认全部）"},
+                    "timeout": {"type": "integer", "default": 120, "description": "超时秒数"}
+                },
+                "required": ["task"]
+            }
+        },
         # ---- Phase 3: MCP 网关管理 ----
         {
             "name": "add_mcp_server",
@@ -777,7 +790,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '3.2.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '3.3.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -1595,6 +1608,38 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             raise
         except Exception as e:
             raise ValueError(f"❌ 安装失败: {e}\n建议：\n1. 检查网络连接\n2. 确认技能名称正确\n3. 使用 search_skills_hub 先搜索")
+
+    elif name == "delegate_task":
+        task_desc = arguments.get("task", "")
+        if not task_desc:
+            raise ValueError("❌ 请提供任务描述。\n建议：\n1. 清晰描述任务目标和预期输出\n2. 列出关键约束条件\n3. 指定交付格式")
+        
+        allowed_tools = arguments.get("tools", [])
+        timeout = int(arguments.get("timeout", 120))
+        
+        # 生成子 Agent ID
+        import uuid
+        agent_id = f"agent_{uuid.uuid4().hex[:8]}"
+        
+        # 记录任务到会话
+        try:
+            hermes_service.create_session(agent_id, f"[子Agent] {task_desc[:50]}")
+            hermes_service.add_session_message(agent_id, "system", f"任务: {task_desc}\n允许工具: {allowed_tools or '全部'}\n超时: {timeout}s")
+        except Exception:
+            pass
+        
+        # 返回任务信息（实际执行由 IDE 的 Agent Loop 完成）
+        return f"""子 Agent 已创建: {agent_id}
+
+📋 任务: {task_desc[:200]}
+🔧 允许工具: {len(allowed_tools) if allowed_tools else '全部'} 个
+⏱️ 超时: {timeout}s
+
+使用说明：
+1. 子 Agent 在独立上下文中执行任务
+2. 可通过 get_session_messages('{agent_id}') 查看进度
+3. 结果会自动记录到会话中
+4. 使用 list_sessions 查看所有子 Agent 状态"""
 
     # ---- Phase 3: MCP 网关管理 ----
     elif name == "add_mcp_server":

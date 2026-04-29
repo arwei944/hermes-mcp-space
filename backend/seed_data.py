@@ -146,6 +146,48 @@ def init_seed_data():
 - SVG 图表（柱状图、折线图、饼图）
 - JSON 结构化数据
 """,
+        "micro-squad": """# micro-squad — 微型团队工作流
+
+## 描述
+标准化 Sprint 工作流（THINK→PLAN→BUILD→VERIFY→SHIP）
+
+## 工作流命令
+
+### /squad <task>
+完整 Sprint 流程：THINK → PLAN → BUILD → VERIFY → SHIP
+
+### /think
+强制质疑假设，挑战需求中的隐含前提
+
+### /plan
+并行规划：分解任务、评估依赖、估算工作量
+
+### /build
+带约束的实现：按计划逐步实现，每步自检
+
+### /verify
+双盲评审：用户视角+工程视角并行审查
+
+### /ship
+带证据链的提交：汇总变更、测试结果、推送
+""",
+        "review-skill": """# review-skill — 双盲评审
+
+## 描述
+两个独立视角（用户视角+工程视角）并行审查，共识表裁决
+
+## 评审流程
+1. 提交评审对象
+2. 视角A（挑剔用户）：功能完整、错误友好、流程顺畅
+3. 视角B（严格工程师）：代码质量、安全风险、性能、可维护性
+4. 共识表裁决：FIX（都发现问题）/ TRIAGE（单视角）/ DISMISS（被反驳）
+
+## 问题级别
+- CRITICAL: 功能不可用/数据丢失/安全漏洞
+- MAJOR: 功能异常/体验差
+- MINOR: 小问题/不影响主流程
+- SUGGESTION: 优化建议
+""",
     }
 
     for name, content in skills.items():
