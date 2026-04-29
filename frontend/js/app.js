@@ -9,7 +9,7 @@ const App = (() => {
         'dashboard', 'knowledge', 'sessions', 'marketplace',
         'tools', 'skills', 'memory', 'plugins',
         'cron', 'agents', 'config', 'mcp',
-        'logs', 'about', 'trash',
+        'logs', 'about', 'trash', 'screenshot',
     ];
     const pages = {};
     pageNames.forEach(name => {
@@ -37,6 +37,7 @@ const App = (() => {
         logs: '操作日志',
         about: '关于',
         trash: '回收站',
+        screenshot: '截图工具',
     };
 
     let _currentPage = null;

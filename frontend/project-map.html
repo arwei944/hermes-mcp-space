@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent MCP Space — 项目架构地图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: 'Noto Sans SC', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1a1a2e; }
+::-webkit-scrollbar-thumb { background: #00d4ff44; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #00d4ff88; }
+
+/* ===== Header ===== */
+.header {
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 100%);
+  border-bottom: 1px solid #00d4ff33;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 100;
+}
+.header-left h1 {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #00d4ff, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 1px;
+}
+.header-right {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #888;
+  display: flex;
+  gap: 16px;
+}
+.header-right span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.stat-dot.cyan { background: #00d4ff; }
+.stat-dot.green { background: #22c55e; }
+.stat-dot.pink { background: #ec4899; }
+.stat-dot.orange { background: #f97316; }
+
+/* ===== Main Layout ===== */
+.main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ===== Left: Architecture Map ===== */
+.map-panel {
+  flex: 7;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  border-right: 1px solid #00d4ff22;
+}
+.map-panel:active { cursor: grabbing; }
+.map-container {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  transition: transform 0.1s ease-out;
+  padding: 30px;
+  min-width: 1200px;
+}
+.map-container svg {
+  width: 100%;
+  height: auto;
+}
+
+/* ===== Right: Demo Panel ===== */
+.demo-panel {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0d0d1a 0%, #0a0a14 100%);
+  min-width: 380px;
+  max-width: 480px;
+}
+
+/* Demo Header */
+.demo-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #00d4ff22;
+  flex-shrink: 0;
+}
+.demo-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #00d4ff;
+  margin-bottom: 4px;
+}
+.demo-header p {
+  font-size: 12px;
+  color: #666;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Slide Area */
+.slide-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.slide {
+  display: none;
+  flex-direction: column;
+  animation: fadeSlideIn 0.5s ease;
+}
+.slide.active { display: flex; }
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-step {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 64px;
+  font-weight: 700;
+  color: #00d4ff22;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.slide.active .slide-step {
+  background: linear-gradient(135deg, #00d4ff44, #8b5cf644);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.slide-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 16px;
+}
+.slide-desc {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #bbb;
+  margin-bottom: 16px;
+  white-space: pre-line;
+}
+.slide-dep {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #f59e0b;
+  background: #f59e0b11;
+  border: 1px solid #f59e0b33;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: auto;
+}
+.slide-dep::before {
+  content: '→ 依赖：';
+  color: #f59e0b88;
+}
+
+/* Controls */
+.demo-controls {
+  padding: 16px 24px 20px;
+  border-top: 1px solid #00d4ff22;
+  flex-shrink: 0;
+}
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #8b5cf6);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.progress-bar:hover .progress-fill { opacity: 0.8; }
+.control-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+.ctrl-btn {
+  width: 36px; height: 36px;
+  border: 1px solid #00d4ff44;
+  background: #00d4ff11;
+  color: #00d4ff;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.ctrl-btn:hover {
+  background: #00d4ff33;
+  border-color: #00d4ff88;
+}
+.ctrl-btn.play-btn {
+  width: 42px; height: 42px;
+  font-size: 16px;
+  border-color: #00d4ff66;
+  background: #00d4ff22;
+}
+.slide-counter {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #666;
+}
+
+/* ===== SVG Architecture Styles ===== */
+.layer-group { transition: opacity 0.3s; }
+.layer-bg {
+  rx: 12; ry: 12;
+  stroke-width: 1.5;
+  opacity: 0.08;
+}
+.layer-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  fill: #fff;
+  opacity: 0.5;
+}
+.module-rect {
+  rx: 8; ry: 8;
+  stroke-width: 1.5;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 0.85;
+}
+.module-rect:hover {
+  opacity: 1;
+  filter: brightness(1.3);
+}
+.module-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  fill: #fff;
+  pointer-events: none;
+  dominant-baseline: central;
+  text-anchor: middle;
+}
+.module-subtext {
+  font-family: 'Noto Sans SC', sans-serif;
+  font-size: 9px;
+  fill: #ffffffaa;
+  pointer-events: none;
+  dominant-baseline: central;
+  text-anchor: middle;
+}
+.arrow-line {
+  stroke: #ffffff22;
+  stroke-width: 1.5;
+  fill: none;
+  marker-end: url(#arrowhead);
+}
+.arrow-line.highlighted {
+  stroke: #00d4ff88;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 4px #00d4ff66);
+}
+
+/* Highlight animation */
+.module-rect.highlighted {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px currentColor) brightness(1.4);
+  stroke-width: 2.5;
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 6px currentColor) brightness(1.3); }
+  50% { filter: drop-shadow(0 0 14px currentColor) brightness(1.6); }
+}
+.layer-group.dimmed { opacity: 0.25; }
+.layer-group.highlighted-layer { opacity: 1; }
+
+/* Module detail tooltip */
+.module-detail {
+  position: absolute;
+  background: #1a1a2eee;
+  border: 1px solid #00d4ff44;
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: #ccc;
+  max-width: 300px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.25s ease;
+  z-index: 200;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.module-detail.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.module-detail h3 {
+  font-size: 14px;
+  color: #00d4ff;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.module-detail p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #999;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 50;
+}
+.zoom-btn {
+  width: 36px; height: 36px;
+  border: 1px solid #ffffff22;
+  background: #0d0d1aee;
+  color: #888;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+.zoom-btn:hover {
+  border-color: #00d4ff66;
+  color: #00d4ff;
+  background: #00d4ff11;
+}
+
+/* Speed control */
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.speed-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid #ffffff22;
+  background: transparent;
+  color: #666;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.speed-btn.active {
+  border-color: #00d4ff66;
+  color: #00d4ff;
+  background: #00d4ff11;
+}
+.speed-btn:hover { border-color: #00d4ff44; color: #aaa; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .main { flex-direction: column; }
+  .map-panel { flex: 1; border-right: none; border-bottom: 1px solid #00d4ff22; }
+  .demo-panel { max-width: none; min-width: auto; flex: 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<div class="header">
+  <div class="header-left">
+    <h1>Hermes Agent MCP Space — 项目架构地图</h1>
+  </div>
+  <div class="header-right">
+    <span><span class="stat-dot cyan"></span>v5.0.0</span>
+    <span><span class="stat-dot cyan"></span>61 MCP 工具</span>
+    <span><span class="stat-dot green"></span>17 API 路由</span>
+    <span><span class="stat-dot pink"></span>16 前端页面</span>
+    <span><span class="stat-dot orange"></span>7 后端服务</span>
+  </div>
+</div>
+
+<!-- ===== Main ===== -->
+<div class="main">
+
+  <!-- Left: Architecture Map -->
+  <div class="map-panel" id="mapPanel">
+    <div class="map-container" id="mapContainer">
+      <svg id="archSvg" viewBox="0 0 1100 920" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ffffff33"/>
+          </marker>
+          <marker id="arrowhead-hl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#00d4ff88"/>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- ===== Layer 1: 部署层 ===== -->
+        <g class="layer-group" data-layer="deploy">
+          <rect class="layer-bg" x="40" y="10" width="1020" height="100" fill="#8b5cf6"/>
+          <text class="layer-label" x="56" y="30">L1 · 部署层</text>
+          <!-- HuggingFace Spaces -->
+          <g class="module" data-id="huggingface" data-layer="deploy">
+            <rect class="module-rect" x="80" y="42" width="200" height="50" fill="#8b5cf622" stroke="#8b5cf6"/>
+            <text class="module-text" x="180" y="60">HuggingFace Spaces</text>
+            <text class="module-subtext" x="180" y="78">云托管平台</text>
+          </g>
+          <!-- Gradio SDK -->
+          <g class="module" data-id="gradio" data-layer="deploy">
+            <rect class="module-rect" x="320" y="42" width="200" height="50" fill="#8b5cf622" stroke="#8b5cf6"/>
+            <text class="module-text" x="420" y="60">Gradio SDK</text>
+            <text class="module-subtext" x="420" y="78">Web 框架</text>
+          </g>
+          <!-- Dockerfile -->
+          <g class="module" data-id="docker" data-layer="deploy">
+            <rect class="module-rect" x="560" y="42" width="200" height="50" fill="#8b5cf622" stroke="#8b5cf6"/>
+            <text class="module-text" x="660" y="60">Dockerfile</text>
+            <text class="module-subtext" x="660" y="78">容器化部署</text>
+          </g>
+          <!-- CI/CD -->
+          <g class="module" data-id="cicd" data-layer="deploy">
+            <rect class="module-rect" x="800" y="42" width="200" height="50" fill="#8b5cf622" stroke="#8b5cf6"/>
+            <text class="module-text" x="900" y="60">CI/CD Pipeline</text>
+            <text class="module-subtext" x="900" y="78">GitHub Actions</text>
+          </g>
+        </g>
+
+        <!-- Arrow: Deploy → Entry -->
+        <line class="arrow-line" x1="550" y1="110" x2="550" y2="130"/>
+
+        <!-- ===== Layer 2: 入口层 ===== -->
+        <g class="layer-group" data-layer="entry">
+          <rect class="layer-bg" x="40" y="130" width="1020" height="80" fill="#f59e0b"/>
+          <text class="layer-label" x="56" y="150">L2 · 入口层</text>
+          <!-- app.py -->
+          <g class="module" data-id="app-py" data-layer="entry">
+            <rect class="module-rect" x="180" y="148" width="280" height="48" fill="#f59e0b22" stroke="#f59e0b"/>
+            <text class="module-text" x="320" y="166">app.py</text>
+            <text class="module-subtext" x="320" y="182">Monkey-patch Gradio · 路由挂载 · HTML 注入</text>
+          </g>
+          <!-- main.py -->
+          <g class="module" data-id="main-py" data-layer="entry">
+            <rect class="module-rect" x="520" y="148" width="280" height="48" fill="#f59e0b22" stroke="#f59e0b"/>
+            <text class="module-text" x="660" y="166">main.py</text>
+            <text class="module-subtext" x="660" y="182">FastAPI 应用 · 中间件 · CORS</text>
+          </g>
+        </g>
+
+        <!-- Arrow: Entry → API -->
+        <line class="arrow-line" x1="550" y1="210" x2="550" y2="230"/>
+
+        <!-- ===== Layer 3: API 路由层 ===== -->
+        <g class="layer-group" data-layer="api">
+          <rect class="layer-bg" x="40" y="230" width="1020" height="140" fill="#00d4ff"/>
+          <text class="layer-label" x="56" y="250">L3 · API 路由层（17 个路由）</text>
+          <!-- Core Routes -->
+          <g class="module" data-id="route-core" data-layer="api">
+            <rect class="module-rect" x="70" y="258" width="230" height="96" fill="#00d4ff11" stroke="#00d4ff"/>
+            <text class="module-text" x="185" y="278" fill="#00d4ff">核心路由</text>
+            <text class="module-subtext" x="185" y="296">sessions · tools · skills</text>
+            <text class="module-subtext" x="185" y="312">memory · cron · agents</text>
+            <text class="module-subtext" x="185" y="328" font-size="8" fill="#00d4ff88">6 routes</text>
+          </g>
+          <!-- Data Routes -->
+          <g class="module" data-id="route-data" data-layer="api">
+            <rect class="module-rect" x="320" y="258" width="230" height="96" fill="#00d4ff11" stroke="#00d4ff"/>
+            <text class="module-text" x="435" y="278" fill="#00d4ff">数据路由</text>
+            <text class="module-subtext" x="435" y="296">dashboard · knowledge · logs</text>
+            <text class="module-subtext" x="435" y="312">events · stats · evals</text>
+            <text class="module-subtext" x="435" y="328" font-size="8" fill="#00d4ff88">6 routes</text>
+          </g>
+          <!-- System Routes -->
+          <g class="module" data-id="route-system" data-layer="api">
+            <rect class="module-rect" x="570" y="258" width="230" height="96" fill="#00d4ff11" stroke="#00d4ff"/>
+            <text class="module-text" x="685" y="278" fill="#00d4ff">系统路由</text>
+            <text class="module-subtext" x="685" y="296">config · mcp · plugins</text>
+            <text class="module-subtext" x="685" y="312">trash · screenshot</text>
+            <text class="module-subtext" x="685" y="328" font-size="8" fill="#00d4ff88">5 routes</text>
+          </g>
+          <!-- SSE -->
+          <g class="module" data-id="route-sse" data-layer="api">
+            <rect class="module-rect" x="820" y="258" width="220" height="96" fill="#00d4ff11" stroke="#00d4ff"/>
+            <text class="module-text" x="930" y="278" fill="#00d4ff">实时通信</text>
+            <text class="module-subtext" x="930" y="296">SSE Events</text>
+            <text class="module-subtext" x="930" y="312">WebSocket</text>
+            <text class="module-subtext" x="930" y="328" font-size="8" fill="#00d4ff88">events.py</text>
+          </g>
+        </g>
+
+        <!-- Arrow: API → Service -->
+        <line class="arrow-line" x1="550" y1="370" x2="550" y2="390"/>
+
+        <!-- ===== Layer 4: 服务层 ===== -->
+        <g class="layer-group" data-layer="service">
+          <rect class="layer-bg" x="40" y="390" width="1020" height="140" fill="#22c55e"/>
+          <text class="layer-label" x="56" y="410">L4 · 服务层（8 个服务）</text>
+          <!-- hermes_service -->
+          <g class="module" data-id="svc-hermes" data-layer="service">
+            <rect class="module-rect" x="60" y="418" width="145" height="96" fill="#22c55e11" stroke="#22c55e"/>
+            <text class="module-text" x="132" y="440" fill="#22c55e">hermes_service</text>
+            <text class="module-subtext" x="132" y="458">核心业务</text>
+            <text class="module-subtext" x="132" y="474">会话管理</text>
+            <text class="module-subtext" x="132" y="490" font-size="8" fill="#22c55e88">M001</text>
+          </g>
+          <!-- eval_service -->
+          <g class="module" data-id="svc-eval" data-layer="service">
+            <rect class="module-rect" x="220" y="418" width="145" height="96" fill="#22c55e11" stroke="#22c55e"/>
+            <text class="module-text" x="292" y="440" fill="#22c55e">eval_service</text>
+            <text class="module-subtext" x="292" y="458">工具调用追踪</text>
+            <text class="module-subtext" x="292" y="474">性能评估</text>
+            <text class="module-subtext" x="292" y="490" font-size="8" fill="#22c55e88">M002</text>
+          </g>
+          <!-- auto_learner -->
+          <g class="module" data-id="svc-learner" data-layer="service">
+            <rect class="module-rect" x="380" y="418" width="145" height="96" fill="#22c55e11" stroke="#22c55e"/>
+            <text class="module-text" x="452" y="440" fill="#22c55e">auto_learner</text>
+            <text class="module-subtext" x="452" y="458">自动学习引擎</text>
+            <text class="module-subtext" x="452" y="474">模式识别</text>
+            <text class="module-subtext" x="452" y="490" font-size="8" fill="#22c55e88">M003</text>
+          </g>
+          <!-- cron_scheduler -->
+          <g class="module" data-id="svc-cron" data-layer="service">
+            <rect class="module-rect" x="540" y="418" width="145" height="96" fill="#22c55e11" stroke="#22c55e"/>
+            <text class="module-text" x="612" y="440" fill="#22c55e">cron_scheduler</text>
+            <text class="module-subtext" x="612" y="458">定时调度</text>
+            <text class="module-subtext" x="612" y="474">任务队列</text>
+            <text class="module-subtext" x="612" y="490" font-size="8" fill="#22c55e88">M004</text>
+          </g>
+          <!-- mcp_client_service -->
+          <g class="module" data-id="svc-mcp" data-layer="service">
+            <rect class="module-rect" x="700" y="418" width="145" height="96" fill="#22c55e11" stroke="#22c55e"/>
+            <text class="module-text" x="772" y="440" fill="#22c55e">mcp_client_svc</text>
+            <text class="module-subtext" x="772" y="458">MCP 网关</text>
+            <text class="module-subtext" x="772" y="474">工具代理</text>
+            <text class="module-subtext" x="772" y="490" font-size="8" fill="#22c55e88">M005</text>
+          </g>
+          <!-- file_service -->
+          <g class="module" data-id="svc-file" data-layer="service">
+            <rect class="module-rect" x="860" y="418" width="180" height="96" fill="#22c55e11" stroke="#22c55e"/>
+            <text class="module-text" x="950" y="440" fill="#22c55e">file_service</text>
+            <text class="module-subtext" x="950" y="458">文件系统</text>
+            <text class="module-subtext" x="950" y="474">读写管理</text>
+            <text class="module-subtext" x="950" y="490" font-size="8" fill="#22c55e88">M006</text>
+          </g>
+        </g>
+
+        <!-- Arrow: Service → Data -->
+        <line class="arrow-line" x1="550" y1="530" x2="550" y2="550"/>
+
+        <!-- ===== Layer 5: 数据层 ===== -->
+        <g class="layer-group" data-layer="data">
+          <rect class="layer-bg" x="40" y="550" width="1020" height="120" fill="#f97316"/>
+          <text class="layer-label" x="56" y="570">L5 · 数据层（12 种存储）</text>
+          <!-- Row 1 -->
+          <g class="module" data-id="data-sqlite" data-layer="data">
+            <rect class="module-rect" x="60" y="578" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="132" y="598" font-size="9">SQLite sessions.db</text>
+          </g>
+          <g class="module" data-id="data-sessions" data-layer="data">
+            <rect class="module-rect" x="220" y="578" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="292" y="598" font-size="9">sessions.json</text>
+          </g>
+          <g class="module" data-id="data-memory" data-layer="data">
+            <rect class="module-rect" x="380" y="578" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="452" y="598" font-size="9">MEMORY.md</text>
+          </g>
+          <g class="module" data-id="data-user" data-layer="data">
+            <rect class="module-rect" x="540" y="578" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="612" y="598" font-size="9">USER.md</text>
+          </g>
+          <g class="module" data-id="data-learnings" data-layer="data">
+            <rect class="module-rect" x="700" y="578" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="772" y="598" font-size="9">learnings.md</text>
+          </g>
+          <g class="module" data-id="data-cron" data-layer="data">
+            <rect class="module-rect" x="860" y="578" width="180" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="950" y="598" font-size="9">cron_jobs.json</text>
+          </g>
+          <!-- Row 2 -->
+          <g class="module" data-id="data-logs" data-layer="data">
+            <rect class="module-rect" x="60" y="626" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="132" y="646" font-size="9">logs.json</text>
+          </g>
+          <g class="module" data-id="data-traces" data-layer="data">
+            <rect class="module-rect" x="220" y="626" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="292" y="646" font-size="9">tool_traces.jsonl</text>
+          </g>
+          <g class="module" data-id="data-trash" data-layer="data">
+            <rect class="module-rect" x="380" y="626" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="452" y="646" font-size="9">trash.json</text>
+          </g>
+          <g class="module" data-id="data-config" data-layer="data">
+            <rect class="module-rect" x="540" y="626" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="612" y="646" font-size="9">config_versions.json</text>
+          </g>
+          <g class="module" data-id="data-plugin" data-layer="data">
+            <rect class="module-rect" x="700" y="626" width="145" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="772" y="646" font-size="9">plugin_index.json</text>
+          </g>
+          <g class="module" data-id="data-mcp-servers" data-layer="data">
+            <rect class="module-rect" x="860" y="626" width="180" height="40" fill="#f9731611" stroke="#f97316"/>
+            <text class="module-text" x="950" y="646" font-size="9">mcp_servers.json</text>
+          </g>
+        </g>
+
+        <!-- Arrow: Data → Frontend -->
+        <line class="arrow-line" x1="550" y1="670" x2="550" y2="690"/>
+
+        <!-- ===== Layer 6: 前端层 ===== -->
+        <g class="layer-group" data-layer="frontend">
+          <rect class="layer-bg" x="40" y="690" width="1020" height="220" fill="#ec4899"/>
+          <text class="layer-label" x="56" y="710">L6 · 前端层（16 个页面）</text>
+          <!-- Core files -->
+          <g class="module" data-id="fe-index" data-layer="frontend">
+            <rect class="module-rect" x="60" y="718" width="120" height="40" fill="#ec489911" stroke="#ec4899"/>
+            <text class="module-text" x="120" y="738" font-size="9">index.html</text>
+          </g>
+          <g class="module" data-id="fe-app" data-layer="frontend">
+            <rect class="module-rect" x="195" y="718" width="120" height="40" fill="#ec489911" stroke="#ec4899"/>
+            <text class="module-text" x="255" y="738" font-size="9">app.js (路由)</text>
+          </g>
+          <g class="module" data-id="fe-api" data-layer="frontend">
+            <rect class="module-rect" x="330" y="718" width="120" height="40" fill="#ec489911" stroke="#ec4899"/>
+            <text class="module-text" x="390" y="738" font-size="9">api.js (请求)</text>
+          </g>
+          <g class="module" data-id="fe-components" data-layer="frontend">
+            <rect class="module-rect" x="465" y="718" width="140" height="40" fill="#ec489911" stroke="#ec4899"/>
+            <text class="module-text" x="535" y="738" font-size="9">components.js (组件库)</text>
+          </g>
+          <g class="module" data-id="fe-css" data-layer="frontend">
+            <rect class="module-rect" x="620" y="718" width="120" height="40" fill="#ec489911" stroke="#ec4899"/>
+            <text class="module-text" x="680" y="738" font-size="9">style.css</text>
+          </g>
+          <!-- Pages Row 1 -->
+          <g class="module" data-id="fe-pg-dashboard" data-layer="frontend">
+            <rect class="module-rect" x="60" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="110" y="786" font-size="8">dashboard</text>
+          </g>
+          <g class="module" data-id="fe-pg-knowledge" data-layer="frontend">
+            <rect class="module-rect" x="170" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="220" y="786" font-size="8">knowledge</text>
+          </g>
+          <g class="module" data-id="fe-pg-sessions" data-layer="frontend">
+            <rect class="module-rect" x="280" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="330" y="786" font-size="8">sessions</text>
+          </g>
+          <g class="module" data-id="fe-pg-chat" data-layer="frontend">
+            <rect class="module-rect" x="390" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="440" y="786" font-size="8">chat</text>
+          </g>
+          <g class="module" data-id="fe-pg-tools" data-layer="frontend">
+            <rect class="module-rect" x="500" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="550" y="786" font-size="8">tools</text>
+          </g>
+          <g class="module" data-id="fe-pg-skills" data-layer="frontend">
+            <rect class="module-rect" x="610" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="660" y="786" font-size="8">skills</text>
+          </g>
+          <g class="module" data-id="fe-pg-memory" data-layer="frontend">
+            <rect class="module-rect" x="720" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="770" y="786" font-size="8">memory</text>
+          </g>
+          <g class="module" data-id="fe-pg-cron" data-layer="frontend">
+            <rect class="module-rect" x="830" y="770" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="880" y="786" font-size="8">cron</text>
+          </g>
+          <!-- Pages Row 2 -->
+          <g class="module" data-id="fe-pg-agents" data-layer="frontend">
+            <rect class="module-rect" x="60" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="110" y="828" font-size="8">agents</text>
+          </g>
+          <g class="module" data-id="fe-pg-config" data-layer="frontend">
+            <rect class="module-rect" x="170" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="220" y="828" font-size="8">config</text>
+          </g>
+          <g class="module" data-id="fe-pg-about" data-layer="frontend">
+            <rect class="module-rect" x="280" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="330" y="828" font-size="8">about</text>
+          </g>
+          <g class="module" data-id="fe-pg-mcp" data-layer="frontend">
+            <rect class="module-rect" x="390" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="440" y="828" font-size="8">mcp</text>
+          </g>
+          <g class="module" data-id="fe-pg-marketplace" data-layer="frontend">
+            <rect class="module-rect" x="500" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="550" y="828" font-size="8">marketplace</text>
+          </g>
+          <g class="module" data-id="fe-pg-logs" data-layer="frontend">
+            <rect class="module-rect" x="610" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="660" y="828" font-size="8">logs</text>
+          </g>
+          <g class="module" data-id="fe-pg-plugins" data-layer="frontend">
+            <rect class="module-rect" x="720" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="770" y="828" font-size="8">plugins</text>
+          </g>
+          <g class="module" data-id="fe-pg-trash" data-layer="frontend">
+            <rect class="module-rect" x="830" y="812" width="100" height="32" fill="#ec489908" stroke="#ec489966"/>
+            <text class="module-text" x="880" y="828" font-size="8">trash</text>
+          </g>
+          <!-- Pages Row 3: screenshot (new) -->
+          <g class="module" data-id="fe-pg-screenshot" data-layer="frontend">
+            <rect class="module-rect" x="60" y="854" width="100" height="32" fill="#ec489922" stroke="#ec4899" stroke-dasharray="4 2"/>
+            <text class="module-text" x="110" y="870" font-size="8" fill="#ec4899">screenshot ★</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoomIn" title="放大">+</button>
+      <button class="zoom-btn" id="zoomOut" title="缩小">−</button>
+      <button class="zoom-btn" id="zoomReset" title="重置" style="font-size:12px;">⟲</button>
+    </div>
+
+    <!-- Module Detail Tooltip -->
+    <div class="module-detail" id="moduleDetail">
+      <h3 id="detailTitle"></h3>
+      <p id="detailDesc"></p>
+    </div>
+  </div>
+
+  <!-- Right: Demo Panel -->
+  <div class="demo-panel">
+    <div class="demo-header">
+      <h2>开发流程演示</h2>
+      <p>以「截图小工具」为例 · 15 步完整流程</p>
+    </div>
+
+    <div class="slide-area" id="slideArea">
+      <!-- Slides will be generated by JS -->
+    </div>
+
+    <div class="demo-controls">
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="control-buttons">
+        <div class="btn-group">
+          <button class="ctrl-btn" id="prevBtn" title="上一步">◁</button>
+          <button class="ctrl-btn play-btn" id="playBtn" title="播放/暂停">▶</button>
+          <button class="ctrl-btn" id="nextBtn" title="下一步">▷</button>
+        </div>
+        <div class="speed-control">
+          <button class="speed-btn" data-speed="3000">1x</button>
+          <button class="speed-btn active" data-speed="5000">1x</button>
+          <button class="speed-btn" data-speed="8000">0.5x</button>
+        </div>
+        <span class="slide-counter" id="slideCounter">1 / 15</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Slide Data =====
+const slides = [
+  {
+    step: '01', title: '需求分析',
+    desc: '我们要开发一个截图小工具，用户输入 URL，自动截取网页截图并保存。\n首先需要了解项目架构，确定这个功能应该放在哪个模块。',
+    dep: '整体架构概览',
+    highlight: []
+  },
+  {
+    step: '02', title: '确定技术方案',
+    desc: '截图功能需要：1) 后端调用浏览器截图 API，2) 前端提供输入框和预览区域。\n项目已有 browser_* MCP 工具，可以复用 browser_screenshot 的能力。',
+    dep: 'MCP 工具集 · browser_screenshot',
+    highlight: ['svc-mcp']
+  },
+  {
+    step: '03', title: '后端 - 添加 MCP 工具',
+    desc: '在 mcp_server.py 中注册新的 screenshot_capture 工具。\n利用已有的 browser_screenshot 能力，封装为一个独立的截图工具。',
+    dep: 'mcp_server.py (M005)',
+    highlight: ['svc-mcp']
+  },
+  {
+    step: '04', title: '后端 - 添加 API 路由',
+    desc: '在 backend/routers/ 下新建 screenshot.py 路由。\n提供 POST /api/screenshot/capture 端点，接收 URL 参数。',
+    dep: '新建 router，挂载到 main.py (M002)',
+    highlight: ['route-system', 'main-py']
+  },
+  {
+    step: '05', title: '后端 - 实现截图服务',
+    desc: '在 backend/services/ 下新建 screenshot_service.py。\n封装截图逻辑：URL 验证 → 页面加载 → 截图 → 保存到文件系统。',
+    dep: 'file_service (M006) 保存文件',
+    highlight: ['svc-hermes', 'svc-file']
+  },
+  {
+    step: '06', title: '数据层 - 截图存储',
+    desc: '截图文件保存到 ~/.hermes/data/screenshots/ 目录。\n元数据（URL、时间、文件路径）记录到 screenshots.json。',
+    dep: '数据层 (D001-D012)',
+    highlight: ['data-sqlite', 'data-sessions']
+  },
+  {
+    step: '07', title: '前端 - 创建页面文件',
+    desc: '在 frontend/js/pages/ 下新建 screenshot.js。\n遵循项目全局变量模式：const ScreenshotPage = (() => { ... })();',
+    dep: '前端层 (F001-F004)',
+    highlight: ['fe-index']
+  },
+  {
+    step: '08', title: '前端 - 注册页面',
+    desc: '三处注册：\n1. app.py 的 build_full_html 自动扫描（已自动化 ✅）\n2. app.js 的 pageNames 数组添加 \'screenshot\'\n3. app.js 的 pageTitles 添加 \'截图工具\'',
+    dep: 'app.js (F002)',
+    highlight: ['fe-app', 'app-py']
+  },
+  {
+    step: '09', title: '前端 - UI 组件',
+    desc: '使用 Components 组件库构建界面：\n- Components.createFormInput() 输入 URL\n- Components.createButton() 触发截图\n- Components.icon(\'camera\') 截图图标',
+    dep: 'components.js (F004)',
+    highlight: ['fe-components']
+  },
+  {
+    step: '10', title: '前端 - API 调用',
+    desc: '通过 api.js 封装截图 API：\nAPI.screenshot = { capture: (url) => API.post(\'/api/screenshot/capture\', { url }) }',
+    dep: 'api.js (F003)',
+    highlight: ['fe-api']
+  },
+  {
+    step: '11', title: '实时更新 - SSE 事件',
+    desc: '截图完成后通过 SSE 推送通知：\n事件类型：screenshot.complete\n前端监听后自动刷新截图列表。',
+    dep: 'events.py (R011) + app.js SSE',
+    highlight: ['route-sse', 'fe-app']
+  },
+  {
+    step: '12', title: '确认弹窗 - 删除保护',
+    desc: '删除截图时使用 Components.Modal.confirm()：\nawait Components.Modal.confirm({ title: \'删除截图\', message: \'确定要删除此截图吗？\', type: \'danger\' })',
+    dep: 'components.js Modal (F004)',
+    highlight: ['fe-components']
+  },
+  {
+    step: '13', title: '质量检查 - ESLint + Prettier',
+    desc: '运行代码质量检查：\n1. ESLint: npx eslint js/pages/screenshot.js → 0 error, 0 warning\n2. Prettier: npx prettier --write js/pages/screenshot.js\n3. pre-commit hook 自动拦截不合格代码',
+    dep: '基础设施 (I001-I005)',
+    highlight: ['cicd']
+  },
+  {
+    step: '14', title: 'CI/CD - 自动部署',
+    desc: '代码提交后：\n1. GitHub Actions CI 自动运行 lint 检查\n2. 检查通过后自动部署到 HuggingFace Spaces\n3. Gradio 应用热重载，新页面立即可用',
+    dep: 'CI/CD (I001)',
+    highlight: ['cicd', 'huggingface', 'gradio', 'docker']
+  },
+  {
+    step: '15', title: '完成！',
+    desc: '截图小工具开发完成！完整路径覆盖了项目的 6 层架构：\n入口层 → API 路由层 → 服务层 → 数据层 → 前端层 → 基础设施层\n这就是 Hermes Agent MCP Space 的完整开发流程。',
+    dep: '全部 6 层架构',
+    highlight: []
+  }
+];
+
+// ===== Module Detail Info =====
+const moduleInfo = {
+  'huggingface': { title: 'HuggingFace Spaces', desc: '云托管平台，提供免费的 Gradio 应用托管服务。支持自动扩缩容、自定义域名和 SSL 证书。' },
+  'gradio': { title: 'Gradio SDK', desc: 'Python Web 框架，用于快速构建 ML/AI 应用界面。项目通过 Monkey-patch 扩展其路由能力。' },
+  'docker': { title: 'Dockerfile', desc: '容器化部署配置，定义运行环境和依赖。支持 Docker Hub 和 HuggingFace Spaces 容器部署。' },
+  'cicd': { title: 'CI/CD Pipeline', desc: 'GitHub Actions 自动化流水线：代码检查 → 测试 → 构建 → 部署。每次推送自动触发。' },
+  'app-py': { title: 'app.py', desc: '应用入口文件。通过 Monkey-patch Gradio 实现自定义路由挂载、HTML 注入和前端资源管理。build_full_html 自动扫描并注入页面。' },
+  'main-py': { title: 'main.py', desc: 'FastAPI 应用主文件。配置中间件、CORS、异常处理和路由挂载。所有 API 路由在此注册。' },
+  'route-core': { title: '核心路由组', desc: 'sessions / tools / skills / memory / cron / agents — 系统核心功能的 API 端点。' },
+  'route-data': { title: '数据路由组', desc: 'dashboard / knowledge / logs / events / stats / evals — 数据查询和展示的 API 端点。' },
+  'route-system': { title: '系统路由组', desc: 'config / mcp / plugins / trash — 系统配置和管理的 API 端点。' },
+  'route-sse': { title: '实时通信', desc: 'SSE (Server-Sent Events) 和 WebSocket 端点。用于推送实时更新、工具调用状态和系统事件。' },
+  'svc-hermes': { title: 'hermes_service', desc: '核心业务服务。管理会话生命周期、消息处理、工具调用链和 Agent 协调。' },
+  'svc-eval': { title: 'eval_service', desc: '工具调用追踪和评估服务。记录每次工具调用的输入输出、耗时和结果，用于性能分析和质量评估。' },
+  'svc-learner': { title: 'auto_learner', desc: '自动学习引擎。分析用户操作模式，自动生成学习记录，优化工具使用策略。' },
+  'svc-cron': { title: 'cron_scheduler', desc: '定时调度服务。管理定时任务队列，支持 cron 表达式和一次性任务。' },
+  'svc-mcp': { title: 'mcp_client_service', desc: 'MCP (Model Context Protocol) 网关服务。代理 61 个 MCP 工具的调用，管理连接池和工具注册。' },
+  'svc-file': { title: 'file_service', desc: '文件系统服务。管理文件读写、目录创建、文件清理和存储配额。' },
+  'data-sqlite': { title: 'SQLite (sessions.db)', desc: '关系型数据库，存储会话消息和结构化数据。支持全文搜索和复杂查询。' },
+  'data-sessions': { title: 'sessions.json', desc: '会话元数据：创建时间、标题、Agent 配置、消息统计。' },
+  'data-memory': { title: 'MEMORY.md', desc: 'Agent 记忆文件。存储跨会话的上下文信息和长期记忆。' },
+  'data-user': { title: 'USER.md', desc: '用户偏好文件。存储用户习惯、常用配置和个性化设置。' },
+  'data-learnings': { title: 'learnings.md', desc: '自动学习记录。auto_learner 生成的模式识别结果和优化建议。' },
+  'data-cron': { title: 'cron_jobs.json', desc: '定时任务配置。任务 ID、cron 表达式、状态和执行历史。' },
+  'data-logs': { title: 'logs.json', desc: '系统日志。API 请求日志、错误日志和调试信息。' },
+  'data-traces': { title: 'tool_traces.jsonl', desc: '工具调用追踪日志。JSONL 格式，记录每次工具调用的完整链路。' },
+  'data-trash': { title: 'trash.json', desc: '回收站数据。已删除的会话、文件和配置，支持恢复。' },
+  'data-config': { title: 'config_versions.json', desc: '配置版本历史。支持配置回滚和变更审计。' },
+  'data-plugin': { title: 'plugin_index.json', desc: '插件索引。已安装插件列表、版本和配置信息。' },
+  'data-mcp-servers': { title: 'mcp_servers.json', desc: 'MCP 服务器配置。连接地址、认证信息和工具映射。' },
+  'fe-index': { title: 'index.html', desc: '前端入口 HTML。由 app.py 的 build_full_html 动态生成，注入所有 JS/CSS 资源引用。' },
+  'fe-app': { title: 'app.js (路由)', desc: '前端路由管理。SPA 路由、页面切换动画、SSE 事件监听和全局状态管理。' },
+  'fe-api': { title: 'api.js (请求)', desc: 'API 请求封装。统一的 HTTP 请求接口，自动处理认证、错误和加载状态。' },
+  'fe-components': { title: 'components.js (组件库)', desc: 'UI 组件库。提供表单、按钮、模态框、图标、通知等 20+ 可复用组件。' },
+  'fe-css': { title: 'style.css', desc: '全局样式表。CSS 变量、主题系统、响应式布局和动画定义。' },
+};
+
+// ===== State =====
+let currentSlide = 0;
+let isPlaying = true;
+let playInterval = null;
+let playSpeed = 5000;
+let zoomLevel = 1;
+let isDragging = false;
+let dragStart = { x: 0, y: 0 };
+let panOffset = { x: 0, y: 0 };
+
+// ===== DOM Refs =====
+const mapContainer = document.getElementById('mapContainer');
+const mapPanel = document.getElementById('mapPanel');
+const slideArea = document.getElementById('slideArea');
+const progressFill = document.getElementById('progressFill');
+const progressBar = document.getElementById('progressBar');
+const slideCounter = document.getElementById('slideCounter');
+const playBtn = document.getElementById('playBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const moduleDetail = document.getElementById('moduleDetail');
+const detailTitle = document.getElementById('detailTitle');
+const detailDesc = document.getElementById('detailDesc');
+
+// ===== Generate Slides =====
+function generateSlides() {
+  slideArea.innerHTML = slides.map((s, i) => `
+    <div class="slide ${i === 0 ? 'active' : ''}" data-index="${i}">
+      <div class="slide-step">${s.step}</div>
+      <div class="slide-title">${s.title}</div>
+      <div class="slide-desc">${s.desc}</div>
+      ${s.dep ? `<div class="slide-dep">${s.dep}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ===== Highlight Modules =====
+function highlightModules(moduleIds) {
+  // Remove all highlights
+  document.querySelectorAll('.module-rect').forEach(el => el.classList.remove('highlighted'));
+  document.querySelectorAll('.layer-group').forEach(el => {
+    el.classList.remove('dimmed', 'highlighted-layer');
+  });
+  document.querySelectorAll('.arrow-line').forEach(el => el.classList.remove('highlighted'));
+
+  if (moduleIds.length === 0) return;
+
+  // Determine which layers are highlighted
+  const highlightedLayers = new Set();
+  moduleIds.forEach(id => {
+    const mod = document.querySelector(`.module[data-id="${id}"]`);
+    if (mod) {
+      mod.querySelector('.module-rect').classList.add('highlighted');
+      highlightedLayers.add(mod.dataset.layer);
+    }
+  });
+
+  // Dim non-highlighted layers
+  document.querySelectorAll('.layer-group').forEach(layer => {
+    if (highlightedLayers.has(layer.dataset.layer)) {
+      layer.classList.add('highlighted-layer');
+    } else {
+      layer.classList.add('dimmed');
+    }
+  });
+
+  // Highlight arrows between highlighted layers
+  const layerOrder = ['deploy', 'entry', 'api', 'service', 'data', 'frontend'];
+  const hlIndices = layerOrder.filter(l => highlightedLayers.has(l)).map(l => layerOrder.indexOf(l));
+  if (hlIndices.length >= 2) {
+    const arrows = document.querySelectorAll('.arrow-line');
+    hlIndices.sort((a, b) => a - b);
+    for (let i = 0; i < hlIndices.length - 1; i++) {
+      if (hlIndices[i + 1] - hlIndices[i] === 1 && arrows[hlIndices[i]]) {
+        arrows[hlIndices[i]].classList.add('highlighted');
+      }
+    }
+  }
+}
+
+// ===== Go to Slide =====
+function goToSlide(index) {
+  if (index < 0 || index >= slides.length) return;
+  currentSlide = index;
+
+  // Update slides
+  document.querySelectorAll('.slide').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+
+  // Update progress
+  progressFill.style.width = `${((index + 1) / slides.length) * 100}%`;
+  slideCounter.textContent = `${index + 1} / ${slides.length}`;
+
+  // Highlight map modules
+  highlightModules(slides[index].highlight);
+
+  // Scroll slide into view
+  const activeSlide = slideArea.querySelector('.slide.active');
+  if (activeSlide) activeSlide.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===== Playback Controls =====
+function startPlayback() {
+  stopPlayback();
+  isPlaying = true;
+  playBtn.textContent = '❚❚';
+  playInterval = setInterval(() => {
+    if (currentSlide < slides.length - 1) {
+      goToSlide(currentSlide + 1);
+    } else {
+      goToSlide(0);
+    }
+  }, playSpeed);
+}
+
+function stopPlayback() {
+  isPlaying = false;
+  playBtn.textContent = '▶';
+  if (playInterval) clearInterval(playInterval);
+  playInterval = null;
+}
+
+function togglePlayback() {
+  if (isPlaying) stopPlayback();
+  else startPlayback();
+}
+
+// ===== Zoom & Pan =====
+function updateTransform() {
+  mapContainer.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`;
+}
+
+function handleWheel(e) {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  zoomLevel = Math.min(2.5, Math.max(0.3, zoomLevel + delta));
+  updateTransform();
+}
+
+mapPanel.addEventListener('wheel', handleWheel, { passive: false });
+
+mapPanel.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.zoom-btn') || e.target.closest('.module-detail')) return;
+  isDragging = true;
+  dragStart = { x: e.clientX - panOffset.x, y: e.clientY - panOffset.y };
+  mapPanel.style.cursor = 'grabbing';
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  panOffset.x = e.clientX - dragStart.x;
+  panOffset.y = e.clientY - dragStart.y;
+  updateTransform();
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+  mapPanel.style.cursor = 'grab';
+});
+
+document.getElementById('zoomIn').addEventListener('click', () => {
+  zoomLevel = Math.min(2.5, zoomLevel + 0.15);
+  updateTransform();
+});
+
+document.getElementById('zoomOut').addEventListener('click', () => {
+  zoomLevel = Math.max(0.3, zoomLevel - 0.15);
+  updateTransform();
+});
+
+document.getElementById('zoomReset').addEventListener('click', () => {
+  zoomLevel = 1;
+  panOffset = { x: 0, y: 0 };
+  updateTransform();
+});
+
+// ===== Module Click =====
+document.querySelectorAll('.module').forEach(mod => {
+  mod.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const id = mod.dataset.id;
+    const info = moduleInfo[id];
+    if (!info) return;
+
+    detailTitle.textContent = info.title;
+    detailDesc.textContent = info.desc;
+
+    // Position tooltip
+    const rect = mod.getBoundingClientRect();
+    const panelRect = mapPanel.getBoundingClientRect();
+    let left = rect.right - panelRect.left + 12;
+    let top = rect.top - panelRect.top;
+
+    // Keep within panel bounds
+    if (left + 300 > panelRect.width) left = rect.left - panelRect.left - 312;
+    if (top + 150 > panelRect.height) top = panelRect.height - 160;
+    if (top < 10) top = 10;
+
+    moduleDetail.style.left = left + 'px';
+    moduleDetail.style.top = top + 'px';
+    moduleDetail.classList.add('visible');
+
+    // Auto-hide after 4s
+    clearTimeout(moduleDetail._hideTimer);
+    moduleDetail._hideTimer = setTimeout(() => {
+      moduleDetail.classList.remove('visible');
+    }, 4000);
+  });
+});
+
+mapPanel.addEventListener('click', (e) => {
+  if (!e.target.closest('.module')) {
+    moduleDetail.classList.remove('visible');
+  }
+});
+
+// ===== Progress Bar Click =====
+progressBar.addEventListener('click', (e) => {
+  const rect = progressBar.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  const index = Math.floor(ratio * slides.length);
+  goToSlide(Math.max(0, Math.min(slides.length - 1, index)));
+});
+
+// ===== Speed Buttons =====
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    playSpeed = parseInt(btn.dataset.speed);
+    if (isPlaying) startPlayback();
+  });
+});
+
+// ===== Button Events =====
+playBtn.addEventListener('click', togglePlayback);
+prevBtn.addEventListener('click', () => {
+  stopPlayback();
+  goToSlide(currentSlide - 1 < 0 ? slides.length - 1 : currentSlide - 1);
+});
+nextBtn.addEventListener('click', () => {
+  stopPlayback();
+  goToSlide(currentSlide + 1 >= slides.length ? 0 : currentSlide + 1);
+});
+
+// ===== Keyboard Controls =====
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') { prevBtn.click(); }
+  else if (e.key === 'ArrowRight') { nextBtn.click(); }
+  else if (e.key === ' ') { e.preventDefault(); togglePlayback(); }
+});
+
+// ===== Init =====
+generateSlides();
+goToSlide(0);
+startPlayback();
+
+// Auto-fit map to panel on load
+function autoFitMap() {
+  const panelW = mapPanel.clientWidth;
+  const panelH = mapPanel.clientHeight;
+  const svgW = 1100;
+  const svgH = 920;
+  const scaleX = (panelW - 60) / svgW;
+  const scaleY = (panelH - 60) / svgH;
+  zoomLevel = Math.min(scaleX, scaleY, 1);
+  panOffset.x = (panelW - svgW * zoomLevel) / 2;
+  panOffset.y = (panelH - svgH * zoomLevel) / 2;
+  updateTransform();
+}
+
+window.addEventListener('resize', autoFitMap);
+setTimeout(autoFitMap, 100);
+</script>
+</body>
+</html>

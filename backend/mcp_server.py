@@ -726,6 +726,22 @@ def _get_tools():
     except Exception as e:
         logger.warning(f"加载外部 MCP 工具失败: {e}")
 
+    # ---- 截图工具 ----
+    tools.append({
+        "name": "capture_screenshot",
+        "description": "截取网页截图并保存到本地（使用 Playwright 无头浏览器）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "要截图的网页 URL"},
+                "width": {"type": "integer", "default": 1280, "description": "视口宽度（像素）"},
+                "height": {"type": "integer", "default": 720, "description": "视口高度（像素）"},
+                "full_page": {"type": "boolean", "default": False, "description": "是否截取完整页面（长截图）"},
+            },
+            "required": ["url"]
+        }
+    })
+
     return tools
 
 
