@@ -27,8 +27,8 @@ const SkillsPage = (() => {
 
     function buildPage() {
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('技能总数', _skills.length, '', '⚡', 'purple')}
-            ${Components.renderStatCard('已激活', _skills.filter(s => s.status !== 'disabled').length, '', '✅', 'green')}
+            ${Components.renderStatCard('技能总数', _skills.length, '', Components.icon('zap', 16), 'purple')}
+            ${Components.renderStatCard('已激活', _skills.filter(s => s.status !== 'disabled').length, '', Components.icon('check', 14), 'green')}
         </div>`;
 
         const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px">
@@ -38,7 +38,7 @@ const SkillsPage = (() => {
         const editorHtml = _showEditor ? buildEditor() : '';
 
         const skillsHtml = _skills.length === 0
-            ? Components.createEmptyState('⚡', '暂无技能', '点击「创建技能」添加第一个技能', '')
+            ? Components.createEmptyState(Components.icon('zap', 16), '暂无技能', '点击「创建技能」添加第一个技能', '')
             : `<div class="table-wrapper"><table class="table">
                 <thead><tr><th>名称</th><th>描述</th><th>标签</th><th>操作</th></tr></thead>
                 <tbody>
@@ -48,9 +48,9 @@ const SkillsPage = (() => {
                         <td>${(s.tags || []).map(t => Components.renderBadge(t, 'blue')).join(' ') || '-'}</td>
                         <td>
                             <div style="display:flex;gap:4px">
-                                <button type="button" class="btn btn-sm btn-ghost" data-action="viewSkill" data-name="${Components.escapeHtml(s.name)}" title="查看">👁️</button>
-                                <button type="button" class="btn btn-sm btn-ghost" data-action="editSkill" data-name="${Components.escapeHtml(s.name)}" title="编辑">✏️</button>
-                                <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSkill" data-name="${Components.escapeHtml(s.name)}" title="删除">🗑️</button>
+                                <button type="button" class="btn btn-sm btn-ghost" data-action="viewSkill" data-name="${Components.escapeHtml(s.name)}" title="查看">${Components.icon('eye', 14)}</button>
+                                <button type="button" class="btn btn-sm btn-ghost" data-action="editSkill" data-name="${Components.escapeHtml(s.name)}" title="编辑">${Components.icon('edit', 14)}</button>
+                                <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSkill" data-name="${Components.escapeHtml(s.name)}" title="删除">${Components.icon('trash', 16)}</button>
                             </div>
                         </td>
                     </tr>`).join('')}
@@ -66,7 +66,7 @@ const SkillsPage = (() => {
             <div class="modal" style="max-width:800px;width:90%" onclick="event.stopPropagation()">
                 <div class="modal-header">
                     <h3>${title}</h3>
-                    <button type="button" class="modal-close" data-action="hideEditor">✕</button>
+                    <button type="button" class="modal-close" data-action="hideEditor">${Components.icon('x', 14)}</button>
                 </div>
                 <div class="modal-body">
                     ${_isCreating ? Components.formGroup('技能名称', `<input class="form-input" id="skillName" placeholder="例如: my-skill">`, '英文、数字、下划线') : ''}

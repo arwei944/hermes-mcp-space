@@ -55,7 +55,7 @@ const ChatPage = (() => {
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
                             ${Components.renderBadge(statusMap[s.status] || s.status || '-', statusColor[s.status] || 'blue')}
-                            <button class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" onclick="event.stopPropagation();ChatPage.deleteSession('${id}')" title="删除">✕</button>
+                            <button class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" onclick="event.stopPropagation();ChatPage.deleteSession('${id}')" title="删除">${Components.icon('x', 14)}</button>
                         </div>
                     </div>
                     <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">
@@ -71,7 +71,7 @@ const ChatPage = (() => {
 
         const messagesHtml = !_currentSession && !_searchKeyword
             ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">💬</div>
+                <div style="font-size:32px;margin-bottom:12px">${Components.icon('messageCircle', 32)}</div>
                 <div style="font-size:14px;margin-bottom:8px">选择或创建一个会话开始</div>
                 <button class="btn btn-primary" onclick="ChatPage.showCreate()">创建新会话</button>
               </div>`

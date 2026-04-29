@@ -30,7 +30,7 @@ const AgentsPage = (() => {
 
         const runningHtml = runningAgents.length > 0
             ? `<div class="tool-grid">${runningAgents.map(a => renderAgentCard(a)).join('')}</div>`
-            : Components.createEmptyState('🤖', '没有运行中的 Agent', '当前没有活跃的子 Agent', '');
+            : Components.createEmptyState(Components.icon('bot', 48), '没有运行中的 Agent', '当前没有活跃的子 Agent', '');
 
         const completedHtml = completedAgents.length > 0
             ? `<div class="tool-grid">${completedAgents.map(a => renderAgentCard(a)).join('')}</div>`

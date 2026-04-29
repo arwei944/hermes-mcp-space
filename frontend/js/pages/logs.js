@@ -50,10 +50,10 @@ const LogsPage = (() => {
         // 统计卡片
         const s = _stats || {};
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('总日志', s.total || _logs.length, '', '📋', 'blue')}
-            ${Components.renderStatCard('信息', s.byLevel?.info || 0, '', 'ℹ️', 'green')}
-            ${Components.renderStatCard('成功', s.byLevel?.success || 0, '', '✅', 'green')}
-            ${Components.renderStatCard('错误', s.byLevel?.error || 0, '', '❌', 'red')}
+            ${Components.renderStatCard('总日志', s.total || _logs.length, '', 'clipboard', 'blue')}
+            ${Components.renderStatCard('信息', s.byLevel?.info || 0, '', 'info', 'green')}
+            ${Components.renderStatCard('成功', s.byLevel?.success || 0, '', Components.icon('check', 14), 'green')}
+            ${Components.renderStatCard('错误', s.byLevel?.error || 0, '', 'x', 'red')}
         </div>`;
 
         // 过滤器
@@ -77,7 +77,7 @@ const LogsPage = (() => {
         const sourceText = { system: '系统', user: '用户', mcp: 'MCP', cron: '定时任务' };
 
         const logsHtml = filtered.length === 0
-            ? Components.createEmptyState('📋', '暂无日志', '没有匹配的操作日志', '')
+            ? Components.createEmptyState(Components.icon('clipboard', 48), '暂无日志', '没有匹配的操作日志', '')
             : `<div class="table-wrapper"><table class="table">
                 <thead><tr><th>时间</th><th>级别</th><th>来源</th><th>操作</th><th>详情</th></tr></thead>
                 <tbody>

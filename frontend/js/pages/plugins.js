@@ -87,7 +87,7 @@ const PluginsPage = (() => {
         const isInstalled = p.installed;
         const typeLabel = { tool: '工具', skill: '技能', memory: '记忆' }[p.type] || p.type;
         const typeColor = { tool: 'blue', skill: 'purple', memory: 'green' }[p.type] || 'gray';
-        const stars = '★'.repeat(Math.round(p.rating || 0)) + '☆'.repeat(5 - Math.round(p.rating || 0));
+        const stars = Components.icon('star', 14).repeat(Math.round(p.rating || 0)) + Components.icon('star', 14).repeat(5 - Math.round(p.rating || 0));
 
         return `<div style="border:1px solid var(--border);border-radius:var(--radius-xs);padding:16px;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
@@ -124,7 +124,7 @@ const PluginsPage = (() => {
     function buildInstalled() {
         if (_installed.length === 0) {
             return `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">🧩</div>
+                <div style="font-size:32px;margin-bottom:12px">${Components.icon('puzzle', 32)}</div>
                 <div style="font-size:14px;margin-bottom:8px">暂无已安装插件</div>
                 <div style="font-size:12px">前往插件市场浏览和安装插件</div>
             </div>`;

@@ -64,11 +64,11 @@ const KnowledgePage = (() => {
         if (!el || !_overview) return;
         const o = _overview;
         el.innerHTML = `
-            ${buildOverviewCard('💬', '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
-            ${buildOverviewCard('💡', '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
-            ${buildOverviewCard('🧠', '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
-            ${buildOverviewCard('⚡', '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
-            ${buildOverviewCard('👻', '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
+            ${buildOverviewCard('Components.icon('messageCircle', 20), '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
+            ${buildOverviewCard('Components.icon('lightbulb', 20), '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
+            ${buildOverviewCard('Components.icon('brain', 20), '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
+            ${buildOverviewCard('Components.icon('zap', 20), '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
+            ${buildOverviewCard('Components.icon('ghost', 20), '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
         `;
     }
 
@@ -92,20 +92,20 @@ const KnowledgePage = (() => {
 
         // 概览统计卡片
         const overviewHtml = `<div id="kbOverview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
-            ${buildOverviewCard('💬', '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
-            ${buildOverviewCard('💡', '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
-            ${buildOverviewCard('🧠', '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
-            ${buildOverviewCard('⚡', '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
-            ${buildOverviewCard('👻', '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
+            ${buildOverviewCard('Components.icon('messageCircle', 20), '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
+            ${buildOverviewCard('Components.icon('lightbulb', 20), '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
+            ${buildOverviewCard('Components.icon('brain', 20), '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
+            ${buildOverviewCard('Components.icon('zap', 20), '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
+            ${buildOverviewCard('Components.icon('ghost', 20), '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
         </div>`;
 
         // Tab 栏
         const tabs = [
-            { key: 'sessions', label: '会话记录', icon: '💬', count: _sessions.length },
-            { key: 'experiences', label: '经验提炼', icon: '💡', count: _experiences.length },
-            { key: 'memory', label: '记忆内容', icon: '🧠', count: _memory.chars || 0 },
-            { key: 'skills', label: '技能库', icon: '⚡', count: _skills.length },
-            { key: 'analysis', label: '自动分析', icon: '🔬', count: ((_analysis.errors||[]).length + (_analysis.patterns||[]).length) },
+            { key: 'sessions', label: '会话记录', icon: 'Components.icon('messageCircle', 20), count: _sessions.length },
+            { key: 'experiences', label: '经验提炼', icon: 'Components.icon('lightbulb', 20), count: _experiences.length },
+            { key: 'memory', label: '记忆内容', icon: 'Components.icon('brain', 20), count: _memory.chars || 0 },
+            { key: 'skills', label: '技能库', icon: 'Components.icon('zap', 20), count: _skills.length },
+            { key: 'analysis', label: '自动分析', icon: 'Components.icon('microscope', 14), count: ((_analysis.errors||[]).length + (_analysis.patterns||[]).length) },
         ];
 
         let tabsHtml = '<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px">';
@@ -151,7 +151,7 @@ const KnowledgePage = (() => {
         _sessions.forEach(s => {
             const time = Components.formatTime(s.created_at);
             const statusColor = s.status === 'active' ? 'var(--green)' : 'var(--text-tertiary)';
-            const statusDot = s.status === 'active' ? '🟢' : '⚪';
+            const statusDot = s.status === 'active' ? 'Components.icon('checkCircle', 10) : 'Components.icon('circle', 10);
             const sourceTag = s.source ? `<span style="font-size:10px;background:var(--bg-secondary);padding:1px 6px;border-radius:var(--radius-tag);color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>` : '';
             const modelTag = s.model && s.model !== 'unknown' ? `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(s.model)}</span>` : '';
             const lastMsg = s.last_message ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.last_message)}">${Components.escapeHtml(s.last_message)}</div>` : '';
@@ -188,7 +188,7 @@ const KnowledgePage = (() => {
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--orange);cursor:default;transition:transform 0.15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    <span style="font-size:14px">💡</span>
+                    Components.icon("lightbulb", 14)
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(title)}</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap" title="${Components.escapeHtml(fullContent)}">${Components.escapeHtml(preview)}${fullContent.length > 150 ? '...' : ''}</div>
@@ -212,7 +212,7 @@ const KnowledgePage = (() => {
             const lines = first.split("\n").filter(l => l.trim());
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green)">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    <span style="font-size:14px">🧠</span>
+                    Components.icon("brain", 14)
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">Agent 长期记忆</span>
                 </div>
                 <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${Components.escapeHtml(lines.slice(0, 8).join("\n"))}</div>
@@ -243,7 +243,7 @@ const KnowledgePage = (() => {
 
             html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border:1px solid var(--border);cursor:default;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                    <span style="font-size:14px">⚡</span>
+                    Components.icon("zap", 14)
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(s.name)}</span>
                 </div>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${tags}</div>
@@ -265,19 +265,19 @@ const KnowledgePage = (() => {
 
         // 操作按钮
         html += `<div style="margin-bottom:16px;display:flex;gap:8px">
-            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:var(--surface);transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">🧠 执行全量学习（写入文件）</button>
+            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:var(--surface);transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Components.icon('brain', 14) + ' 执行全量学习（写入文件）</button>
             <span style="font-size:11px;color:var(--text-tertiary);display:flex;align-items:center">自动分析当前数据，将结果写入 learnings.md 和 MEMORY.md</span>
         </div>`;
 
         // 错误模式
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">🔴 错误模式 (${errors.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('alertCircle', 14) + ' 错误模式 (${errors.length})</div>`;
         if (errors.length === 0) {
-            html += '<div style="font-size:12px;color:var(--green);padding:8px">✓ 没有检测到错误模式</div>';
+            html += '<div style="font-size:12px;color:var(--green);padding:8px">Components.icon('check', 12) + ' 没有检测到错误模式'</div>';
         } else {
             errors.slice(0, 8).forEach(e => {
                 const statusColor = e.is_fixed ? 'var(--green)' : 'var(--red)';
-                const statusText = e.is_fixed ? '✅ 已修复' : '⚠️ 未修复';
+                const statusText = e.is_fixed ? 'Components.icon('check', 10) + ' 已修复'' : 'Components.icon('alertTriangle', 10) + ' 未修复'';
                 const severityColor = e.severity === 'high' ? 'var(--red)' : e.severity === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor}">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -297,7 +297,7 @@ const KnowledgePage = (() => {
 
         // 最佳实践
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">🟢 最佳实践 (${patterns.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('checkCircle', 14) + ' 最佳实践 (${patterns.length})</div>`;
         if (patterns.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
@@ -315,7 +315,7 @@ const KnowledgePage = (() => {
 
         // 用户偏好
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">📊 用户偏好 (${prefs.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('chart', 14) + ' 用户偏好 (${prefs.length})</div>`;
         if (prefs.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
@@ -334,7 +334,7 @@ const KnowledgePage = (() => {
 
         // 技能建议
         html += `<div style="margin-bottom:20px">
-            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">💡 技能建议 (${suggestions.length})</div>`;
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">Components.icon('lightbulb', 14) + ' 技能建议 (${suggestions.length})</div>`;
         if (suggestions.length === 0) {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无建议</div>';
         } else {

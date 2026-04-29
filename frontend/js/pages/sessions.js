@@ -66,7 +66,7 @@ const SessionsPage = (() => {
 
         const listHtml = filtered.length === 0
             ? `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">📡</div>
+                <div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div>
                 <div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div>
                 <div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div>
               </div>`
@@ -79,7 +79,7 @@ const SessionsPage = (() => {
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
                             ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
-                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">✕</button>
+                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">${Components.icon('x', 14)}</button>
                         </div>
                     </div>
                     <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
@@ -105,13 +105,13 @@ const SessionsPage = (() => {
 
         const messagesHtml = !_currentId
             ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">📡</div>
+                <div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div>
                 <div style="font-size:14px;margin-bottom:4px">选择左侧会话查看对话记录</div>
                 <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
               </div>`
             : _messages.length === 0
             ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:24px;margin-bottom:8px">📝</div>
+                <div style="font-size:24px;margin-bottom:8px">${Components.icon('edit', 24)}</div>
                 <div>等待消息...</div>
               </div>`
             : `<div class="chat-messages" id="chatMessages">
@@ -162,7 +162,7 @@ const SessionsPage = (() => {
         const activeCount = _sessions.filter(s => s.status === 'active').length;
 
         if (filtered.length === 0) {
-            listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">📡</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
+            listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
         } else {
             listEl.innerHTML = filtered.map(s => {
                 const id = s.id || s.session_id;
@@ -173,7 +173,7 @@ const SessionsPage = (() => {
                         <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
                         <div style="display:flex;gap:4px;align-items:center">
                             ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
-                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">✕</button>
+                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">${Components.icon('x', 14)}</button>
                         </div>
                     </div>
                     <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
@@ -216,13 +216,13 @@ const SessionsPage = (() => {
 
         const messagesHtml = !_currentId
             ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">📡</div>
+                <div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div>
                 <div style="font-size:14px;margin-bottom:4px">选择左侧会话查看对话记录</div>
                 <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
               </div>`
             : _messages.length === 0
             ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:24px;margin-bottom:8px">📝</div>
+                <div style="font-size:24px;margin-bottom:8px">${Components.icon('edit', 24)}</div>
                 <div>等待消息...</div>
               </div>`
             : `<div class="chat-messages" id="chatMessages">

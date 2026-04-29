@@ -48,6 +48,7 @@ const App = (() => {
         Components.Modal.init();
         bindGlobalEvents();
         initTheme();
+        replaceNavIcons();
 
         // 预加载版本元数据
         getMeta();
@@ -162,7 +163,7 @@ const App = (() => {
         } catch (err) {
             console.error(`[App] 页面 ${pageName} 渲染失败:`, err);
             document.getElementById('contentBody').innerHTML = Components.createEmptyState(
-                '⚠️', '页面加载失败',
+                Components.icon('alertTriangle', 14), '页面加载失败',
                 err.message || '未知错误',
                 `<button class="btn btn-primary" onclick="App.refresh()">重试</button>`
             );
@@ -180,6 +181,21 @@ const App = (() => {
     function refresh() {
         if (_currentPage && pages[_currentPage]) {
             pages[_currentPage].render();
+        }
+    }
+
+    function replaceNavIcons() {
+        document.querySelectorAll('.nav-icon[data-icon]').forEach(el => {
+            const name = el.getAttribute('data-icon');
+            if (name) {
+                el.innerHTML = Components.icon(name, 16);
+            }
+        });
+        // 主题切换按钮
+        const themeBtn = document.getElementById('themeToggle');
+        if (themeBtn) {
+            const iconName = themeBtn.getAttribute('data-icon') || 'moon';
+            themeBtn.innerHTML = Components.icon(iconName, 16);
         }
     }
 

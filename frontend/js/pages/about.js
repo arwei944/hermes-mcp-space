@@ -396,7 +396,7 @@ const AboutPage = (() => {
                     ${Components.sectionTitle('关于 Hermes Agent')}
                     ${Components.renderSection('', `
                         <div style="text-align:center;padding:20px 0">
-                            <div style="font-size:48px;margin-bottom:12px">🤖</div>
+                            <div style="font-size:48px;margin-bottom:12px">${Components.icon('bot', 48)}</div>
                             <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Hermes Agent MCP Space</h2>
                             <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">AI Agent 管理面板 + MCP 服务</p>
                             <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px 20px;font-size:13px;color:var(--text-secondary)">

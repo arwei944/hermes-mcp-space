@@ -31,9 +31,9 @@ const CronPage = (() => {
 
         // 统计
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('总任务', _jobs.length, '', '⏰', 'blue')}
-            ${Components.renderStatCard('运行中', activeCount, '', '✅', 'green')}
-            ${Components.renderStatCard('暂停', _jobs.length - activeCount, '', '⏸️', 'orange')}
+            ${Components.renderStatCard('总任务', _jobs.length, '', 'clock', 'blue')}
+            ${Components.renderStatCard('运行中', activeCount, '', 'check', 'green')}
+            ${Components.renderStatCard('暂停', _jobs.length - activeCount, '', 'pause', 'orange')}
         </div>`;
 
         // 操作按钮
@@ -46,7 +46,7 @@ const CronPage = (() => {
 
         // 任务列表
         const jobsHtml = _jobs.length === 0
-            ? Components.createEmptyState('⏰', '暂无定时任务', '点击「创建任务」添加第一个定时任务', '')
+            ? Components.createEmptyState(Components.icon('clock', 48), '暂无定时任务', '点击「创建任务」添加第一个定时任务', '')
             : `<div class="table-wrapper"><table class="table">
                 <thead><tr><th>名称</th><th>调度</th><th>命令</th><th>状态</th><th>上次执行</th><th>操作</th></tr></thead>
                 <tbody>
@@ -59,8 +59,8 @@ const CronPage = (() => {
                         <td>
                             <div style="display:flex;gap:4px">
                                 <button class="btn btn-sm btn-ghost" onclick="CronPage.triggerJob('${j.id}')" title="立即执行">▶️</button>
-                                <button class="btn btn-sm btn-ghost" onclick="CronPage.editJob('${j.id}')" title="编辑">✏️</button>
-                                <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="CronPage.deleteJob('${j.id}')" title="删除">🗑️</button>
+                                <button class="btn btn-sm btn-ghost" onclick="CronPage.editJob('${j.id}')" title="编辑">${Components.icon('edit', 14)}</button>
+                                <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="CronPage.deleteJob('${j.id}')" title="删除">${Components.icon('trash', 16)}</button>
                             </div>
                         </td>
                     </tr>`).join('')}
@@ -77,7 +77,7 @@ const CronPage = (() => {
             <div class="modal" onclick="event.stopPropagation()">
                 <div class="modal-header">
                     <h3>${isEdit ? '编辑定时任务' : '创建定时任务'}</h3>
-                    <button class="modal-close" onclick="CronPage.hideForm()">✕</button>
+                    <button class="modal-close" onclick="CronPage.hideForm()">${Components.icon('x', 14)}</button>
                 </div>
                 <div class="modal-body">
                     ${Components.formGroup('任务名称', `<input class="form-input" id="cronName" placeholder="例如: 每日备份" value="${Components.escapeHtml(job.name || '')}">`)}

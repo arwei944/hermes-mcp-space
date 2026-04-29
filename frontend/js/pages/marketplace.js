@@ -50,9 +50,9 @@ const MarketplacePage = (() => {
     // ---- 页面构建 ----
     function buildPage() {
         const tabs = [
-            { key: 'mcp', label: '外部 MCP', icon: '🌐', count: _mcpServers.length },
-            { key: 'skills', label: '技能', icon: '⚡', count: _skills.length },
-            { key: 'tools', label: '工具', icon: '🔧', count: _allTools.length },
+            { key: 'mcp', label: '外部 MCP', icon: Components.icon('globe', 14), count: _mcpServers.length },
+            { key: 'skills', label: '技能', icon: Components.icon('zap', 16), count: _skills.length },
+            { key: 'tools', label: '工具', icon: Components.icon('wrench', 16), count: _allTools.length },
         ];
 
         const tabHtml = `<div class="marketplace-tabs">
@@ -88,7 +88,7 @@ const MarketplacePage = (() => {
 
         const serverListHtml = _mcpServers.length === 0
             ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:8px">🌐</div>
+                <div style="font-size:32px;margin-bottom:8px">${Components.icon('globe', 32)}</div>
                 <div>暂无外部 MCP 服务器</div>
                 <div style="font-size:12px;margin-top:4px">添加外部服务器后，其工具将自动聚合到工具列表</div>
               </div>`
@@ -126,7 +126,7 @@ const MarketplacePage = (() => {
 
         const skillListHtml = _skills.length === 0
             ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:8px">⚡</div>
+                <div style="font-size:32px;margin-bottom:8px">${Components.icon('zap', 32)}</div>
                 <div>暂无技能</div>
               </div>`
             : `<div class="mp-skill-list">
@@ -168,7 +168,7 @@ const MarketplacePage = (() => {
 
         const toolsHtml = _allTools.length === 0
             ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:8px">🔧</div>
+                <div style="font-size:32px;margin-bottom:8px">${Components.icon('wrench', 32)}</div>
                 <div>暂无工具</div>
               </div>`
             : `<div class="mp-tool-list">
@@ -337,7 +337,7 @@ const MarketplacePage = (() => {
         const html = `
             <div class="modal-header">
                 <h3>${title}</h3>
-                <button type="button" class="btn btn-ghost btn-sm" data-action="closeModal">✕</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-action="closeModal">${Components.icon('x', 14)}</button>
             </div>
             <div class="modal-body">
                 ${isView ? `

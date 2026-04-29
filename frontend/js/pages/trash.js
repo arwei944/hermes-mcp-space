@@ -38,7 +38,7 @@ const TrashPage = (() => {
         </div>`;
 
         const listHtml = filtered.length === 0
-            ? Components.createEmptyState('🗑️', '回收站为空', '删除的项目会出现在这里', '')
+            ? Components.createEmptyState(Components.icon('trash', 16), '回收站为空', '删除的项目会出现在这里', '')
             : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
                 ${filtered.map(item => {
                     const typeLabel = typeLabels[item.type] || item.type;

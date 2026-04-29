@@ -50,7 +50,7 @@ const McpPage = (() => {
         return {
             trae: {
                 label: 'Trae',
-                icon: '⚡',
+                icon: Components.icon('zap', 16),
                 description: 'Trae IDE 内置 MCP 客户端',
                 config: JSON.stringify({
                     mcpServers: {
@@ -66,7 +66,7 @@ const McpPage = (() => {
             },
             claude: {
                 label: 'Claude Desktop',
-                icon: '🤖',
+                icon: Components.icon('bot', 16),
                 description: 'Claude 桌面版 MCP 客户端',
                 config: JSON.stringify({
                     mcpServers: {
@@ -85,7 +85,7 @@ const McpPage = (() => {
             },
             vscode: {
                 label: 'VS Code (Copilot)',
-                icon: '💻',
+                icon: Components.icon('monitor', 16),
                 description: 'VS Code + GitHub Copilot MCP',
                 config: JSON.stringify({
                     servers: {
@@ -158,10 +158,10 @@ const McpPage = (() => {
 
         // 统计卡片
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('MCP 服务', isOnline ? '运行中' : '未运行', isOnline ? '服务正常' : '服务未启动', '🔌', isOnline ? 'green' : 'red')}
-            ${Components.renderStatCard('Hermes 主程序', hermesOk ? '已连接' : '未连接', hermesOk ? '数据实时同步' : '使用降级数据', '🤖', hermesOk ? 'green' : 'orange')}
-            ${Components.renderStatCard('暴露工具', _mcpTools.length + ' 个', 'MCP 协议可用', '🔧', 'blue')}
-            ${Components.renderStatCard('后端状态', api.status === 'ok' ? '正常' : '降级', api.status || '-', '📡', api.status === 'ok' ? 'green' : 'orange')}
+            ${Components.renderStatCard('MCP 服务', isOnline ? '运行中' : '未运行', isOnline ? '服务正常' : '服务未启动', Components.icon('plug', 16), isOnline ? 'green' : 'red')}
+            ${Components.renderStatCard('Hermes 主程序', hermesOk ? '已连接' : '未连接', hermesOk ? '数据实时同步' : '使用降级数据', Components.icon('bot', 16), hermesOk ? 'green' : 'orange')}
+            ${Components.renderStatCard('暴露工具', _mcpTools.length + ' 个', 'MCP 协议可用', Components.icon('wrench', 16), 'blue')}
+            ${Components.renderStatCard('后端状态', api.status === 'ok' ? '正常' : '降级', api.status || '-', Components.icon('radio', 16), api.status === 'ok' ? 'green' : 'orange')}
         </div>`;
 
         // 操作按钮
@@ -196,7 +196,7 @@ const McpPage = (() => {
         const tabKeys = Object.keys(configs);
         const tabHtml = `<div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap">
             ${tabKeys.map(k => `<button type="button" class="btn btn-sm ${_activeTab === k ? 'btn-primary' : 'btn-ghost'}" data-action="switchTab" data-tab="${k}">${configs[k].icon} ${configs[k].label}</button>`).join('')}
-            <button type="button" class="btn btn-sm ${_activeTab === 'prompt' ? 'btn-primary' : 'btn-ghost'}" data-action="switchTab" data-tab="prompt">📋 System Prompt</button>
+            <button type="button" class="btn btn-sm ${_activeTab === 'prompt' ? 'btn-primary' : 'btn-ghost'}" data-action="switchTab" data-tab="prompt">${Components.icon('clipboard', 14)} System Prompt</button>
         </div>`;
 
         // 配置内容区
@@ -206,7 +206,7 @@ const McpPage = (() => {
             configContentHtml = Components.renderSection('System Prompt 模板', `
                 <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">将以下内容添加到 Trae / Claude / Cursor 的 System Prompt 或自定义指令中：</p>
                 <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-                    <button type="button" class="btn btn-sm btn-ghost" data-action="copyPrompt">📋 复制 Prompt</button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-action="copyPrompt">${Components.icon('clipboard', 14)} 复制 Prompt</button>
                 </div>
                 <div class="schema-display" id="systemPromptDisplay" style="white-space:pre-wrap;font-size:13px;line-height:1.7">${Components.escapeHtml(prompt)}</div>
             `);
@@ -216,7 +216,7 @@ const McpPage = (() => {
                 configContentHtml = Components.renderSection(`${cfg.icon} ${cfg.label} 配置`, `
                     <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:12px">${cfg.description}</p>
                     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-                        <button type="button" class="btn btn-sm btn-ghost" data-action="copyConfig">📋 复制配置</button>
+                        <button type="button" class="btn btn-sm btn-ghost" data-action="copyConfig">${Components.icon('clipboard', 14)} 复制配置</button>
                     </div>
                     <div class="schema-display" id="traeConfigDisplay">${Components.escapeHtml(cfg.config)}</div>
                     <div style="margin-top:16px">
