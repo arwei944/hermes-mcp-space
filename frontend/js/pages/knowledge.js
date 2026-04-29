@@ -10,11 +10,35 @@ const KnowledgePage = (() => {
     let _skills = [];
     let _analysis = null;
     let _activeTab = 'sessions';
+    let _pollTimer = null;
 
     async function render() {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
+        await _loadData();
+
+        container.innerHTML = buildPage();
+        startPolling();
+    }
+
+    function destroy() {
+        stopPolling();
+    }
+
+    function stopPolling() {
+        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+    }
+
+    function startPolling() {
+        stopPolling();
+        _pollTimer = setInterval(async () => {
+            await _loadData();
+            updateOverview();
+        }, 30000);
+    }
+
+    async function _loadData() {
         try {
             const [overview, sessions, experiences, memory, skills, analysis] = await Promise.all([
                 API.get('/api/knowledge/overview'),
@@ -31,10 +55,31 @@ const KnowledgePage = (() => {
             _skills = skills || [];
             _analysis = analysis || {};
         } catch (err) {
-            _overview = {}; _sessions = []; _experiences = []; _memory = {}; _skills = [];
+            _overview = {}; _sessions = []; _experiences = []; _memory = {}; _skills = []; _analysis = {};
         }
+    }
 
-        container.innerHTML = buildPage();
+    function updateOverview() {
+        const el = document.getElementById('kbOverview');
+        if (!el || !_overview) return;
+        const o = _overview;
+        el.innerHTML = `
+            ${buildOverviewCard('💬', '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
+            ${buildOverviewCard('💡', '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
+            ${buildOverviewCard('🧠', '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}
+            ${buildOverviewCard('⚡', '技能', o.skills || 0, 'MCP 工具技能', 'var(--accent)')}
+            ${buildOverviewCard('👻', '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
+        `;
+    }
+
+    function onSSEEvent(type, data) {
+        if (type === 'mcp.tool_complete') {
+            // 工具调用完成后刷新概览数据
+            API.get('/api/knowledge/overview').then(o => {
+                _overview = o || {};
+                updateOverview();
+            }).catch(() => {});
+        }
     }
 
     function switchTab(tab) {
@@ -46,7 +91,7 @@ const KnowledgePage = (() => {
         const o = _overview;
 
         // 概览统计卡片
-        const overviewHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+        const overviewHtml = `<div id="kbOverview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
             ${buildOverviewCard('💬', '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
             ${buildOverviewCard('💡', '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
             ${buildOverviewCard('🧠', '记忆', `${o.memory_chars || 0} 字`, 'Agent 长期记忆', 'var(--green)')}

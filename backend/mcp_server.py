@@ -2191,7 +2191,7 @@ async def mcp_endpoint(request: Request):
                     level="info",
                     source="mcp",
                 )
-                emit_event("mcp.tool_call", {"tool": tool_name, "arguments": arguments}, source="mcp")
+                emit_event("mcp.tool_call", {"tool": tool_name, "arguments": arguments, "status": "start"}, source="mcp")
             except Exception:
                 pass
 
@@ -2208,6 +2208,15 @@ async def mcp_endpoint(request: Request):
                     run_incremental_learning(tool_name, True)
                 except Exception:
                     pass
+                # 发送完成事件
+                try:
+                    from backend.routers.events import emit_event
+                    emit_event("mcp.tool_complete", {
+                        "tool": tool_name, "ok": True, "ms": latency,
+                        "summary": result_text[:200] if result_text else "",
+                    }, source="mcp")
+                except Exception:
+                    pass
                 return JSONResponse(content=_jsonrpc_response(req_id, {
                     "content": [{"type": "text", "text": result_text}]
                 }))
@@ -2218,6 +2227,15 @@ async def mcp_endpoint(request: Request):
                 try:
                     from backend.services.auto_learner import run_incremental_learning
                     run_incremental_learning(tool_name, False, str(e))
+                except Exception:
+                    pass
+                # 发送失败事件
+                try:
+                    from backend.routers.events import emit_event
+                    emit_event("mcp.tool_complete", {
+                        "tool": tool_name, "ok": False, "ms": latency,
+                        "error": str(e)[:200],
+                    }, source="mcp")
                 except Exception:
                     pass
                 raise

@@ -10,6 +10,7 @@ const DashboardPage = (() => {
     let _ranking = [];
     let _errors = [];
     let _heatmap = null;
+    let _pollTimer = null;
 
     async function render() {
         const container = document.getElementById('contentBody');
@@ -36,6 +37,74 @@ const DashboardPage = (() => {
         }
 
         container.innerHTML = buildPage();
+        startPolling();
+    }
+
+    function destroy() {
+        stopPolling();
+    }
+
+    function stopPolling() {
+        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+    }
+
+    function startPolling() {
+        stopPolling();
+        _pollTimer = setInterval(async () => {
+            try {
+                const [dashData, activity] = await Promise.all([
+                    API.system.dashboard(),
+                    API.get('/api/dashboard/activity?limit=30'),
+                ]);
+                _data = dashData;
+                _activity = activity || [];
+                // 增量更新统计卡片
+                updateStats();
+                // 增量更新活动流
+                updateActivityFeed();
+            } catch (e) { /* 静默 */ }
+        }, 15000); // 15秒轮询
+    }
+
+    function updateStats() {
+        const s = _data.stats || {};
+        const sys = _data.system || {};
+        const el = document.getElementById('dashStats');
+        if (!el) return;
+        el.innerHTML = `
+            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, '📊', 'blue')}
+            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', '⚡', 'green')}
+            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, '💬', 'purple')}
+            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, '🔧', 'orange')}
+            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', '✓', 'green')}
+            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', '🔌', s.mcpConnected ? 'green' : 'red')}
+        `;
+    }
+
+    function updateActivityFeed() {
+        const el = document.getElementById('activityFeed');
+        if (!el) return;
+        el.innerHTML = buildActivityFeed(_activity);
+    }
+
+    // SSE 实时事件 — 增量更新活动流（不重渲染整个页面）
+    function onSSEEvent(type, data) {
+        if (type === 'mcp.tool_call' || type === 'mcp.tool_complete') {
+            // 立即刷新活动流
+            API.get('/api/dashboard/activity?limit=30').then(activity => {
+                _activity = activity || [];
+                updateActivityFeed();
+            }).catch(() => {});
+        }
+        if (type === 'mcp.tool_complete') {
+            // 刷新统计（延迟 500ms 等数据写入）
+            setTimeout(() => {
+                API.system.dashboard().then(dashData => {
+                    _data = dashData;
+                    updateStats();
+                }).catch(() => {});
+            }, 500);
+        }
     }
 
     // ========== 图表工具 ==========
@@ -188,7 +257,7 @@ const DashboardPage = (() => {
         if (!activities || activities.length === 0) {
             return '<div style="text-align:center;color:var(--text-tertiary);padding:24px">暂无活动记录</div>';
         }
-        let html = '<div style="display:flex;flex-direction:column;gap:2px;max-height:380px;overflow-y:auto;padding-right:4px">';
+        let html = '<div id="activityFeed" style="display:flex;flex-direction:column;gap:2px;max-height:380px;overflow-y:auto;padding-right:4px">';
         activities.forEach(a => {
             const time = a.ts ? Components.formatTime(a.ts) : '';
             if (a.type === 'tool_call') {
@@ -261,7 +330,7 @@ const DashboardPage = (() => {
         const sys = _data.systemStatus || {};
 
         // --- 顶部统计卡片（6 张） ---
-        const statsHtml = `<div class="stats">
+        const statsHtml = `<div id="dashStats" class="stats">
             ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, '📊', 'blue')}
             ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', '⚡', 'green')}
             ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, '💬', 'purple')}

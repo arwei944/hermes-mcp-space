@@ -128,16 +128,10 @@ const App = (() => {
         const type = event.type || '';
         const data = event.data || {};
 
-        // 传递给当前页面的 onSSEEvent 方法（实时更新）
+        // 传递给当前页面的 onSSEEvent 方法（实时增量更新）
         const page = pages[_currentPage];
         if (page && typeof page.onSSEEvent === 'function') {
             try { page.onSSEEvent(type, data); } catch (e) { /* ignore */ }
-        }
-
-        // 仪表盘/日志页面自动刷新
-        if (_currentPage === 'dashboard' || _currentPage === 'logs') {
-            clearTimeout(App._refreshTimer);
-            App._refreshTimer = setTimeout(() => refresh(), 1000);
         }
     }
 

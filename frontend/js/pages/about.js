@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.5.0',
+            date: '2026-04-29 17:10',
+            title: '实时数据驱动',
+            changes: [
+                '仪表盘 SSE 增量更新：工具调用时实时刷新活动流和统计卡片（不重渲染页面）',
+                '仪表盘 15 秒自动轮询：统计数据和活动流自动更新',
+                '知识库 30 秒自动轮询：概览卡片实时变化',
+                'MCP 中间件 emit 双事件：tool_call（开始）+ tool_complete（完成/失败）',
+                '页面 destroy 生命周期：离开页面自动停止轮询',
+                'app.js SSE 不再全量刷新，改为调用页面 onSSEEvent 增量更新',
+            ],
+        },        {
             version: '4.4.0',
             date: '2026-04-29 17:00',
             title: '自动提炼引擎',
