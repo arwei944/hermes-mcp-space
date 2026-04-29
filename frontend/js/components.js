@@ -356,11 +356,15 @@ const Components = (() => {
         if (isNaN(date.getTime())) return dateStr;
         const now = new Date();
         const diff = now - date;
-        if (diff < 60000) return '刚刚';
-        if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
-        if (diff < 604800000) return `${Math.floor(diff / 86400000)} 天前`;
-        return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const pad = n => String(n).padStart(2, '0');
+        const time = `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+        // 今天：只显示时间
+        if (diff < 86400000 && date.getDate() === now.getDate()) return time;
+        // 昨天
+        const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+        if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth()) return `昨天 ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        // 更早
+        return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
     function formatDateTime(dateStr) {

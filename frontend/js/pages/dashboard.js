@@ -203,6 +203,21 @@ const DashboardPage = (() => {
                     <span style="color:var(--text-tertiary);font-size:10px;flex-shrink:0">${a.ms}ms</span>
                     <span style="color:var(--text-tertiary);font-size:10px;flex-shrink:0;min-width:50px;text-align:right">${time}</span>
                 </div>`;
+            } else if (a.type === 'solo_message') {
+                const roleIcon = a.role === 'user' ? '👤' : '🤖';
+                const roleLabel = a.role === 'user' ? '用户' : 'SOLO';
+                const roleColor = a.role === 'user' ? 'var(--blue)' : 'var(--accent)';
+                html += `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:default;transition:background 0.15s;border-left:2px solid ${roleColor}" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
+                    <span style="flex-shrink:0;font-size:13px">${roleIcon}</span>
+                    <div style="flex:1;min-width:0">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+                            <span style="color:${roleColor};font-weight:600;font-size:11px">${roleLabel}</span>
+                            ${a.tool ? `<span style="color:var(--text-tertiary);font-size:10px;background:var(--bg-secondary);padding:1px 5px;border-radius:3px">${Components.escapeHtml(a.tool)}</span>` : ''}
+                        </div>
+                        <div style="color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(a.content || '')}">${Components.escapeHtml(a.content || '')}</div>
+                    </div>
+                    <span style="color:var(--text-tertiary);font-size:10px;flex-shrink:0;min-width:60px;text-align:right;white-space:nowrap">${time}</span>
+                </div>`;
             } else {
                 const levelColor = { info: 'var(--blue)', success: 'var(--green)', warning: 'var(--orange)', error: 'var(--red)' }[a.level] || 'var(--text-tertiary)';
                 const levelIcon = { info: 'ℹ', success: '✓', warning: '⚠', error: '✕' }[a.level] || '•';

@@ -54,15 +54,14 @@ def _get_system_resources():
 
 @router.get("/dashboard/activity")
 async def get_activity(limit: int = Query(default=30, le=100)):
-    """实时活动流：合并工具调用追踪 + 操作日志，按时间倒序"""
+    """实时活动流：合并工具调用追踪 + 操作日志 + SOLO 对话，按时间倒序"""
     activities = []
 
     # 1. 从 tool_traces.jsonl 读取最近工具调用
     traces = eval_service._read_all_records()
     for t in traces[-50:]:
-        ts = t.get("ts", "")
         activities.append({
-            "ts": ts,
+            "ts": t.get("ts", ""),
             "type": "tool_call",
             "tool": t.get("tool", "?"),
             "ok": t.get("ok", False),
@@ -84,6 +83,36 @@ async def get_activity(limit: int = Query(default=30, le=100)):
             "level": log.get("level", "info"),
             "source": log.get("source", "system"),
         })
+
+    # 3. 从 solo_realtime 会话读取 SOLO 对话记录
+    try:
+        msgs = hermes_service.get_session_messages("solo_realtime")
+        msgs_data = []
+        if isinstance(msgs, list):
+            msgs_data = msgs
+        elif isinstance(msgs, dict):
+            msgs_data = msgs.get("messages", [])
+        # 如果是字符串格式的消息列表，尝试解析
+        if not msgs_data and isinstance(msgs, str) and msgs.strip():
+            for line in msgs.strip().split("\n"):
+                line = line.strip()
+                if line.startswith("[assistant]") or line.startswith("[user]"):
+                    role = line[1:line.index("]")].strip()
+                    content = line[line.index("]")+1:].strip()
+                    msgs_data.append({"role": role, "content": content, "timestamp": ""})
+        for m in msgs_data[-30:]:
+            content = m.get("content", "")
+            if isinstance(content, dict):
+                content = content.get("text", str(content))
+            activities.append({
+                "ts": m.get("timestamp", m.get("created_at", "")),
+                "type": "solo_message",
+                "role": m.get("role", "assistant"),
+                "content": (str(content) or "")[:150],
+                "tool": m.get("metadata", {}).get("tool", "") if isinstance(m.get("metadata"), dict) else "",
+            })
+    except Exception:
+        pass
 
     # 按时间倒序
     activities.sort(key=lambda x: x.get("ts", ""), reverse=True)

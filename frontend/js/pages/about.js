@@ -5,7 +5,17 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
-            version: '4.1.0',
+            version: '4.1.1',
+            date: '2026-04-29 16:05',
+            title: '时间修复 + SOLO 对话实时记录',
+            changes: [
+                '时间显示改为精确到秒的绝对时间 (HH:MM:SS)',
+                'SOLO 对话实时记录: 每次 MCP 工具调用自动写入 solo_realtime 会话',
+                '活动流新增 solo_message 类型展示 (🤖 SOLO / 👤 用户)',
+                '新增 _summarize_tool_args 智能参数摘要',
+                'add_session_message 支持 metadata 参数',
+            ],
+        },        {
             date: '2026-04-29 16:00',
             title: '仪表盘大改版 + Bug修复',
             changes: [

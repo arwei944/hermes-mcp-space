@@ -759,6 +759,39 @@ def _get_resources():
     ]
 
 
+def _summarize_tool_args(tool_name: str, args: Dict[str, Any], max_len: int = 200) -> str:
+    """将工具调用参数摘要为一行可读文本"""
+    if not args:
+        return "(无参数)"
+    # 对不同工具提取关键参数
+    if tool_name == "add_message":
+        role = args.get("role", "?")
+        content = str(args.get("content", ""))[:max_len]
+        return f"[{role}] {content}"
+    if tool_name in ("write_memory", "write_user_profile", "write_soul", "write_agents_md"):
+        content = str(args.get("content", ""))[:max_len]
+        return content
+    if tool_name == "shell_execute":
+        return f"$ {args.get('command', '')}"
+    if tool_name == "web_search":
+        return f"搜索: {args.get('query', '')}"
+    if tool_name == "create_skill":
+        return f"创建技能 [{args.get('name', '')}]: {str(args.get('content', ''))[:80]}"
+    if tool_name == "web_fetch":
+        return f"抓取: {args.get('url', '')}"
+    # 通用摘要
+    parts = []
+    for k, v in list(args.items())[:4]:
+        sv = str(v)
+        if len(sv) > 60:
+            sv = sv[:60] + "..."
+        parts.append(f"{k}={sv}")
+    result = ", ".join(parts)
+    if len(result) > max_len:
+        result = result[:max_len] + "..."
+    return result
+
+
 async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
     """Execute a tool and return the result as text."""
     from backend.services.hermes_service import hermes_service
@@ -2133,6 +2166,19 @@ async def mcp_endpoint(request: Request):
         tool_name = params.get("name", "")
         arguments = params.get("arguments", {})
         try:
+            # 自动记录到实时会话（SOLO 对话追踪）
+            try:
+                from backend.services.hermes_service import hermes_service as _hs
+                call_summary = f"[{tool_name}] " + _summarize_tool_args(tool_name, arguments)
+                _hs.add_session_message(
+                    session_id="solo_realtime",
+                    role="assistant",
+                    content=call_summary,
+                    metadata={"tool": tool_name, "auto": True},
+                )
+            except Exception:
+                pass
+
             # 记录 MCP 工具调用日志
             try:
                 from backend.routers.logs import add_log

@@ -190,7 +190,7 @@ class HermesService:
         self._save_sessions_data(data)
         return {"success": True, "session": session}
 
-    def add_session_message(self, session_id: str, role: str, content: str) -> Dict[str, Any]:
+    def add_session_message(self, session_id: str, role: str, content: str, metadata: dict = None) -> Dict[str, Any]:
         """向会话添加消息"""
         ts = datetime.now().isoformat()
         msg = {
@@ -198,6 +198,8 @@ class HermesService:
             "content": content,
             "timestamp": ts,
         }
+        if metadata:
+            msg["metadata"] = metadata
 
         # 优先写入 SQLite（如果存在）
         db_path = self._get_session_db_path()
