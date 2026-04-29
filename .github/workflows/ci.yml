@@ -18,10 +18,16 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install ESLint
+        run: cd frontend && npm ci
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Check JS with ESLint
+        run: cd frontend && npx eslint js/
 
       - name: Check JS syntax (all files)
         run: |

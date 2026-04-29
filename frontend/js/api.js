@@ -6,7 +6,7 @@
 // 版本号从后端动态获取，不硬编码
 let _metaCache = null;
 
-async function getMeta() {
+async function _getMeta() {
     if (_metaCache) return _metaCache;
     try {
         const resp = await fetch('/api/meta');
@@ -240,10 +240,11 @@ const API = (() => {
         request, get, post, put, del,
         sessions, tools, skills, memory,
         cron, agents, mcp, config, system,
+        meta: _getMeta,
         BASE_URL,
         checkForUpdate,
         startUpdateCheck,
-        rawGet: request,  // 无包装的 get（用于 meta 等非标准响应）
+        rawGet: request,
     };
 })();
 

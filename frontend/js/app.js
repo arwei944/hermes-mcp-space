@@ -51,7 +51,7 @@ const App = (() => {
         replaceNavIcons();
 
         // 预加载版本元数据
-        getMeta();
+        API.meta();
 
         // 启动热更新检查
         API.checkForUpdate();

@@ -54,6 +54,13 @@
     --text: var(--text-primary);
     --accent-bg: var(--accent-light);
 
+    /* 交互/装饰 */
+    --glass-bg: var(--glass-bg);
+    --hover-bg: var(--hover-bg);
+    --badge-bg: var(--badge-bg);
+    --scrollbar-thumb: var(--scrollbar-thumb);
+    --scrollbar-thumb-hover: var(--scrollbar-thumb-hover);
+
     --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -92,6 +99,13 @@
     --red-bg: rgba(255, 69, 58, 0.15);
     --purple-bg: rgba(191, 90, 242, 0.15);
     --blue-bg: rgba(10, 132, 255, 0.15);
+
+    /* 交互/装饰（深色模式覆盖） */
+    --glass-bg: rgba(44, 44, 46, 0.72);
+    --hover-bg: rgba(255, 255, 255, 0.06);
+    --badge-bg: rgba(255, 255, 255, 0.08);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
 }
 
 /* --- 主题切换按钮 --- */
@@ -310,17 +324,17 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--scrollbar-thumb-hover);
 }
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 /* ============================================
@@ -332,7 +346,7 @@ textarea {
     top: 0;
     bottom: 0;
     width: var(--sidebar-w);
-    background: rgba(255, 255, 255, 0.72);
+    background: var(--glass-bg);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-right: 1px solid var(--border);
@@ -437,7 +451,7 @@ textarea {
 }
 
 .nav-item:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--hover-bg);
     color: var(--text-primary);
 }
 
@@ -463,7 +477,7 @@ textarea {
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--badge-bg);
     color: var(--text-secondary);
 }
 
@@ -535,7 +549,7 @@ textarea {
 .header {
     height: var(--header-h);
     border-bottom: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.72);
+    background: var(--glass-bg);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     display: flex;
@@ -585,7 +599,7 @@ textarea {
 }
 
 .content::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
 }
 
@@ -632,7 +646,7 @@ textarea {
 }
 
 .btn-ghost:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--hover-bg);
     color: var(--text-primary);
 }
 
@@ -1036,7 +1050,7 @@ textarea {
 
 .toast-close:hover {
     color: var(--text-primary);
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--hover-bg);
 }
 
 @keyframes slideIn {
@@ -1116,7 +1130,7 @@ textarea {
 
 .modal-close:hover {
     color: var(--text-primary);
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--hover-bg);
 }
 
 .modal-body {

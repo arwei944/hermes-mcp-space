@@ -5,6 +5,21 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.8.0',
+            date: '2026-04-29 20:00',
+            title: '深色模式补全 + ESLint 引入',
+            changes: [
+                '深色模式：毛玻璃背景/hover/滚动条/badge 全部适配 CSS 变量',
+                '新增 --glass-bg/--hover-bg/--badge-bg/--scrollbar-thumb 变量',
+                '引入 ESLint 9：零 error 基线建立',
+                '修复 components.js 4 个重复 key（info/eye/moon/star）',
+                '修复 api.js getMeta 未暴露为全局函数',
+                '修复 marketplace.js container 作用域问题',
+                '修复 components.js/dashboard.js 无用赋值',
+                'CI 新增 ESLint 检查步骤',
+                'pre-commit hook 新增 ESLint 检查',
+            ],
+        },        {
             version: '4.7.0',
             date: '2026-04-29 19:00',
             title: '质量保障体系 + 图标修复',

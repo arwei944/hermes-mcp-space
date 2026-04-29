@@ -179,7 +179,7 @@ const DashboardPage = (() => {
         const stepX = chartW / (trend.length - 1 || 1);
 
         // 工具调用折线
-        let toolPath = '', toolDots = '', toolFill = '';
+        let toolPath = '', toolDots = '', toolFill;
         trend.forEach((d, i) => {
             const x = padL + i * stepX;
             const y = padT + chartH - (d.tool_calls / maxCalls) * chartH;

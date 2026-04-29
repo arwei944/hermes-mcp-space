@@ -283,7 +283,7 @@ const MarketplacePage = (() => {
             Components.Toast.success(resp.message || '添加成功');
             await loadMCPServers();
             await loadTools();
-            container.innerHTML = buildPage();
+            document.getElementById('contentBody').innerHTML = buildPage();
             bindEvents();
         } catch (err) {
             Components.Toast.error(`添加失败: ${err.message}`);
