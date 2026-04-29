@@ -27,7 +27,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "4.5.0")
+APP_VERSION = os.environ.get("APP_VERSION", "4.6.0")
 BUILD_TIME = os.environ.get("BUILD_TIME", datetime.now().strftime("%Y-%m-%d %H:%M"))
 START_TIME = time.time()  # 进程启动时间戳
 

@@ -5,6 +5,21 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '4.6.0',
+            date: '2026-04-29 18:00',
+            title: '矢量图标 + UI 风格统一',
+            changes: [
+                '全量替换 emoji 为 SVG 矢量图标（50+ 处，17 个文件）',
+                '新增 18 个 Lucide 风格 SVG 图标（knowledge/brain/zap/ghost 等）',
+                '导航栏改用 data-icon 属性 + JS 动态渲染 SVG',
+                'CSS 变量体系补全（--bg-secondary/--text/--radius-tag 别名）',
+                '所有硬编码颜色替换为 CSS 变量（深色模式自动适配）',
+                '统一圆角/字号/间距规范',
+                'badge/skeleton/form-switch 改用 CSS 变量',
+                'Toast 通知图标改为 SVG',
+                'renderStatCard 支持图标名称自动转换',
+            ],
+        },        {
             version: '4.5.0',
             date: '2026-04-29 17:10',
             title: '实时数据驱动',
