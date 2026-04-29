@@ -1,243 +1,308 @@
 /**
- * 仪表盘页面 (Mac 极简风格)
- * 数据可视化 + 真实 API 数据
+ * 仪表盘页面 v2 — 实时运维监控台
+ * 核心理念：展示"正在发生什么"
  */
 
 const DashboardPage = (() => {
     let _data = null;
-    let _cronJobs = [];
-    let _useFallback = false;
+    let _activity = [];
+    let _trend = [];
+    let _ranking = [];
+    let _errors = [];
+    let _heatmap = null;
 
     async function render() {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
         try {
-            const [dashData, cronData] = await Promise.all([
+            const [dashData, activity, trend, ranking, errors, heatmap] = await Promise.all([
                 API.system.dashboard(),
-                API.cron.list(),
+                API.get('/api/dashboard/activity'),
+                API.get('/api/dashboard/trend?days=7'),
+                API.get('/api/dashboard/ranking'),
+                API.get('/api/dashboard/errors'),
+                API.get('/api/dashboard/heatmap'),
             ]);
             _data = dashData;
-            _cronJobs = cronData.jobs || cronData || [];
-            _useFallback = false;
+            _activity = activity || [];
+            _trend = trend || [];
+            _ranking = ranking || [];
+            _errors = errors || [];
+            _heatmap = heatmap || null;
         } catch (err) {
             _data = {};
-            _cronJobs = [];
-            _useFallback = true;
+            _activity = []; _trend = []; _ranking = []; _errors = []; _heatmap = null;
         }
 
         container.innerHTML = buildPage();
     }
 
-    // --- SVG 图表工具 ---
+    // ========== 图表工具 ==========
 
-    function buildBarChart(data, width, height, color) {
-        if (!data || data.length === 0) return '<div style="text-align:center;color:var(--text-tertiary);padding:20px">暂无数据</div>';
-        const max = Math.max(...data.map(d => d.value), 1);
-        const barWidth = Math.max(12, (width - 40) / data.length - 8);
-        const chartH = height - 30;
-        let bars = '';
-        data.forEach((d, i) => {
-            const h = Math.max(2, (d.value / max) * (chartH - 10));
-            const x = 20 + i * (barWidth + 8);
-            const y = chartH - h;
-            bars += `<rect x="${x}" y="${y}" width="${barWidth}" height="${h}" rx="3" fill="${color}" opacity="0.8"/>`;
-            bars += `<text x="${x + barWidth / 2}" y="${chartH + 14}" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">${d.label}</text>`;
-            bars += `<text x="${x + barWidth / 2}" y="${y - 4}" text-anchor="middle" fill="var(--text-secondary)" font-size="10">${d.value}</text>`;
+    function buildHeatmap(heatmap) {
+        if (!heatmap || !heatmap.tools || heatmap.tools.length === 0) {
+            return '<div style="text-align:center;color:var(--text-tertiary);padding:20px">暂无调用数据</div>';
+        }
+        const { hours, tools, matrix, max } = heatmap;
+        const cellSize = 14;
+        const gap = 2;
+        const labelW = 90;
+        const headerH = 20;
+
+        let html = `<div style="overflow-x:auto"><div style="display:inline-block;min-width:${labelW + hours.length * (cellSize + gap) + 10}px">`;
+
+        // 小时标签行
+        html += `<div style="display:flex;margin-left:${labelW}px;margin-bottom:2px">`;
+        hours.forEach(h => {
+            html += `<div style="width:${cellSize}px;margin-right:${gap}px;text-align:center;font-size:9px;color:var(--text-tertiary)">${h}h</div>`;
         });
-        return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${bars}</svg>`;
+        html += '</div>';
+
+        // 工具行
+        tools.forEach(tool => {
+            const shortName = tool.length > 12 ? tool.slice(0, 12) + '..' : tool;
+            html += `<div style="display:flex;align-items:center;margin-bottom:${gap}px">`;
+            html += `<div style="width:${labelW}px;font-size:10px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(tool)}">${Components.escapeHtml(shortName)}</div>`;
+            hours.forEach(h => {
+                const val = matrix[`${h}_${tool}`] || 0;
+                const intensity = max > 0 ? val / max : 0;
+                const bg = intensity === 0 ? 'var(--bg-secondary)' : `rgba(99,102,241,${0.15 + intensity * 0.85})`;
+                const title = `${tool} @ ${h}:00 → ${val} 次`;
+                html += `<div style="width:${cellSize}px;height:${cellSize}px;border-radius:3px;background:${bg};margin-right:${gap}px;cursor:pointer;transition:transform 0.15s" title="${Components.escapeHtml(title)}" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'"></div>`;
+            });
+            html += '</div>';
+        });
+
+        html += '</div></div>';
+        return html;
     }
 
-    function buildDonutChart(segments, size, strokeWidth) {
-        if (!segments || segments.length === 0) return '';
-        const r = (size - strokeWidth) / 2;
-        const cx = size / 2, cy = size / 2;
-        const total = segments.reduce((s, seg) => s + seg.value, 0) || 1;
-        let offset = 0;
-        let arcs = '';
-        let legend = '';
-        segments.forEach(seg => {
-            const pct = seg.value / total;
-            const dashArray = `${pct * 2 * Math.PI * r} ${(1 - pct) * 2 * Math.PI * r}`;
-            const dashOffset = -offset * 2 * Math.PI * r;
-            arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${seg.color}" stroke-width="${strokeWidth}" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}" transform="rotate(-90 ${cx} ${cy})"/>`;
-            offset += pct;
-            legend += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-                <div style="width:8px;height:8px;border-radius:50%;background:${seg.color}"></div>
-                <span style="font-size:12px;color:var(--text-secondary)">${seg.label}: ${seg.value}</span>
+    function buildHorizontalBar(data, maxBars = 10) {
+        if (!data || data.length === 0) return '<div style="text-align:center;color:var(--text-tertiary);padding:20px">暂无数据</div>';
+        const maxVal = Math.max(...data.map(d => d.total_calls), 1);
+        const items = data.slice(0, maxBars);
+        let html = '';
+        items.forEach((d, i) => {
+            const pct = (d.total_calls / maxVal * 100).toFixed(1);
+            const rateColor = d.success_rate >= 90 ? 'var(--green)' : d.success_rate >= 70 ? 'var(--orange)' : 'var(--red)';
+            html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <div style="width:120px;font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0" title="${Components.escapeHtml(d.tool)}">${Components.escapeHtml(d.tool)}</div>
+                <div style="flex:1;height:18px;background:var(--bg-secondary);border-radius:9px;overflow:hidden;position:relative">
+                    <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),rgba(99,102,241,0.6));border-radius:9px;transition:width 0.6s ease"></div>
+                </div>
+                <div style="width:50px;text-align:right;font-size:11px;color:var(--text-primary);font-weight:600;flex-shrink:0">${d.total_calls}</div>
+                <div style="width:40px;text-align:right;font-size:10px;color:${rateColor};flex-shrink:0">${d.success_rate}%</div>
             </div>`;
         });
-        return `<div style="display:flex;align-items:center;gap:16px">
-            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${arcs}</svg>
-            <div>${legend}</div>
+        return html;
+    }
+
+    function buildTrendChart(trend) {
+        if (!trend || trend.length === 0) return '<div style="text-align:center;color:var(--text-tertiary);padding:20px">暂无数据</div>';
+        const width = 500, height = 160;
+        const padL = 35, padR = 10, padT = 10, padB = 25;
+        const chartW = width - padL - padR;
+        const chartH = height - padT - padB;
+
+        const maxCalls = Math.max(...trend.map(d => d.tool_calls), 1);
+        const maxSessions = Math.max(...trend.map(d => d.sessions), 1);
+        const stepX = chartW / (trend.length - 1 || 1);
+
+        // 工具调用折线
+        let toolPath = '', toolDots = '', toolFill = '';
+        trend.forEach((d, i) => {
+            const x = padL + i * stepX;
+            const y = padT + chartH - (d.tool_calls / maxCalls) * chartH;
+            toolPath += `${i === 0 ? 'M' : 'L'}${x},${y}`;
+            toolDots += `<circle cx="${x}" cy="${y}" r="3" fill="var(--accent)"/>`;
+        });
+        const firstX = padL, lastX = padL + (trend.length - 1) * stepX;
+        toolFill = `${toolPath}L${lastX},${padT + chartH}L${firstX},${padT + chartH}Z`;
+
+        // 会话折线
+        let sessPath = '', sessDots = '';
+        trend.forEach((d, i) => {
+            const x = padL + i * stepX;
+            const y = padT + chartH - (d.sessions / maxSessions) * chartH;
+            sessPath += `${i === 0 ? 'M' : 'L'}${x},${y}`;
+            sessDots += `<circle cx="${x}" cy="${y}" r="3" fill="var(--green)"/>`;
+        });
+
+        // X 轴标签
+        let labels = '';
+        trend.forEach((d, i) => {
+            const x = padL + i * stepX;
+            const dateLabel = d.date.slice(5); // MM-DD
+            labels += `<text x="${x}" y="${height - 4}" text-anchor="middle" fill="var(--text-tertiary)" font-size="9">${dateLabel}</text>`;
+        });
+
+        // Y 轴
+        let yLabels = '';
+        for (let i = 0; i <= 4; i++) {
+            const val = Math.round(maxCalls * i / 4);
+            const y = padT + chartH - (i / 4) * chartH;
+            yLabels += `<text x="${padL - 4}" y="${y + 3}" text-anchor="end" fill="var(--text-tertiary)" font-size="9">${val}</text>`;
+            yLabels += `<line x1="${padL}" y1="${y}" x2="${width - padR}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>`;
+        }
+
+        return `<svg width="100%" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <linearGradient id="toolFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>
+                </linearGradient>
+            </defs>
+            ${yLabels}
+            <path d="${toolFill}" fill="url(#toolFill)"/>
+            <path d="${toolPath}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            ${toolDots}
+            <path d="${sessPath}" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,3"/>
+            ${sessDots}
+            ${labels}
+        </svg>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:4px">
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary)"><span style="width:12px;height:2px;background:var(--accent);border-radius:1px"></span>工具调用</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary)"><span style="width:12px;height:2px;background:var(--green);border-radius:1px;border-top:2px dashed var(--green)"></span>会话数</span>
         </div>`;
     }
 
-    function buildLineChart(data, width, height, color) {
-        if (!data || data.length < 2) return '<div style="text-align:center;color:var(--text-tertiary);padding:20px">暂无数据</div>';
-        const max = Math.max(...data.map(d => d.value), 1);
-        const min = Math.min(...data.map(d => d.value), 0);
-        const range = max - min || 1;
-        const chartH = height - 30;
-        const chartW = width - 40;
-        const stepX = chartW / (data.length - 1);
-
-        let points = '';
-        let labels = '';
-        data.forEach((d, i) => {
-            const x = 20 + i * stepX;
-            const y = 10 + chartH - ((d.value - min) / range) * (chartH - 20);
-            points += `${i === 0 ? 'M' : 'L'}${x},${y}`;
-            labels += `<text x="${x}" y="${height - 4}" text-anchor="middle" fill="var(--text-tertiary)" font-size="10">${d.label}</text>`;
-        });
-
-        // 填充区域
-        const firstX = 20;
-        const lastX = 20 + (data.length - 1) * stepX;
-        const fillPath = `${points}L${lastX},${chartH + 10}L${firstX},${chartH + 10}Z`;
-
-        return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-            <defs><linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="${color}" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
-            </linearGradient></defs>
-            <path d="${fillPath}" fill="url(#lineGrad)"/>
-            <path d="${points}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            ${data.map((d, i) => {
-                const x = 20 + i * stepX;
-                const y = 10 + chartH - ((d.value - min) / range) * (chartH - 20);
-                return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
-            }).join('')}
-            ${labels}
-        </svg>`;
-    }
-
-    function buildGaugeChart(value, max, label, color) {
-        const size = 80;
-        const sw = 6;
+    function buildGauge(value, max, label, color, unit = '') {
+        const size = 72, sw = 5;
         const r = (size - sw) / 2;
         const cx = size / 2, cy = size / 2;
         const pct = Math.min(value / max, 1);
         const dashArray = `${pct * 2 * Math.PI * r} ${(1 - pct) * 2 * Math.PI * r}`;
-        return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+        const displayVal = typeof value === 'number' ? (value >= 100 ? Math.round(value) : value.toFixed(1)) : value;
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
             <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
                 <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${sw}"/>
-                <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="${dashArray}" stroke-dashoffset="0" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/>
-                <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" fill="var(--text-primary)" font-size="14" font-weight="600">${typeof value === 'number' ? value : value}</text>
+                <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="${dashArray}" stroke-dashoffset="0" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round" style="transition:stroke-dasharray 0.8s ease"/>
+                <text x="${cx}" y="${cy + 1}" text-anchor="middle" dominant-baseline="middle" fill="var(--text-primary)" font-size="13" font-weight="600">${displayVal}${unit}</text>
             </svg>
-            <span style="font-size:11px;color:var(--text-tertiary)">${label}</span>
+            <span style="font-size:10px;color:var(--text-tertiary)">${label}</span>
         </div>`;
     }
 
-    // --- 页面构建 ---
+    function buildActivityFeed(activities) {
+        if (!activities || activities.length === 0) {
+            return '<div style="text-align:center;color:var(--text-tertiary);padding:24px">暂无活动记录</div>';
+        }
+        let html = '<div style="display:flex;flex-direction:column;gap:2px;max-height:380px;overflow-y:auto;padding-right:4px">';
+        activities.forEach(a => {
+            const time = a.ts ? Components.formatTime(a.ts) : '';
+            if (a.type === 'tool_call') {
+                const icon = a.ok ? '✓' : '✕';
+                const iconColor = a.ok ? 'var(--green)' : 'var(--red)';
+                const bgHover = a.ok ? 'rgba(34,197,94,0.04)' : 'rgba(239,68,68,0.04)';
+                const errTip = a.err ? ` title="${Components.escapeHtml(a.err)}"` : '';
+                html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:default;transition:background 0.15s" onmouseover="this.style.background='${bgHover}'" onmouseout="this.style.background='transparent'"${errTip}>
+                    <span style="color:${iconColor};font-weight:700;font-size:14px;flex-shrink:0;width:16px;text-align:center">${icon}</span>
+                    <span style="color:var(--text-primary);font-weight:500;flex-shrink:0;min-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(a.tool)}">${Components.escapeHtml(a.tool)}</span>
+                    <span style="color:var(--text-tertiary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(a.args_summary || '')}</span>
+                    <span style="color:var(--text-tertiary);font-size:10px;flex-shrink:0">${a.ms}ms</span>
+                    <span style="color:var(--text-tertiary);font-size:10px;flex-shrink:0;min-width:50px;text-align:right">${time}</span>
+                </div>`;
+            } else {
+                const levelColor = { info: 'var(--blue)', success: 'var(--green)', warning: 'var(--orange)', error: 'var(--red)' }[a.level] || 'var(--text-tertiary)';
+                const levelIcon = { info: 'ℹ', success: '✓', warning: '⚠', error: '✕' }[a.level] || '•';
+                html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12px;cursor:default;transition:background 0.15s" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">
+                    <span style="color:${levelColor};font-weight:700;font-size:13px;flex-shrink:0;width:16px;text-align:center">${levelIcon}</span>
+                    <span style="color:var(--text-secondary);flex-shrink:0;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(a.action || '')}</span>
+                    <span style="color:var(--text-tertiary);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(a.detail || a.target || '')}</span>
+                    <span style="color:var(--text-tertiary);font-size:10px;flex-shrink:0;min-width:50px;text-align:right">${time}</span>
+                </div>`;
+            }
+        });
+        html += '</div>';
+        return html;
+    }
+
+    function buildErrorCards(errors) {
+        if (!errors || errors.length === 0) {
+            return '<div style="text-align:center;color:var(--green);padding:16px;font-size:13px">✓ 最近没有错误</div>';
+        }
+        let html = '';
+        errors.slice(0, 8).forEach(e => {
+            const time = e.ts ? Components.formatTime(e.ts) : '';
+            html += `<div style="display:flex;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(239,68,68,0.04);border-left:3px solid var(--red);margin-bottom:6px">
+                <div style="flex-shrink:0">
+                    <div style="font-size:12px;font-weight:600;color:var(--red)">${Components.escapeHtml(e.tool || '?')}</div>
+                    <div style="font-size:10px;color:var(--text-tertiary)">${time}</div>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(e.err || '')}">${Components.escapeHtml((e.err || '未知错误').slice(0, 120))}</div>
+                </div>
+                <div style="flex-shrink:0;font-size:10px;color:var(--text-tertiary)">${e.ms}ms</div>
+            </div>`;
+        });
+        return html;
+    }
+
+    // ========== 页面构建 ==========
 
     function buildPage() {
         const s = _data.stats || {};
-        const recentSessions = _data.recentSessions || [];
         const sys = _data.systemStatus || {};
 
-        const fallbackNotice = _useFallback ? `
-            <div style="margin-bottom:16px;padding:10px 14px;border-radius:var(--radius-sm);background:#fffbeb;border:1px solid #fde68a;font-size:12px;color:#92400e">
-                ⚠️ 当前使用演示数据（后端 API 未连接）。部署到 HF Spaces 后将显示真实数据。
-            </div>` : '';
-
-        // 统计卡片
+        // --- 顶部统计卡片（6 张） ---
         const statsHtml = `<div class="stats">
-            ${Components.renderStatCard('总会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, '💬', 'blue')}
-            ${Components.renderStatCard('活跃工具', s.activeTools || 0, `共 ${s.tools || 0} 个`, '🔧', 'green')}
-            ${Components.renderStatCard('技能数', s.skills || 0, '', '⚡', 'purple')}
-            ${Components.renderStatCard('MCP 连接', s.mcpConnected ? '在线' : '离线', s.mcpConnected ? '● 在线' : '● 离线', '🔌', 'orange')}
+            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, '📊', 'blue')}
+            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', '⚡', 'green')}
+            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, '💬', 'purple')}
+            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, '🔧', 'orange')}
+            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', '✓', 'green')}
+            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', '🔌', s.mcpConnected ? 'green' : 'red')}
         </div>`;
 
-        // --- 图表区域 ---
-        // 会话来源分布（环形图）
-        const sourceMap = {};
-        recentSessions.forEach(s => { sourceMap[s.source || '其他'] = (sourceMap[s.source || '其他'] || 0) + 1; });
-        const sourceSegments = Object.entries(sourceMap).map(([k, v]) => ({
-            label: k, value: v,
-            color: { Trae: 'var(--purple)', Web: 'var(--blue)', CLI: 'var(--green)', API: 'var(--orange)' }[k] || 'var(--text-tertiary)',
-        }));
-
-        // 模型使用分布（柱状图）
-        const modelMap = {};
-        recentSessions.forEach(s => { modelMap[s.model || '未知'] = (modelMap[s.model || '未知'] || 0) + 1; });
-        const modelData = Object.entries(modelMap).map(([k, v]) => ({ label: k.length > 10 ? k.slice(0, 10) : k, value: v }));
-
-        // 7 天会话趋势（折线图）
-        const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-        const trendData = days.map(d => ({
-            label: d,
-            value: 0,
-        }));
-
-        // 系统资源仪表盘
-        const memMatch = (sys.memoryUsage || '').match(/(\d+)/);
-        const cpuMatch = (sys.cpuUsage || '').match(/([\d.]+)/);
-        const memVal = memMatch ? parseInt(memMatch[1]) : 0;
-        const cpuVal = cpuMatch ? parseFloat(cpuMatch[1]) : 0;
-
-        const chartsHtml = `<div class="two-col" style="margin-top:16px">
-            ${Components.renderSection('会话来源', buildDonutChart(sourceSegments, 120, 16))}
-            ${Components.renderSection('模型使用', buildBarChart(modelData, 280, 140, 'var(--accent)'))}
-        </div>
-        <div class="two-col" style="margin-top:16px">
-            ${Components.renderSection('7 天会话趋势', buildLineChart(trendData, 280, 140, 'var(--accent)'))}
-            ${Components.renderSection('系统资源', `
-                <div style="display:flex;justify-content:space-around;padding:8px 0">
-                    ${buildGaugeChart(memVal, 1024, '内存 (MB)', 'var(--green)')}
-                    ${buildGaugeChart(cpuVal.toFixed(1), 100, 'CPU (%)', 'var(--orange)')}
-                    ${buildGaugeChart(s.activeSessions || 0, 10, '活跃会话', 'var(--blue)')}
-                </div>
-            `)}
-        </div>`;
-
-        // 最近会话表格
-        const sessionsHtml = Components.renderSection('最近会话', `
-            <table class="table">
-                <thead><tr><th>ID</th><th>来源</th><th>模型</th><th>消息数</th><th>状态</th><th>时间</th></tr></thead>
-                <tbody>
-                    ${recentSessions.length === 0 ? `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-tertiary)">暂无会话记录</td></tr>` :
-                    recentSessions.map(s => `<tr>
-                        <td class="mono">#${Components.truncate(s.id, 12)}</td>
-                        <td>${Components.renderBadge(s.source || '-', s.source === 'Trae' ? 'purple' : s.source === 'Web' ? 'blue' : s.source === 'CLI' ? 'green' : 'orange')}</td>
-                        <td class="mono">${s.model || '-'}</td>
-                        <td>${s.messages || 0}</td>
-                        <td>${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}</td>
-                        <td>${Components.formatDateTime(s.createdAt)}</td>
-                    </tr>`).join('')}
-                </tbody>
-            </table>
-        `, '查看全部 →');
-
-        // 定时任务 + 系统状态
-        const cronStatusMap = { active: '运行中', paused: '暂停', disabled: '已禁用', idle: '空闲' };
-        const cronBadgeMap = { active: 'green', paused: 'orange', disabled: 'red', idle: 'blue' };
-        const cronHtml = Components.renderSection('定时任务', `
-            <table class="table">
-                <thead><tr><th>名称</th><th>调度</th><th>状态</th></tr></thead>
-                <tbody>
-                    ${_cronJobs.length === 0 ? `<tr><td colspan="3" style="text-align:center;padding:40px;color:var(--text-tertiary)">暂无定时任务</td></tr>` :
-                    _cronJobs.map(j => `<tr>
-                        <td>${Components.escapeHtml(j.name || '-')}</td>
-                        <td class="mono">${Components.escapeHtml(j.schedule || j.cron || '-')}</td>
-                        <td>${Components.renderBadge(cronStatusMap[j.status] || j.status || '-', cronBadgeMap[j.status] || 'blue')}</td>
-                    </tr>`).join('')}
-                </tbody>
-            </table>
-        `, '管理 →');
-
-        const statusHtml = Components.renderSection('系统状态', `
-            <div class="status-list">
-                <div class="status-item"><span class="status-item-label">运行时间</span><span class="status-item-value">${sys.uptime || '-'}</span></div>
-                <div class="status-item"><span class="status-item-label">版本</span><span class="status-item-value">${sys.version || '-'}</span></div>
-                <div class="status-item"><span class="status-item-label">内存使用</span><span class="status-item-value">${sys.memoryUsage || '-'}</span></div>
-                <div class="status-item"><span class="status-item-label">CPU 使用率</span><span class="status-item-value">${sys.cpuUsage || '-'}</span></div>
+        // --- 系统心跳 ---
+        const memPct = sys.totalMemMb > 0 ? (sys.memMb / sys.totalMemMb * 100) : 0;
+        const heartbeatHtml = Components.renderSection('系统心跳', `
+            <div style="display:flex;justify-content:space-around;align-items:center;padding:4px 0">
+                ${buildGauge(sys.cpuPct || 0, 100, 'CPU', 'var(--orange)', '%')}
+                ${buildGauge(memPct, 100, '内存', 'var(--green)', '%')}
+                ${buildGauge(s.activeSessions || 0, 20, '活跃会话', 'var(--blue)', '')}
+                ${buildGauge(s.totalToolCalls || 0, Math.max(s.totalToolCalls * 1.2, 100), '总调用', 'var(--accent)', '')}
+            </div>
+            <div style="display:flex;justify-content:center;gap:20px;margin-top:8px;font-size:11px;color:var(--text-tertiary)">
+                <span>⏱ 运行 ${sys.uptime || '-'}</span>
+                <span>📦 v${sys.version || '-'}</span>
             </div>
         `);
 
-        const twoColHtml = `<div class="two-col">${cronHtml}${statusHtml}</div>`;
+        // --- 活动流 + 错误追踪 ---
+        const activityHtml = Components.renderSection('实时活动流', buildActivityFeed(_activity));
+        const errorHtml = Components.renderSection('错误追踪', buildErrorCards(_errors));
 
-        return `${fallbackNotice}${statsHtml}${chartsHtml}${sessionsHtml}${twoColHtml}`;
+        // --- 趋势图 + 热力图 ---
+        const trendHtml = Components.renderSection('7 天趋势（工具调用 + 会话）', buildTrendChart(_trend));
+        const heatmapHtml = Components.renderSection('24h 工具调用热力图', buildHeatmap(_heatmap));
+
+        // --- 工具排行 ---
+        const rankHtml = Components.renderSection('工具调用排行', `
+            <div style="display:flex;gap:12px;margin-bottom:8px;font-size:10px;color:var(--text-tertiary)">
+                <span style="width:120px">工具名</span>
+                <span style="flex:1">调用频次</span>
+                <span style="width:50px;text-align:right">次数</span>
+                <span style="width:40px;text-align:right">成功率</span>
+            </div>
+            ${buildHorizontalBar(_ranking, 12)}
+        `);
+
+        // 组装布局
+        return `${statsHtml}
+        ${heartbeatHtml}
+        <div class="two-col" style="margin-top:16px">
+            ${activityHtml}
+            ${errorHtml}
+        </div>
+        <div class="two-col" style="margin-top:16px">
+            ${trendHtml}
+            ${heatmapHtml}
+        </div>
+        <div style="margin-top:16px">
+            ${rankHtml}
+        </div>`;
     }
 
     return { render };

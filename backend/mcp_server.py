@@ -763,6 +763,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
     """Execute a tool and return the result as text."""
     from backend.services.hermes_service import hermes_service
     from backend.services.mcp_client_service import mcp_client_service
+    import urllib.parse  # 防止局部 import 导致的 unhashable type 错误
 
     if name == "list_sessions":
         sessions = hermes_service.list_sessions()
@@ -875,6 +876,8 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             name=arguments["name"],
             content=arguments.get("content", ""),
         )
+        if not result.get("success"):
+            raise ValueError(f"❌ {result.get('message', '创建失败')}\n建议：\n1. 检查技能名是否已存在，使用 list_skills 查看\n2. 如需更新已有技能，使用 update_skill\n3. 使用不同的技能名称")
         return result.get("message", "操作完成")
 
     elif name == "list_cron_jobs":
@@ -943,9 +946,9 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 
     elif name == "add_message":
         result = hermes_service.add_session_message(
-            session_id=arguments["session_id"],
-            role=arguments["role"],
-            content=arguments["content"],
+            session_id=arguments.get("session_id", ""),
+            role=arguments.get("role", ""),
+            content=arguments.get("content", ""),
         )
         return result.get("message", "操作完成")
 
@@ -1270,10 +1273,14 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             try:
                 import urllib.parse as _up
                 import urllib.request as _ur
+                import ssl as _ssl
                 import re as _re
                 url = f"https://html.duckduckgo.com/html/?q={_up.quote(query)}"
                 req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with _ur.urlopen(req, timeout=10) as resp:
+                ctx = _ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = _ssl.CERT_NONE
+                with _ur.urlopen(req, timeout=10, context=ctx) as resp:
                     html = resp.read().decode("utf-8", errors="replace")
                 # 提取搜索结果
                 results = _re.findall(r'class="result__a"[^>]*>(.*?)</a>.*?class="result__snippet"[^>]*>(.*?)</a>', html, _re.DOTALL)
@@ -1287,6 +1294,31 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                 return f"搜索: {query}\n{'='*50}\n\n" + "\n\n".join(output)
             except Exception as e:
                 raise ValueError(f"❌ 搜索失败: {e}\n建议：\n1. 尝试使用英文关键词重新搜索，可能获得更多结果\n2. 简化关键词，避免过于复杂的查询\n3. 如果持续失败，可能是网络连接问题，请检查网络状态")
+        except Exception as e:
+            # DDGS 库存在但调用失败，尝试降级
+            try:
+                import urllib.parse as _up
+                import urllib.request as _ur
+                import ssl as _ssl
+                import re as _re
+                url = f"https://html.duckduckgo.com/html/?q={_up.quote(query)}"
+                req = _ur.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                ctx = _ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = _ssl.CERT_NONE
+                with _ur.urlopen(req, timeout=10, context=ctx) as resp:
+                    html = resp.read().decode("utf-8", errors="replace")
+                results = _re.findall(r'class="result__a"[^>]*>(.*?)</a>.*?class="result__snippet"[^>]*>(.*?)</a>', html, _re.DOTALL)
+                if not results:
+                    return f"未找到 '{query}' 的搜索结果"
+                output = []
+                for i, (title, snippet) in enumerate(results[:max_results]):
+                    clean_title = _re.sub(r'<[^>]+>', '', title).strip()
+                    clean_snippet = _re.sub(r'<[^>]+>', '', snippet).strip()
+                    output.append(f"{i+1}. {clean_title}\n   {clean_snippet}")
+                return f"搜索: {query}\n{'='*50}\n\n" + "\n\n".join(output)
+            except Exception as e2:
+                raise ValueError(f"❌ 搜索失败: {e2}\n建议：\n1. 尝试使用英文关键词重新搜索，可能获得更多结果\n2. 简化关键词，避免过于复杂的查询\n3. 如果持续失败，可能是网络连接问题，请检查网络状态")
 
     elif name == "web_fetch":
         url = arguments.get("url", "")
@@ -1573,6 +1605,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 """ + "\n".join(f"[{m.get('role','?')}] {m.get('content','')[:100]}" for m in recent_msgs)
 
     elif name == "suggest_skill":
+        import re
         session_id = arguments.get("session_id", "")
         min_calls = int(arguments.get("min_calls", 3))
 
@@ -1661,10 +1694,21 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 
         try:
             import urllib.request
+            import urllib.parse
+            import json
             url = f"https://skills.sh/api/search?q={urllib.parse.quote(query)}&limit={limit}"
             req = urllib.request.Request(url, headers={"Accept": "application/json"})
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
+
+            if not data:
+                return f"未找到匹配 '{query}' 的技能。建议：\n1. 尝试更通用的关键词\n2. 检查网络连接"
+
+            # 兼容 API 返回列表或字典格式
+            if isinstance(data, dict):
+                data = data.get("results", data.get("skills", data.get("items", [])))
+            if not isinstance(data, list):
+                data = []
 
             if not data:
                 return f"未找到匹配 '{query}' 的技能。建议：\n1. 尝试更通用的关键词\n2. 检查网络连接"
@@ -1698,11 +1742,16 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
 
         try:
             import urllib.request
+            import json
+            import ssl as _ssl
             if not source:
-                source = f"https://skills.sh/api/skills/{urllib.parse.quote(skill_name)}"
+                source = f"https://skills.sh/api/v1/skills/{urllib.parse.quote(skill_name)}"
 
-            req = urllib.request.Request(source, headers={"Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            ctx = _ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = _ssl.CERT_NONE
+            req = urllib.request.Request(source, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
 
             content = data.get("content", "")
@@ -1721,7 +1770,42 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         except ValueError:
             raise
         except Exception as e:
-            raise ValueError(f"❌ 安装失败: {e}\n建议：\n1. 检查网络连接\n2. 确认技能名称正确\n3. 使用 search_skills_hub 先搜索")
+            # 降级：通过搜索 API 获取信息，创建模板技能
+            try:
+                import urllib.request
+                import json
+                import ssl as _ssl
+                ctx = _ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = _ssl.CERT_NONE
+                search_url = f"https://skills.sh/api/search?q={urllib.parse.quote(skill_name)}&limit=1"
+                req = urllib.request.Request(search_url, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+                    search_data = json.loads(resp.read().decode("utf-8"))
+
+                skills_list = search_data.get("skills", [])
+                if not skills_list:
+                    raise ValueError(f"技能 '{skill_name}' 未在市场中找到")
+
+                matched = skills_list[0]
+                matched_name = matched.get("name", skill_name)
+                matched_source = matched.get("source", "")
+                matched_installs = matched.get("installs", 0)
+
+                # 创建模板技能
+                template_content = f"# {matched_name}\n\n> 来源: skills.sh ({matched_source})\n> 安装次数: {matched_installs}\n\n## 说明\n\n此技能从 skills.sh 市场安装（降级模式）。\n完整内容请访问: https://skills.sh/s/{matched_name}\n\n## 使用\n\n请根据技能名称 '{matched_name}' 的用途进行配置和使用。"
+                desc = f"从 skills.sh 安装 (降级): {matched_name} ({matched_installs} 安装)"
+                tags = ["hub", "skills-sh"]
+                result = hermes_service.create_skill(skill_name, template_content, desc, tags)
+
+                if result.get("success"):
+                    return f"技能 '{skill_name}' 安装成功（降级模式）！\n来源: {matched_source}\n安装次数: {matched_installs}\n描述: {desc}\n使用 get_skill_content('{skill_name}') 查看内容"
+                else:
+                    raise ValueError(f"❌ 安装失败: {result.get('message', '未知错误')}\n建议：\n1. 技能可能已存在，使用 update_skill 更新\n2. 检查技能名称")
+            except ValueError:
+                raise
+            except Exception as e2:
+                raise ValueError(f"❌ 在线市场暂不可用: {e2}\n建议：\n1. 使用 create_skill 手动创建技能\n2. 稍后重试\n3. 使用 search_skills_hub 先搜索")
 
     elif name == "delegate_task":
         task_desc = arguments.get("task", "")
