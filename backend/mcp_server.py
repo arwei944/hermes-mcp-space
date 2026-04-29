@@ -7,6 +7,7 @@ Hermes Agent - MCP Server (manual implementation)
 import json
 import logging
 import os
+import time
 import uuid
 from typing import Any, Dict
 
@@ -430,6 +431,53 @@ def _get_tools():
                 "required": ["content"]
             }
         },
+        # ---- AGENTS.md 支持 ----
+        {
+            "name": "read_agents_md",
+            "description": "读取项目级指令文件（AGENTS.md / CLAUDE.md）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "自定义文件路径（可选，默认自动发现）"}
+                }
+            }
+        },
+        {
+            "name": "write_agents_md",
+            "description": "写入项目级指令文件（AGENTS.md）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "项目指令内容（Markdown 格式）"},
+                    "path": {"type": "string", "description": "写入路径（默认 ~/.hermes/AGENTS.md）"}
+                },
+                "required": ["content"]
+            }
+        },
+        # ---- 学习循环 ----
+        {
+            "name": "read_learnings",
+            "description": "读取 Agent 学习记录（从历史经验中学习）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "integer", "default": 20, "description": "返回条数"}
+                }
+            }
+        },
+        {
+            "name": "add_learning",
+            "description": "添加一条学习记录（记录工具使用中的发现）",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "学习内容"},
+                    "tool": {"type": "string", "description": "相关工具名（可选）"},
+                    "error": {"type": "string", "description": "相关错误（可选）"}
+                },
+                "required": ["content"]
+            }
+        },
         # ---- Phase 3: MCP 网关管理 ----
         {
             "name": "add_mcp_server",
@@ -661,7 +709,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             f"Hermes Agent 系统状态:\n"
             f"- MCP 服务: {status.get('status', 'unknown')}\n"
             f"- Hermes 可用: {'是' if hermes_service.hermes_available else '否'}\n"
-            f"- 版本: {os.environ.get('APP_VERSION', '3.0.0')}"
+            f"- 版本: {os.environ.get('APP_VERSION', '3.1.0')}"
         )
 
     elif name == "get_dashboard_summary":
@@ -823,7 +871,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         offset = int(arguments.get("offset", 0))
         limit = int(arguments.get("limit", 500))
         if not _os.path.isfile(fpath):
-            raise ValueError(f"文件不存在: {fpath}")
+            raise ValueError(f"❌ 文件不存在: {fpath}\n建议：\n1. 使用 list_directory 工具查看目标目录下的文件列表，确认路径是否正确\n2. 检查路径拼写，注意大小写和斜杠方向（使用 / 而非 \\）\n3. 如果是相对路径，尝试使用绝对路径")
         try:
             with open(fpath, "r", encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()
@@ -833,28 +881,28 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             header = f"文件: {fpath}\n总行数: {total}\n显示: 第 {offset+1}-{min(offset+limit, total)} 行\n{'='*50}\n"
             return header + content
         except Exception as e:
-            raise ValueError(f"读取文件失败: {e}")
+            raise ValueError(f"❌ 读取文件失败: {e}\n建议：\n1. 检查文件编码是否为 UTF-8，如果是二进制文件（如图片、压缩包）则无法以文本方式读取\n2. 确认当前用户对该文件有读取权限（使用 ls -la 检查）\n3. 如果文件被其他进程锁定，请等待后重试")
 
     elif name == "write_file":
         import os as _os
         fpath = arguments.get("path", "")
         content = arguments.get("content", "")
         if not fpath:
-            raise ValueError("请提供文件路径")
+            raise ValueError("❌ 请提供文件路径\n建议：\n1. 在参数 path 中指定要写入的文件完整路径\n2. 路径示例：'/workspace/myproject/config.json'\n3. 如果目录不存在，write_file 会自动创建中间目录")
         try:
             _os.makedirs(_os.path.dirname(fpath), exist_ok=True)
             with open(fpath, "w", encoding="utf-8") as f:
                 f.write(content)
             return f"文件已写入: {fpath} ({len(content)} 字符)"
         except Exception as e:
-            raise ValueError(f"写入文件失败: {e}")
+            raise ValueError(f"❌ 写入文件失败: {e}\n建议：\n1. 检查目标目录的写入权限（使用 ls -la 确认当前用户是否有写权限）\n2. 确认磁盘空间充足（使用 df -h 检查）\n3. 如果目标路径是系统目录或受保护路径，请选择其他位置")
 
     elif name == "list_directory":
         import os as _os
         dpath = arguments.get("path", "")
         pattern = arguments.get("pattern", "")
         if not _os.path.isdir(dpath):
-            raise ValueError(f"目录不存在: {dpath}")
+            raise ValueError(f"❌ 目录不存在: {dpath}\n建议：\n1. 使用 list_directory 工具查看父目录，确认路径拼写是否正确\n2. 检查路径中每一级目录是否都存在\n3. 如果需要创建目录，请先使用 shell_execute 执行 mkdir -p 命令")
         try:
             import glob as _glob
             if pattern:
@@ -871,7 +919,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                     result.append(f"📄 {item} ({size} bytes)")
             return f"目录: {dpath}\n{'='*50}\n" + "\n".join(result) if result else "空目录"
         except Exception as e:
-            raise ValueError(f"列出目录失败: {e}")
+            raise ValueError(f"❌ 列出目录失败: {e}\n建议：\n1. 检查当前用户对该目录是否有读取和执行权限（使用 ls -la 确认）\n2. 如果是挂载目录或网络目录，确认挂载状态正常\n3. 尝试使用 shell_execute 执行 ls 命令获取更多信息")
 
     elif name == "search_files":
         import os as _os
@@ -880,7 +928,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         file_pattern = arguments.get("file_pattern", "")
         max_results = int(arguments.get("max_results", 20))
         if not _os.path.isdir(root):
-            raise ValueError(f"目录不存在: {root}")
+            raise ValueError(f"❌ 目录不存在: {root}\n建议：\n1. 使用 list_directory 工具确认父目录路径是否正确\n2. 检查路径拼写，注意大小写敏感性\n3. 如果目录尚未创建，请先通过 shell_execute 执行 mkdir -p 创建")
         try:
             import re as _re
             import glob as _glob
@@ -914,50 +962,105 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                 return f"在 {root} 中未找到匹配 '{pattern}' 的内容"
             return f"搜索: {pattern} in {root}\n找到 {len(results)} 条结果\n{'='*50}\n" + "\n".join(results)
         except Exception as e:
-            raise ValueError(f"搜索失败: {e}")
+            raise ValueError(f"❌ 搜索失败: {e}\n建议：\n1. 缩小搜索范围，指定更精确的 path 参数或使用 file_pattern 限制文件类型\n2. 检查正则表达式语法是否正确（pattern 参数使用正则语法）\n3. 如果目录文件过多，尝试降低 max_results 或缩小搜索目录")
 
     # ---- Phase 1: 终端执行工具 ----
     elif name == "shell_execute":
         import subprocess as _subprocess
+        import os as _os
         command = arguments.get("command", "")
         timeout = min(int(arguments.get("timeout", 30)), 120)
         cwd = arguments.get("cwd", "")
         if not command:
-            raise ValueError("请提供命令")
+            raise ValueError("❌ 请提供命令\n建议：\n1. 在参数 command 中输入要执行的终端命令\n2. 命令示例：'ls -la /workspace' 或 'python script.py'\n3. 可选参数 timeout 控制超时秒数（默认 30 秒，最大 120 秒），cwd 指定工作目录")
         try:
+            actual_cwd = cwd or _os.getcwd()
             result = _subprocess.run(
                 command, shell=True, capture_output=True, text=True,
-                timeout=timeout, cwd=cwd or None,
+                timeout=timeout, cwd=actual_cwd,
                 env={**_subprocess.os.environ, "PAGER": "cat"}
             )
             output = result.stdout or ""
             error = result.stderr or ""
+            exit_code = result.returncode
+
             # 截断过长输出
             max_output = 10000
+            truncated_output = False
+            truncated_error = False
             if len(output) > max_output:
-                output = output[:max_output] + f"\n... (输出已截断，共 {len(result.stdout)} 字符)"
+                output = output[:max_output]
+                truncated_output = True
             if len(error) > max_output:
-                error = error[:max_output] + f"\n... (错误已截断)"
+                error = error[:max_output]
+                truncated_error = True
+
+            # 构建输出部分
             parts = [f"命令: {command}"]
-            if cwd:
-                parts.append(f"工作目录: {cwd}")
-            parts.append(f"退出码: {result.returncode}")
+            parts.append(f"工作目录: {actual_cwd}")
+            parts.append(f"退出码: {exit_code}")
+
             if output:
+                # 长输出格式化
+                output_lines = output.split("\n")
+                total_lines = len(output_lines)
+                if total_lines > 500:
+                    display_lines = output_lines[:500]
+                    output = "\n".join(display_lines)
+                    output += f"\n\n... (共 {total_lines} 行，显示第 1-500 行)"
                 parts.append(f"\n--- stdout ---\n{output}")
+                if truncated_output:
+                    parts.append(f"\n[输出已截断，原始 stdout 共 {len(result.stdout)} 字符]")
+
             if error:
                 parts.append(f"\n--- stderr ---\n{error}")
+                if truncated_error:
+                    parts.append(f"\n[错误已截断，原始 stderr 共 {len(result.stderr)} 字符]")
+
+            # 错误信息增强
+            if exit_code == 127:
+                # 命令不存在
+                cmd_name = command.strip().split()[0] if command.strip() else "未知"
+                parts.append(f"\n⚠️ 命令 '{cmd_name}' 不存在")
+                parts.append("建议：")
+                parts.append(f"1. 检查命令拼写是否正确（常见拼写错误：'sl' → 'ls'，'cd..' → 'cd ..'）")
+                parts.append(f"2. 使用 'which {cmd_name}' 或 'command -v {cmd_name}' 确认命令是否已安装")
+                parts.append(f"3. 如果需要安装，尝试：apt install {cmd_name} / brew install {cmd_name} / pip install {cmd_name}")
+                parts.append(f"4. 如果是 Python 包，尝试：pip install $(echo {cmd_name} | tr '-' '_')")
+            elif exit_code == 126:
+                # 权限不足
+                parts.append("\n⚠️ 权限不足，无法执行命令")
+                parts.append("建议：")
+                parts.append("1. 使用 sudo 重新执行命令（如 sudo apt update）")
+                parts.append("2. 检查文件权限：ls -la <命令路径>")
+                parts.append("3. 如果是脚本文件，添加执行权限：chmod +x <文件路径>")
+                parts.append("4. 确认当前用户是否在正确的用户组中")
+            elif exit_code != 0:
+                # 其他非零退出码
+                parts.append(f"\n⚠️ 命令执行失败（退出码 {exit_code}）")
+                if error:
+                    # 提取关键错误信息
+                    error_lines = [l.strip() for l in error.strip().split("\n") if l.strip()]
+                    if error_lines:
+                        parts.append(f"错误摘要: {error_lines[-1]}")
+                parts.append("建议：")
+                parts.append("1. 检查命令参数是否正确")
+                parts.append("2. 查看上方 stderr 输出中的详细错误信息")
+                parts.append("3. 尝试使用 --help 或 -h 查看命令帮助")
+                parts.append("4. 如果是编译/构建错误，检查依赖是否完整安装")
+
             return "\n".join(parts)
         except _subprocess.TimeoutExpired:
-            raise ValueError(f"命令执行超时（{timeout}秒）")
+            raise ValueError(f"❌ 命令执行超时（{timeout}秒）\n建议：\n1. 将命令拆分为多个较短的子命令分步执行\n2. 增加 timeout 参数值（最大支持 120 秒）\n3. 如果是长时间运行的任务，考虑使用 nohup 或 screen 在后台执行")
         except Exception as e:
-            raise ValueError(f"命令执行失败: {e}")
+            raise ValueError(f"❌ 命令执行失败: {e}\n建议：\n1. 检查命令语法是否正确，尤其是引号、管道符和分号的使用\n2. 确认命令所需的依赖和程序已安装（使用 which 或 command -v 检查）\n3. 查看 stderr 输出中的具体错误信息以定位问题")
 
     # ---- Phase 1: Web 搜索工具 ----
     elif name == "web_search":
         query = arguments.get("query", "")
         max_results = int(arguments.get("max_results", 5))
         if not query:
-            raise ValueError("请提供搜索关键词")
+            raise ValueError("❌ 请提供搜索关键词\n建议：\n1. 在参数 query 中输入要搜索的关键词或问题\n2. 关键词示例：'Python asyncio 教程' 或 'Docker 容器网络配置'\n3. 可选参数 max_results 控制返回结果数量（默认 5 条）")
         try:
             from duckduckgo_search import DDGS
             results = []
@@ -988,13 +1091,13 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                     output.append(f"{i+1}. {clean_title}\n   {clean_snippet}")
                 return f"搜索: {query}\n{'='*50}\n\n" + "\n\n".join(output)
             except Exception as e:
-                raise ValueError(f"搜索失败: {e}")
+                raise ValueError(f"❌ 搜索失败: {e}\n建议：\n1. 尝试使用英文关键词重新搜索，可能获得更多结果\n2. 简化关键词，避免过于复杂的查询\n3. 如果持续失败，可能是网络连接问题，请检查网络状态")
 
     elif name == "web_fetch":
         url = arguments.get("url", "")
         max_length = int(arguments.get("max_length", 5000))
         if not url:
-            raise ValueError("请提供 URL")
+            raise ValueError("❌ 请提供 URL\n建议：\n1. 在参数 url 中输入完整的网页地址\n2. URL 示例：'https://docs.python.org/3/' 或 'https://github.com/user/repo'\n3. 确保 URL 以 http:// 或 https:// 开头")
         try:
             import urllib.request as _ur
             import re as _re
@@ -1012,7 +1115,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                 text = text[:max_length] + f"\n... (内容已截断，共 {len(text)} 字符)"
             return f"URL: {url}\n长度: {len(text)} 字符\n{'='*50}\n{text}"
         except Exception as e:
-            raise ValueError(f"抓取网页失败: {e}")
+            raise ValueError(f"❌ 抓取网页失败: {e}\n建议：\n1. 检查 URL 是否正确且可访问（在浏览器中打开确认）\n2. 某些网站可能拒绝非浏览器请求，尝试其他网站\n3. 检查网络连接是否正常，确认目标服务器未宕机")
 
     # ---- Phase 2: 全文搜索工具 ----
     elif name == "search_messages":
@@ -1020,7 +1123,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         session_id = arguments.get("session_id")
         limit = int(arguments.get("limit", 20))
         if not query:
-            raise ValueError("请提供搜索关键词")
+            raise ValueError("❌ 请提供搜索关键词\n建议：\n1. 在参数 query 中输入要搜索的消息内容关键词\n2. 关键词示例：'函数定义' 或 '错误处理'\n3. 可选参数 session_id 可限定搜索范围到特定会话")
         try:
             from backend.services.hermes_service import hermes_service
             results = hermes_service.search_messages(query, session_id, limit)
@@ -1032,7 +1135,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                 output.append(f"[{r['role']}] ({r['session_id'][:12]}...) {content_preview}")
             return "\n".join(output)
         except Exception as e:
-            raise ValueError(f"搜索失败: {e}")
+            raise ValueError(f"❌ 搜索失败: {e}\n建议：\n1. 检查搜索关键词是否过于宽泛或包含特殊字符\n2. 确认 Hermes 服务正常运行，数据库连接正常\n3. 尝试使用更具体的关键词缩小搜索范围")
 
     # ---- Phase 2: Context Files ----
     elif name == "read_soul":
@@ -1045,12 +1148,12 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             else:
                 return "SOUL.md 尚未创建。使用 write_soul 工具创建 Agent 人格定义。"
         except Exception as e:
-            raise ValueError(f"读取 SOUL.md 失败: {e}")
+            raise ValueError(f"❌ 读取 SOUL.md 失败: {e}\n建议：\n1. 检查 Hermes 主目录是否存在且可访问\n2. 如果 SOUL.md 尚未创建，请使用 write_soul 工具创建 Agent 人格定义\n3. 确认文件编码为 UTF-8")
 
     elif name == "write_soul":
         content = arguments.get("content", "")
         if not content:
-            raise ValueError("请提供人格定义内容")
+            raise ValueError("❌ 请提供人格定义内容\n建议：\n1. 在参数 content 中输入 Agent 的人格定义文本（Markdown 格式）\n2. 内容示例：'你是专业的编程助手，擅长 Python 和 JavaScript'\n3. 可以包含角色设定、行为准则、知识领域等描述")
         try:
             from backend.config import get_hermes_home
             soul_path = get_hermes_home() / "SOUL.md"
@@ -1058,7 +1161,160 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             soul_path.write_text(content, encoding="utf-8")
             return f"SOUL.md 已更新 ({len(content)} 字符)"
         except Exception as e:
-            raise ValueError(f"写入 SOUL.md 失败: {e}")
+            raise ValueError(f"❌ 写入 SOUL.md 失败: {e}\n建议：\n1. 检查 Hermes 主目录的写入权限\n2. 确认磁盘空间充足\n3. 如果文件被其他进程占用，请稍后重试")
+
+    # ---- AGENTS.md 支持 ----
+    elif name == "read_agents_md":
+        import os as _os
+        custom_path = arguments.get("path", "")
+        if custom_path:
+            if not _os.path.isfile(custom_path):
+                raise ValueError(f"❌ 文件不存在: {custom_path}\n建议：\n1. 检查路径拼写是否正确\n2. 使用 list_directory 确认文件位置")
+            try:
+                with open(custom_path, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+                return f"AGENTS.md ({custom_path}, {len(content)} 字符)\n{'='*50}\n{content}"
+            except Exception as e:
+                raise ValueError(f"❌ 读取文件失败: {e}")
+        else:
+            # 按顺序查找：./AGENTS.md → ./CLAUDE.md → ~/.hermes/AGENTS.md
+            search_paths = [
+                ("./AGENTS.md", "AGENTS.md"),
+                ("./CLAUDE.md", "CLAUDE.md"),
+            ]
+            try:
+                from backend.config import get_hermes_home
+                hermes_home = get_hermes_home()
+                search_paths.append((str(hermes_home / "AGENTS.md"), "~/.hermes/AGENTS.md"))
+            except Exception:
+                pass
+
+            for fpath, label in search_paths:
+                if _os.path.isfile(fpath):
+                    try:
+                        with open(fpath, "r", encoding="utf-8", errors="replace") as f:
+                            content = f.read()
+                        return f"{label} ({fpath}, {len(content)} 字符)\n{'='*50}\n{content}"
+                    except Exception as e:
+                        raise ValueError(f"❌ 读取 {label} 失败: {e}")
+
+            return "未找到 AGENTS.md，使用 write_agents_md 创建。\n\n查找路径（按顺序）：\n1. ./AGENTS.md\n2. ./CLAUDE.md\n3. ~/.hermes/AGENTS.md"
+
+    elif name == "write_agents_md":
+        import os as _os
+        content = arguments.get("content", "")
+        if not content:
+            raise ValueError("❌ 请提供项目指令内容\n建议：\n1. 在参数 content 中输入项目级指令文本（Markdown 格式）\n2. 内容示例：编码规范、项目结构说明、常用命令等\n3. 可选参数 path 指定写入路径（默认 ~/.hermes/AGENTS.md）")
+        custom_path = arguments.get("path", "")
+        if custom_path:
+            target_path = custom_path
+        else:
+            try:
+                from backend.config import get_hermes_home
+                target_path = str(get_hermes_home() / "AGENTS.md")
+            except Exception:
+                target_path = _os.path.expanduser("~/.hermes/AGENTS.md")
+        try:
+            _os.makedirs(_os.path.dirname(target_path), exist_ok=True)
+            with open(target_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            return f"AGENTS.md 已写入: {target_path} ({len(content)} 字符)"
+        except Exception as e:
+            raise ValueError(f"❌ 写入 AGENTS.md 失败: {e}\n建议：\n1. 检查目标目录的写入权限\n2. 确认磁盘空间充足\n3. 尝试使用 path 参数指定其他写入路径")
+
+    # ---- 学习循环 ----
+    elif name == "read_learnings":
+        import os as _os
+        try:
+            from backend.config import get_hermes_home
+            learnings_path = get_hermes_home() / "learnings.md"
+        except Exception:
+            learnings_path = _os.path.expanduser("~/.hermes/learnings.md")
+
+        if not _os.path.isfile(learnings_path):
+            return "暂无学习记录。使用 add_learning 工具记录工具使用中的发现和经验。"
+
+        try:
+            with open(learnings_path, "r", encoding="utf-8", errors="replace") as f:
+                full_content = f.read()
+            if not full_content.strip():
+                return "暂无学习记录。使用 add_learning 工具记录工具使用中的发现和经验。"
+
+            # 按条目分割（## 开头为条目分隔符）
+            entries = []
+            current_entry = []
+            for line in full_content.split("\n"):
+                if line.startswith("## ") and current_entry:
+                    entries.append("\n".join(current_entry))
+                    current_entry = [line]
+                else:
+                    current_entry.append(line)
+            if current_entry:
+                entries.append("\n".join(current_entry))
+
+            # 按时间倒序（最新在前）
+            entries = entries[::-1]
+            limit = int(arguments.get("limit", 20))
+            selected = entries[:limit]
+
+            header = f"学习记录 (共 {len(entries)} 条，显示最近 {len(selected)} 条)\n{'='*50}\n"
+            return header + "\n---\n".join(selected)
+        except Exception as e:
+            raise ValueError(f"❌ 读取学习记录失败: {e}")
+
+    elif name == "add_learning":
+        import os as _os
+        from datetime import datetime, timezone
+        content = arguments.get("content", "")
+        if not content:
+            raise ValueError("❌ 请提供学习内容\n建议：\n1. 在参数 content 中输入本次学习或发现的描述\n2. 可选参数 tool 指定相关工具名\n3. 可选参数 error 记录相关错误信息")
+        tool_name = arguments.get("tool", "")
+        error_info = arguments.get("error", "")
+
+        try:
+            from backend.config import get_hermes_home
+            learnings_path = get_hermes_home() / "learnings.md"
+        except Exception:
+            learnings_path = _os.path.expanduser("~/.hermes/learnings.md")
+
+        try:
+            _os.makedirs(_os.path.dirname(learnings_path), exist_ok=True)
+
+            # 构建新条目
+            now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            entry_lines = [f"\n## [{now}] {tool_name}"]
+            entry_lines.append(f"- **内容**: {content}")
+            if tool_name:
+                entry_lines.append(f"- **工具**: {tool_name}")
+            if error_info:
+                entry_lines.append(f"- **错误**: {error_info}")
+            new_entry = "\n".join(entry_lines) + "\n"
+
+            # 读取现有内容并检查条数
+            existing = ""
+            if _os.path.isfile(learnings_path):
+                with open(learnings_path, "r", encoding="utf-8", errors="replace") as f:
+                    existing = f.read()
+
+            # 计算现有条数
+            entry_count = existing.count("\n## ")
+
+            # 超过 50 条时删除最旧的条目
+            if entry_count >= 50:
+                # 找到第一个条目（最旧的）并删除
+                first_entry_end = existing.find("\n## ", 1)
+                if first_entry_end != -1:
+                    existing = existing[first_entry_end:]
+                else:
+                    existing = ""
+
+            # 写入
+            with open(learnings_path, "w", encoding="utf-8") as f:
+                f.write(existing + new_entry)
+
+            return f"学习记录已添加 ({tool_name or '通用'})"
+        except Exception as e:
+            raise ValueError(f"❌ 添加学习记录失败: {e}\n建议：\n1. 检查 ~/.hermes/ 目录的写入权限\n2. 确认磁盘空间充足\n3. 如果 learnings.md 文件损坏，可手动删除后重试")
 
     # ---- Phase 3: MCP 网关管理 ----
     elif name == "add_mcp_server":
@@ -1067,14 +1323,14 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         prefix = arguments.get("prefix", "")
         result = mcp_client_service.add_server(server_name, url, prefix)
         if not result.get("success"):
-            raise ValueError(result.get("message", "添加失败"))
+            raise ValueError(f"❌ {result.get('message', '添加失败')}\n建议：\n1. 检查服务器名称是否已存在（使用 list_mcp_servers 查看已添加的服务器）\n2. 确认 URL 格式正确且服务器可访问\n3. 检查服务器名称和 URL 是否拼写正确")
         return f"已添加 MCP 服务器 '{server_name}'，发现 {result.get('tools_count', 0)} 个工具（前缀: {mcp_client_service._servers[server_name].get('prefix', '')}）"
 
     elif name == "remove_mcp_server":
         server_name = arguments.get("name", "")
         result = mcp_client_service.remove_server(server_name)
         if not result.get("success"):
-            raise ValueError(result.get("message", "移除失败"))
+            raise ValueError(f"❌ {result.get('message', '移除失败')}\n建议：\n1. 使用 list_mcp_servers 确认服务器名称是否正确\n2. 确认该服务器当前处于已连接状态\n3. 服务器名称区分大小写，请检查拼写")
         return f"已移除 MCP 服务器 '{server_name}'"
 
     elif name == "list_mcp_servers":
@@ -1102,7 +1358,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             # 解析 MCP 响应
             if isinstance(result, dict):
                 if "error" in result:
-                    raise ValueError(result["error"])
+                    raise ValueError(f"❌ {result['error']}\n建议：\n1. 使用 refresh_mcp_servers 工具刷新外部服务器连接状态\n2. 检查外部 MCP 服务器是否正常运行\n3. 确认网络连接正常，服务器地址可访问")
                 content_list = result.get("result", {}).get("content", [])
                 if content_list:
                     return "\n".join(c.get("text", "") for c in content_list)
@@ -1111,10 +1367,10 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         except ValueError:
             raise
         except Exception as e:
-            raise ValueError(f"调用外部工具 '{name}' 失败: {e}")
+            raise ValueError(f"❌ 调用外部工具 '{name}' 失败: {e}\n建议：\n1. 使用 refresh_mcp_servers 刷新服务器连接后重试\n2. 检查传递给工具的参数是否符合要求\n3. 确认外部 MCP 服务器正在运行且网络可达")
 
     else:
-        raise ValueError(f"未知工具: {name}")
+        raise ValueError(f"❌ 未知工具: {name}\n建议：\n1. 使用 list_tools 工具查看所有可用的内置工具列表\n2. 如果要使用外部 MCP 工具，请先通过 add_mcp_server 添加对应服务器\n3. 检查工具名称拼写是否正确，注意大小写")
 
 
 async def _read_resource(uri: str) -> str:
@@ -1200,10 +1456,20 @@ async def mcp_endpoint(request: Request):
             except Exception:
                 pass
 
-            result_text = await _call_tool(tool_name, arguments)
-            return JSONResponse(content=_jsonrpc_response(req_id, {
-                "content": [{"type": "text", "text": result_text}]
-            }))
+            # 工具调用追踪
+            from backend.services import eval_service
+            start = time.time()
+            try:
+                result_text = await _call_tool(tool_name, arguments)
+                latency = int((time.time() - start) * 1000)
+                eval_service.record_tool_call(tool_name, arguments, True, latency, "", "mcp")
+                return JSONResponse(content=_jsonrpc_response(req_id, {
+                    "content": [{"type": "text", "text": result_text}]
+                }))
+            except Exception as e:
+                latency = int((time.time() - start) * 1000)
+                eval_service.record_tool_call(tool_name, arguments, False, latency, str(e), "mcp")
+                raise
         except Exception as e:
             # 记录 MCP 调用失败
             try:

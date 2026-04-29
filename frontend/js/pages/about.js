@@ -5,6 +5,19 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '3.1.0',
+            date: '2026-04-29 12:30',
+            title: '工程层加固（AI 工程指南整合）',
+            changes: [
+                '错误信息指令化: 25 处 raise ValueError 改为诊断+建议格式',
+                '工具调用追踪: tool_traces.jsonl 记录每次调用',
+                'Evals API: /api/evals/summary|tools|errors|trend',
+                'AGENTS.md: read_agents_md / write_agents_md',
+                '学习循环: read_learnings / add_learning（上限 50 条）',
+                'shell_execute 增强: 命令不存在/权限不足/超时智能建议',
+                'MCP 工具 44 → 48 个',
+            ],
+        },        {
             version: '3.0.0',
             date: '2026-04-29 01:30',
             title: 'MCP 网关 - 工具聚合器',
