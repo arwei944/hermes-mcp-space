@@ -154,6 +154,35 @@ const API = (() => {
         timeline(id) {
             return get(`/api/sessions/${id}/timeline`);
         },
+        // 批量操作
+        batchDelete(ids) {
+            return post('/api/sessions/batch/delete', { session_ids: ids });
+        },
+        batchArchive(ids, archived) {
+            return post('/api/sessions/batch/archive', { session_ids: ids, archived });
+        },
+        batchTags(ids, tags) {
+            return post('/api/sessions/batch/tags', { session_ids: ids, tags });
+        },
+        batchExport(ids, format) {
+            return post('/api/sessions/batch/export', { session_ids: ids, format });
+        },
+        // 知识提取
+        summarize(id) {
+            return post(`/api/sessions/${id}/summarize`);
+        },
+        extract(id) {
+            return get(`/api/sessions/${id}/extract`);
+        },
+        toSkill(id, name, description) {
+            return post(`/api/sessions/${id}/to-skill`, { name, description });
+        },
+        toMemory(id) {
+            return post(`/api/sessions/${id}/to-memory`);
+        },
+        toLearning(id) {
+            return post(`/api/sessions/${id}/to-learning`);
+        },
     };
 
     // ==========================================

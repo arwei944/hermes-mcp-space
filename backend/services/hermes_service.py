@@ -1127,5 +1127,169 @@ class HermesService:
         return {"success": True, "message": "MCP 服务运行正常（内嵌模式，无需重启）"}
 
 
+    # ==================== 知识提取 ====================
+
+    def generate_session_summary(self, session: Dict[str, Any], messages: List[Dict[str, Any]]) -> str:
+        """基于消息内容生成会话摘要"""
+        import re
+        title = session.get("title", "未命名会话")
+        model = session.get("model", "unknown")
+        created = session.get("created_at", "")[:16]
+        total_messages = len(messages)
+
+        # Count by role
+        user_msgs = [m for m in messages if m.get("role") == "user"]
+        assistant_msgs = [m for m in messages if m.get("role") == "assistant"]
+
+        # Extract key topics from first few user messages
+        topics = []
+        for m in user_msgs[:5]:
+            content = m.get("content", "")
+            if len(content) > 10:
+                topics.append(content[:100])
+
+        lines = [
+            f"## 会话摘要: {title}",
+            "",
+            f"- **模型**: {model}",
+            f"- **时间**: {created}",
+            f"- **消息数**: {total_messages} (用户 {len(user_msgs)} / 助手 {len(assistant_msgs)})",
+            "",
+        ]
+
+        if topics:
+            lines.append("### 主要讨论")
+            for i, t in enumerate(topics, 1):
+                lines.append(f"{i}. {t}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def extract_key_info(self, messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """从消息中提取关键信息"""
+        import re
+
+        all_content = "\n".join(m.get("content", "") for m in messages)
+
+        # Extract URLs
+        urls = list(set(re.findall(r'https?://[^\s<>"\')\]]+', all_content)))
+
+        # Extract file paths
+        file_paths = list(set(re.findall(r'/[\w\-./]+\.\w+', all_content)))
+
+        # Extract code blocks (language + count)
+        code_blocks = re.findall(r'```(\w*)\n', all_content)
+        code_count = len(code_blocks)
+        code_languages = list(set(code_blocks))
+
+        # Extract TODO/FIXME
+        todos = re.findall(r'(?:TODO|FIXME|BUG|HACK)[\s:]*[^\n]{0,100}', all_content, re.IGNORECASE)
+
+        # Extract numbers with units (metrics)
+        metrics = re.findall(r'\d+(?:\.\d+)?\s*(?:ms|MB|KB|GB|秒|次|行|个|%|px)', all_content)
+
+        return {
+            "urls": urls[:20],
+            "file_paths": file_paths[:20],
+            "code_blocks": {"count": code_count, "languages": code_languages},
+            "todos": todos[:10],
+            "metrics": metrics[:10],
+            "total_content_length": len(all_content),
+        }
+
+    def generate_skill_from_messages(self, session: Dict[str, Any], messages: List[Dict[str, Any]]) -> str:
+        """从会话消息中生成技能内容"""
+        title = session.get("title", "自动提取技能")
+        lines = [
+            f"# {title}",
+            "",
+            f"> 自动从会话中提取",
+            f"> 模型: {session.get('model', 'unknown')}",
+            f"> 时间: {session.get('created_at', '')[:16]}",
+            "",
+            "## 使用方法",
+            "",
+        ]
+
+        # Extract user requests as steps
+        user_msgs = [m for m in messages if m.get("role") == "user"]
+        assistant_msgs = [m for m in messages if m.get("role") == "assistant"]
+
+        if user_msgs:
+            lines.append("### 操作步骤")
+            for i, m in enumerate(user_msgs[:10], 1):
+                content = m.get("content", "").strip()
+                if content:
+                    lines.append(f"{i}. {content}")
+            lines.append("")
+
+        if assistant_msgs:
+            lines.append("### 关键回复")
+            for m in assistant_msgs[:5]:
+                content = m.get("content", "").strip()
+                if content:
+                    lines.append(f"- {content[:200]}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def generate_knowledge_from_messages(self, session: Dict[str, Any], messages: List[Dict[str, Any]]) -> str:
+        """从会话中提取关键知识"""
+        title = session.get("title", "未命名会话")
+        assistant_msgs = [m for m in messages if m.get("role") == "assistant"]
+
+        if not assistant_msgs:
+            return ""
+
+        lines = [
+            f"### 来自: {title}",
+            f"**时间**: {session.get('created_at', '')[:16]}",
+            "",
+        ]
+
+        # Take key assistant responses
+        for m in assistant_msgs[:3]:
+            content = m.get("content", "").strip()
+            if len(content) > 20:
+                lines.append(f"- {content[:300]}")
+
+        return "\n".join(lines)
+
+    def generate_learning_from_messages(self, session: Dict[str, Any], messages: List[Dict[str, Any]]) -> str:
+        """从会话中提取经验教训"""
+        import re
+        title = session.get("title", "未命名会话")
+        all_content = "\n".join(m.get("content", "") for m in messages)
+
+        # Look for error patterns, solutions, best practices
+        patterns = [
+            (r'(?:错误|失败|问题|bug)[：:\s]*([^\n]{10,200})', "问题"),
+            (r'(?:解决|修复|方法|方案)[：:\s]*([^\n]{10,200})', "解决方案"),
+            (r'(?:注意|避免|不要|切记)[：:\s]*([^\n]{10,200})', "注意事项"),
+        ]
+
+        learnings = []
+        for pattern, category in patterns:
+            matches = re.findall(pattern, all_content, re.IGNORECASE)
+            for match in matches[:3]:
+                learnings.append(f"- [{category}] {match.strip()}")
+
+        if not learnings:
+            # Fallback: just note the session happened
+            learnings.append(f"- [{title}] 会话记录，{len(messages)} 条消息")
+
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        lines = [
+            f"## {title}",
+            f"*{timestamp}*",
+            "",
+            "\n".join(learnings),
+        ]
+
+        return "\n".join(lines)
+
+
 # 全局服务实例
 hermes_service = HermesService()
