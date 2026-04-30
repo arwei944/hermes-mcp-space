@@ -183,7 +183,7 @@ class MCPClientService:
             data=payload,
             headers={
                 "Content-Type": "application/json",
-                "Accept": "application/json",
+                "Accept": "application/json, text/event-stream",
             },
             method="POST",
         )
@@ -209,7 +209,7 @@ class MCPClientService:
             data=payload,
             headers={
                 "Content-Type": "application/json",
-                "Accept": "application/json",
+                "Accept": "application/json, text/event-stream",
             },
             method="POST",
         )
