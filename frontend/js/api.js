@@ -127,6 +127,33 @@ const API = (() => {
         compress(id) {
             return post(`/api/sessions/${id}/compress`);
         },
+        search(params) {
+            return get('/api/sessions/search', params);
+        },
+        tags() {
+            return get('/api/sessions/tags');
+        },
+        setTags(id, tags) {
+            return put(`/api/sessions/${id}/tags`, { tags });
+        },
+        rename(id, title) {
+            return put(`/api/sessions/${id}/title`, { title });
+        },
+        pin(id, pinned) {
+            return put(`/api/sessions/${id}/pin`, { pinned });
+        },
+        archive(id, archived) {
+            return put(`/api/sessions/${id}/archive`, { archived });
+        },
+        exportSession(id, format) {
+            return fetch(`${BASE_URL}/api/sessions/${id}/export?format=${format}`).then(r => r.blob());
+        },
+        exportAll(format) {
+            return fetch(`${BASE_URL}/api/sessions/export?format=${format}`).then(r => r.blob());
+        },
+        timeline(id) {
+            return get(`/api/sessions/${id}/timeline`);
+        },
     };
 
     // ==========================================
