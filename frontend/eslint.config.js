@@ -27,6 +27,7 @@ export default [
                 LogsPage: "writable",
                 PluginsPage: "writable",
                 TrashPage: "writable",
+                ScreenshotPage: "writable",
                 APP_VERSION: "readonly",
                 HermesMCP: "readonly",
                 showToast: "readonly",
