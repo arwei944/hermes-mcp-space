@@ -194,9 +194,18 @@ const MarketplacePage = (() => {
             ${Components.renderStatCard('后端状态', api.status === 'ok' ? '正常' : '降级', api.status || '-', Components.icon('radio', 16), api.status === 'ok' ? 'green' : 'orange')}
         </div>`;
 
-        // 操作按钮
+        // 扫描配置 + 操作按钮
+        const scanConfigHtml = `<div style="margin-bottom:16px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)">
+            <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text-secondary)">扫描配置</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <input type="text" id="mcpCustomPorts" placeholder="自定义端口（逗号分隔，如 3000,5000,8080）" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
+                <input type="text" id="mcpCustomUrl" placeholder="自定义 URL（如 http://localhost:7860/mcp）" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
+                <button type="button" class="btn btn-secondary" data-action="discoverMCPServers" ${_isScanning ? 'disabled' : ''}>${_isScanning ? '扫描中...' : '扫描'}</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">默认扫描端口：3000-3005, 4000, 5000, 8000, 8080 + 同用户 HF Space</div>
+        </div>`;
+
         const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">
-            <button type="button" class="btn btn-secondary" data-action="discoverMCPServers" ${_isScanning ? 'disabled' : ''}>${_isScanning ? '扫描中...' : '扫描 MCP 服务'}</button>
             <button type="button" class="btn btn-secondary" data-action="testConnection">测试 MCP 连接</button>
             <button type="button" class="btn btn-secondary" data-action="restartService">重启 MCP 服务</button>
         </div>`;
@@ -366,7 +375,7 @@ const MarketplacePage = (() => {
             );
         }
 
-        return `${statsHtml}${actionsHtml}${testResultHtml}${toolsHtml}
+        return `${statsHtml}${scanConfigHtml}${actionsHtml}${testResultHtml}${toolsHtml}
             ${Components.renderSection('连接配置', `${configTabHtml}${configContentHtml}`)}
             ${endpointHtml}
             ${discoveredHtml}
@@ -525,7 +534,13 @@ const MarketplacePage = (() => {
         document.getElementById('contentBody').innerHTML = buildPage();
         bindEvents();
         try {
-            const resp = await API.get('/api/mcp/discover');
+            const ports = document.getElementById('mcpCustomPorts')?.value.trim() || '';
+            const customUrl = document.getElementById('mcpCustomUrl')?.value.trim() || '';
+            const params = new URLSearchParams();
+            if (ports) params.set('ports', ports);
+            if (customUrl) params.set('custom_url', customUrl);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            const resp = await API.get(`/api/mcp/discover${query}`);
             _discoveredServers = resp.discovered || [];
             Components.Toast.success(`扫描完成，发现 ${_discoveredServers.length} 个 MCP 服务`);
         } catch (err) {

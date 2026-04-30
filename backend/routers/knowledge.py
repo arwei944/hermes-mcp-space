@@ -200,9 +200,14 @@ async def set_obsidian_config(body: dict):
 
 
 @router.post("/obsidian/sync", summary="执行 Obsidian 双向同步")
-async def sync_obsidian():
-    """执行 Obsidian Vault 与知识库的双向同步"""
+async def sync_obsidian(direction: str = "both"):
+    """执行 Obsidian Vault 与知识库的双向同步
+    
+    direction: "export"(仅导出), "import"(仅导入), "both"(双向,默认)
+    双向同步策略：以最后修改时间较新的文件为准
+    """
     import json
+    from datetime import datetime
     config_file = HERMES_HOME / "data" / "obsidian_config.json"
     if not config_file.exists():
         return {"success": False, "message": "未配置 Obsidian Vault 路径"}
@@ -218,28 +223,68 @@ async def sync_obsidian():
         return {"success": False, "message": f"Vault 路径不存在: {vault_path}"}
 
     synced_files = []
-    # 同步 MEMORY.md
-    memory_file = HERMES_HOME / "data" / "MEMORY.md"
-    vault_memory = vault / "Hermes" / "MEMORY.md"
-    if memory_file.exists():
-        vault_memory.parent.mkdir(parents=True, exist_ok=True)
-        vault_memory.write_text(memory_file.read_text(encoding="utf-8"), encoding="utf-8")
-        synced_files.append("MEMORY.md")
+    hermes_dir = HERMES_HOME / "memories"
+    vault_hermes = vault / "Hermes"
 
-    # 同步 USER.md
-    user_file = HERMES_HOME / "data" / "USER.md"
-    vault_user = vault / "Hermes" / "USER.md"
-    if user_file.exists():
-        vault_user.parent.mkdir(parents=True, exist_ok=True)
-        vault_user.write_text(user_file.read_text(encoding="utf-8"), encoding="utf-8")
-        synced_files.append("USER.md")
+    # 定义同步文件映射
+    file_mappings = [
+        ("MEMORY.md", hermes_dir / "MEMORY.md", vault_hermes / "MEMORY.md"),
+        ("USER.md", hermes_dir / "USER.md", vault_hermes / "USER.md"),
+        ("learnings.md", HERMES_HOME / "learnings.md", vault_hermes / "learnings.md"),
+        ("SOUL.md", HERMES_HOME / "SOUL.md", vault_hermes / "SOUL.md"),
+    ]
+
+    for label, hermes_file, vault_file in file_mappings:
+        hermes_exists = hermes_file.exists()
+        vault_exists = vault_file.exists()
+
+        # --- 导出：Hermes → Obsidian ---
+        if direction in ("export", "both") and hermes_exists:
+            if not vault_exists or hermes_file.stat().st_mtime >= vault_file.stat().st_mtime:
+                vault_file.parent.mkdir(parents=True, exist_ok=True)
+                vault_file.write_text(hermes_file.read_text(encoding="utf-8"), encoding="utf-8")
+                synced_files.append(f"→ {label} (导出)")
+
+        # --- 导入：Obsidian → Hermes ---
+        if direction in ("import", "both") and vault_exists:
+            if not hermes_exists or vault_file.stat().st_mtime > hermes_file.stat().st_mtime:
+                hermes_file.parent.mkdir(parents=True, exist_ok=True)
+                hermes_file.write_text(vault_file.read_text(encoding="utf-8"), encoding="utf-8")
+                synced_files.append(f"← {label} (导入)")
+
+    # 同步技能文件
+    if direction in ("export", "both"):
+        skills_dir = HERMES_HOME / "skills"
+        vault_skills = vault_hermes / "skills"
+        if skills_dir.exists():
+            for sf in skills_dir.glob("*.json"):
+                target = vault_skills / sf.name
+                if not target.exists() or sf.stat().st_mtime >= target.stat().st_mtime:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_text(sf.read_text(encoding="utf-8"), encoding="utf-8")
+                    synced_files.append(f"→ skills/{sf.name} (导出)")
+
+    if direction in ("import", "both"):
+        vault_skills = vault_hermes / "skills"
+        skills_dir = HERMES_HOME / "skills"
+        if vault_skills.exists():
+            for sf in vault_skills.glob("*.json"):
+                target = skills_dir / sf.name
+                if not target.exists() or sf.stat().st_mtime > target.stat().st_mtime:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_text(sf.read_text(encoding="utf-8"), encoding="utf-8")
+                    synced_files.append(f"← skills/{sf.name} (导入)")
 
     # 更新同步时间
-    from datetime import datetime
     config["last_sync"] = datetime.now().isoformat()
     config_file.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    return {"success": True, "message": f"已同步 {len(synced_files)} 个文件", "files": synced_files}
+    return {
+        "success": True,
+        "message": f"已同步 {len(synced_files)} 个文件",
+        "files": synced_files,
+        "direction": direction,
+    }
 
 
 @router.get("/obsidian/status", summary="获取同步状态")

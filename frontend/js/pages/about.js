@@ -5,6 +5,19 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '6.1.0',
+            date: '2026-04-30',
+            title: '后续优化 — 数据填充/SSE驱动/双向同步/MCP增强',
+            changes: [
+                'seed_data.py 增加示例数据：3个示例会话、5条日志、1个定时任务、3条学习记录、2个示例技能、SOUL.md',
+                'knowledge.js 移除 30 秒轮询，改为 SSE 事件驱动刷新（6 种事件类型 + 500ms 防抖）',
+                'Obsidian 同步扩展为双向：支持导出/导入/双向三种模式，基于文件修改时间戳',
+                '同步范围扩展：MEMORY.md + USER.md + learnings.md + SOUL.md + skills/*.json',
+                'MCP 扫描增加自定义端口配置和自定义 URL 手动添加',
+                '扫描结果新增 source 字段区分来源（localhost/huggingface/custom）',
+            ],
+        },
+        {
             version: '6.0.0',
             date: '2026-04-30',
             title: '智能体行为管理 + 仪表盘增强 + 关于页重构',

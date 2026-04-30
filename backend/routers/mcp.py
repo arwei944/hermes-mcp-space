@@ -7,7 +7,7 @@
 import os
 from typing import Any, Dict, List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from backend.services.hermes_service import hermes_service
 
@@ -80,15 +80,33 @@ async def refresh_all_mcp_servers() -> Dict[str, Any]:
 
 
 @router.get("/discover", summary="扫描可用 MCP 服务")
-async def discover_mcp_services() -> Dict[str, Any]:
-    """扫描 HF Space 内网中可用的 MCP 服务"""
+async def discover_mcp_services(
+    ports: str = Query(default="", description="自定义端口列表，逗号分隔，如 '3000,5000,8080'"),
+    custom_url: str = Query(default="", description="自定义 MCP URL，如 'http://localhost:7860/mcp'"),
+) -> Dict[str, Any]:
+    """扫描 HF Space 内网中可用的 MCP 服务
+    
+    支持参数：
+    - ports: 自定义扫描端口（逗号分隔），留空使用默认端口列表
+    - custom_url: 手动添加的自定义 MCP 服务 URL
+    """
     discovered = []
     
     # 尝试探测常见的 MCP 端口
     import asyncio
     import aiohttp
     
-    common_ports = [3000, 3001, 3002, 3003, 3004, 3005, 4000, 5000, 8000, 8080]
+    default_ports = [3000, 3001, 3002, 3003, 3004, 3005, 4000, 5000, 8000, 8080]
+    
+    # 解析自定义端口
+    if ports:
+        try:
+            custom_ports = [int(p.strip()) for p in ports.split(",") if p.strip().isdigit()]
+            common_ports = list(set(default_ports + custom_ports))
+        except Exception:
+            common_ports = default_ports
+    else:
+        common_ports = default_ports
     
     # 获取当前 Space 信息
     space_name = os.environ.get("SPACE_ID", "")
@@ -119,16 +137,58 @@ async def discover_mcp_services() -> Dict[str, Any]:
                                 "port": port,
                                 "description": server_info.get("name", "MCP Service"),
                                 "status": "available",
+                                "source": "localhost",
                             })
         except Exception:
             pass
+    
+    # 探测自定义 URL
+    if custom_url:
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3)) as session:
+                async with session.post(custom_url, json={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {},
+                        "clientInfo": {"name": "hermes-discovery", "version": "1.0.0"}
+                    }
+                }) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        if "result" in data:
+                            server_info = data["result"].get("serverInfo", {})
+                            discovered.append({
+                                "name": server_info.get("name", "custom-service"),
+                                "url": custom_url,
+                                "description": server_info.get("name", "Custom MCP Service"),
+                                "status": "available",
+                                "source": "custom",
+                            })
+                    else:
+                        discovered.append({
+                            "name": "custom-service",
+                            "url": custom_url,
+                            "description": f"连接失败 (HTTP {resp.status})",
+                            "status": "error",
+                            "source": "custom",
+                        })
+        except Exception as e:
+            discovered.append({
+                "name": "custom-service",
+                "url": custom_url,
+                "description": f"连接失败: {str(e)[:100]}",
+                "status": "error",
+                "source": "custom",
+            })
     
     # 探测同用户的其他 HF Space
     if space_owner:
         try:
             import aiohttp
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
-                # 获取用户 Space 列表
                 api_url = f"https://huggingface.co/api/spaces?author={space_owner}&limit=50"
                 async with session.get(api_url) as resp:
                     if resp.status == 200:
@@ -136,7 +196,6 @@ async def discover_mcp_services() -> Dict[str, Any]:
                         for space in spaces:
                             space_id = space.get("id", "")
                             if space_id and space_id != f"{space_owner}/{space_name}":
-                                # 尝试探测该 Space 的 MCP 端点
                                 space_url = f"https://{space_id.replace('/', '-')}.hf.space/mcp"
                                 try:
                                     async with session.post(space_url, json={
@@ -166,7 +225,7 @@ async def discover_mcp_services() -> Dict[str, Any]:
         except Exception:
             pass
     
-    return {"discovered": discovered, "total": len(discovered)}
+    return {"discovered": discovered, "total": len(discovered), "ports_scanned": common_ports}
 
 
 @router.post("/discover/add", summary="批量添加发现的 MCP 服务")

@@ -11,7 +11,7 @@ const KnowledgePage = (() => {
     let _skills = [];
     let _analysis = null;
     let _activeTab = 'sessions';
-    let _pollTimer = null;
+    let _pollTimer = null; // 保留引用，但不再使用轮询
     let _searchTerm = '';
     let _searchResults = null;
     let _obsidianConfig = null;
@@ -31,7 +31,7 @@ const KnowledgePage = (() => {
 
         container.innerHTML = buildPage();
         bindEvents();
-        startPolling();
+        // 不再启动轮询，改由 SSE 事件驱动刷新
     }
 
     function stopPolling() {
@@ -42,11 +42,8 @@ const KnowledgePage = (() => {
     }
 
     function startPolling() {
+        // 已废弃：改用 SSE 事件驱动，不再定时轮询
         stopPolling();
-        _pollTimer = setInterval(async () => {
-            await _loadData();
-            updateOverview();
-        }, 30000);
     }
 
     async function _loadData() {
@@ -89,15 +86,28 @@ const KnowledgePage = (() => {
     }
 
     function onSSEEvent(type, _data) {
-        if (type === 'mcp.tool_complete') {
-            API.get('/api/knowledge/overview')
-                .then((o) => {
-                    _overview = o || {};
-                    updateOverview();
-                })
-                .catch(() => {});
+        // SSE 事件驱动刷新：替代 30 秒轮询
+        const shouldRefreshOverview = [
+            'mcp.tool_complete',    // 工具调用完成
+            'session.message',      // 新消息
+            'session.updated',      // 会话更新
+            'memory.updated',       // 记忆更新
+            'skill.updated',        // 技能更新
+            'knowledge.updated',    // 知识库更新
+        ].includes(type);
+
+        if (shouldRefreshOverview) {
+            // 防抖：500ms 内只刷新一次
+            if (knowledgePage._refreshTimer) return;
+            knowledgePage._refreshTimer = setTimeout(() => {
+                knowledgePage._refreshTimer = null;
+                _loadData().then(() => updateOverview()).catch(() => {});
+            }, 500);
         }
     }
+
+    // 防抖定时器（模块级）
+    const knowledgePage = { _refreshTimer: null };
 
     function switchTab(tab) {
         _activeTab = tab;
@@ -228,7 +238,9 @@ const KnowledgePage = (() => {
                 ${Components.formGroup('Vault 路径', `<input class="form-input" id="obsidianVaultPath" placeholder="/path/to/your/vault" value="${Components.escapeHtml(vaultPath)}">`, 'Obsidian Vault 的绝对路径')}
                 <div style="display:flex;gap:8px;margin-top:12px">
                     <button type="button" class="btn btn-primary" data-action="saveObsidianConfig">保存配置</button>
-                    <button type="button" class="btn btn-secondary" data-action="syncObsidian" ${!vaultPath ? 'disabled' : ''}>执行同步</button>
+                    <button type="button" class="btn btn-secondary" data-action="syncObsidian" data-direction="both" ${!vaultPath ? 'disabled' : ''}>双向同步</button>
+                    <button type="button" class="btn btn-ghost" data-action="syncObsidian" data-direction="export" ${!vaultPath ? 'disabled' : ''}>仅导出</button>
+                    <button type="button" class="btn btn-ghost" data-action="syncObsidian" data-direction="import" ${!vaultPath ? 'disabled' : ''}>仅导入</button>
                 </div>
             </div>
             <div class="mp-card">
@@ -495,12 +507,14 @@ const KnowledgePage = (() => {
         }
     }
 
-    async function syncObsidian() {
-        Components.Toast.info('正在同步...');
+    async function syncObsidian(direction) {
+        const dir = direction || 'both';
+        const dirLabel = { export: '导出到 Obsidian', import: '从 Obsidian 导入', both: '双向同步' }[dir] || '同步';
+        Components.Toast.info(`正在${dirLabel}...`);
         try {
-            const result = await API.post('/api/knowledge/obsidian/sync');
+            const result = await API.post(`/api/knowledge/obsidian/sync?direction=${dir}`);
             if (result.success) {
-                Components.Toast.success(result.message);
+                Components.Toast.success(`${dirLabel}完成：${result.message}`);
                 _obsidianConfig = await API.get('/api/knowledge/obsidian/config');
                 document.getElementById('kbContent').innerHTML = buildTabContent();
                 bindTabEvents();
@@ -508,7 +522,7 @@ const KnowledgePage = (() => {
                 Components.Toast.error(result.message);
             }
         } catch (err) {
-            Components.Toast.error('同步失败: ' + err.message);
+            Components.Toast.error(`${dirLabel}失败: ` + err.message);
         }
     }
 
@@ -552,7 +566,7 @@ const KnowledgePage = (() => {
                     saveObsidianConfig();
                     break;
                 case 'syncObsidian':
-                    syncObsidian();
+                    syncObsidian(btn.dataset.direction || 'both');
                     break;
                 case 'clearSearch':
                     _searchTerm = '';
