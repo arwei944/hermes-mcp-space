@@ -183,6 +183,22 @@ const API = (() => {
         toLearning(id) {
             return post(`/api/sessions/${id}/to-learning`);
         },
+        // Analytics
+        analyticsOverview() {
+            return get('/api/sessions/analytics/overview');
+        },
+        analyticsTrends(params) {
+            return get('/api/sessions/analytics/trends', params);
+        },
+        analyticsDistribution() {
+            return get('/api/sessions/analytics/distribution');
+        },
+        analyticsTools(params) {
+            return get('/api/sessions/analytics/tools', params);
+        },
+        analyticsBehavior() {
+            return get('/api/sessions/analytics/behavior');
+        },
     };
 
     // ==========================================
