@@ -28,18 +28,18 @@ async def get_changelog():
     content = about_file.read_text(encoding="utf-8")
 
     # 提取 CHANGELOG 数组
-    match = re.search(r"const CHANGELOG = \\[[\\s\\S]*?\\];", content)
+    match = re.search(r"const CHANGELOG = \[[\s\S]*?\];", content)
     if not match:
         return {"versions": []}
 
     # 简单解析 version/date/title/changes
     versions = []
-    for block in re.finditer(r"\\{([\\s\\S]*?)\\}", match.group(1)):
+    for block in re.finditer(r"\{([\s\S]*?)\}", match.group(0)):
         block_text = block.group(1)
-        ver = re.search(r"version:\\s*['\"]([^'\"]+)", block_text)
-        date = re.search(r"date:\\s*['\"]([^'\"]+)", block_text)
-        title = re.search(r"title:\\s*['\"]([^'\"]+)", block_text)
-        changes = re.findall(r"'([^']+)'(?=,|\\s*\\])", block_text)
+        ver = re.search(r"version:\s*['\"]([^'\"]+)", block_text)
+        date = re.search(r"date:\s*['\"]([^'\"]+)", block_text)
+        title = re.search(r"title:\s*['\"]([^'\"]+)", block_text)
+        changes = re.findall(r"'([^']+)'(?=,|\s*\])", block_text)
         # 过滤掉 version/date/title 本身
         changes = [c for c in changes if c not in ("version", "date", "title") and not c.startswith("version:") and not c.startswith("date:") and not c.startswith("title:")]
         if ver:
