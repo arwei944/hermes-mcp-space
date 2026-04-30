@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.7.0',
+            date: '2026-04-30',
+            title: 'MCP 扫描与自动添加',
+            changes: [
+                '新增 MCP 服务扫描功能：探测 localhost 常见端口 + 同用户 HF Space',
+                '新增"扫描 MCP 服务"按钮，一键发现可用服务',
+                '新增发现列表：显示扫描结果，支持单个添加或一键添加全部',
+                '新增后端 /api/mcp/discover、/api/mcp/discover/add、/api/mcp/servers/health 端点',
+                '已添加的服务自动标记，避免重复添加',
+            ],
+        },
+        {
             version: '5.6.0',
             date: '2026-04-30',
             title: '技能完善 — 模板库 + 分类管理',

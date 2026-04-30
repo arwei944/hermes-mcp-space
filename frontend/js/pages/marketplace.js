@@ -16,6 +16,8 @@ const MarketplacePage = (() => {
     let _mcpTools = [];
     let _mcpTestResult = null;
     let _configTab = 'trae'; // trae | claude | vscode | cursor | prompt
+    let _discoveredServers = [];
+    let _isScanning = false;
 
     // 技能相关
     let _skills = [];
@@ -194,6 +196,7 @@ const MarketplacePage = (() => {
 
         // 操作按钮
         const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">
+            <button type="button" class="btn btn-secondary" data-action="discoverMCPServers" ${_isScanning ? 'disabled' : ''}>${_isScanning ? '扫描中...' : '扫描 MCP 服务'}</button>
             <button type="button" class="btn btn-secondary" data-action="testConnection">测试 MCP 连接</button>
             <button type="button" class="btn btn-secondary" data-action="restartService">重启 MCP 服务</button>
         </div>`;
@@ -326,9 +329,47 @@ const MarketplacePage = (() => {
 
         const externalSectionHtml = Components.renderSection('外部 MCP 服务器', addFormHtml + serverListHtml);
 
+        // 发现的 MCP 服务
+        let discoveredHtml = '';
+        if (_discoveredServers.length > 0) {
+            const existingNames = new Set(_mcpServers.map((s) => s.name));
+            const newServers = _discoveredServers.filter((s) => !existingNames.has(s.name));
+            discoveredHtml = Components.renderSection(
+                `发现的 MCP 服务 (${_discoveredServers.length})`,
+                `<div style="margin-bottom:12px;font-size:12px;color:var(--text-tertiary)">
+                    扫描完成：发现 ${_discoveredServers.length} 个服务，其中 ${newServers.length} 个可添加
+                </div>
+                <div class="mp-server-list">
+                    ${_discoveredServers
+                        .map(
+                            (s) => `<div class="mp-server-card" style="display:flex;justify-content:space-between;align-items:center">
+                                <div>
+                                    <div style="font-weight:600;font-size:14px">${Components.escapeHtml(s.name)}</div>
+                                    <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">${Components.escapeHtml(s.url)}</div>
+                                    ${s.description ? `<div style="font-size:11px;color:var(--text-tertiary)">${Components.escapeHtml(s.description)}</div>` : ''}
+                                </div>
+                                <div style="display:flex;gap:6px;align-items:center">
+                                    ${Components.renderBadge('可用', 'green')}
+                                    ${existingNames.has(s.name)
+                                        ? Components.renderBadge('已添加', 'blue')
+                                        : `<button type="button" class="btn btn-sm btn-primary" data-action="addDiscoveredServer" data-name="${Components.escapeHtml(s.name)}" data-url="${Components.escapeHtml(s.url)}">添加</button>`}
+                                </div>
+                            </div>`,
+                        )
+                        .join('')}
+                </div>
+                ${newServers.length > 0
+                    ? `<div style="display:flex;justify-content:flex-end;margin-top:12px">
+                        <button type="button" class="btn btn-primary" data-action="addAllDiscovered">一键添加全部 (${newServers.length})</button>
+                    </div>`
+                    : ''}`,
+            );
+        }
+
         return `${statsHtml}${actionsHtml}${testResultHtml}${toolsHtml}
             ${Components.renderSection('连接配置', `${configTabHtml}${configContentHtml}`)}
             ${endpointHtml}
+            ${discoveredHtml}
             ${externalSectionHtml}`;
     }
 
@@ -476,6 +517,60 @@ const MarketplacePage = (() => {
                 document.body.removeChild(textarea);
                 Components.Toast.success('已复制到剪贴板');
             });
+    }
+
+    /** 扫描 MCP 服务 */
+    async function discoverMCPServers() {
+        _isScanning = true;
+        document.getElementById('contentBody').innerHTML = buildPage();
+        bindEvents();
+        try {
+            const resp = await API.get('/api/mcp/discover');
+            _discoveredServers = resp.discovered || [];
+            Components.Toast.success(`扫描完成，发现 ${_discoveredServers.length} 个 MCP 服务`);
+        } catch (err) {
+            Components.Toast.error(`扫描失败: ${err.message}`);
+            _discoveredServers = [];
+        }
+        _isScanning = false;
+        document.getElementById('contentBody').innerHTML = buildPage();
+        bindEvents();
+    }
+
+    /** 添加单个发现的服务 */
+    async function addDiscoveredServer(name, url) {
+        try {
+            await API.request('/api/mcp/servers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, url, prefix: '' }),
+            });
+            Components.Toast.success(`已添加 ${name}`);
+            await loadMCPServers();
+            document.getElementById('contentBody').innerHTML = buildPage();
+            bindEvents();
+        } catch (err) {
+            Components.Toast.error(`添加失败: ${err.message}`);
+        }
+    }
+
+    /** 一键添加所有发现的服务 */
+    async function addAllDiscovered() {
+        const existingNames = new Set(_mcpServers.map((s) => s.name));
+        const newServers = _discoveredServers.filter((s) => !existingNames.has(s.name));
+        if (newServers.length === 0) {
+            Components.Toast.info('没有新的服务需要添加');
+            return;
+        }
+        try {
+            const resp = await API.post('/api/mcp/discover/add', { servers: newServers });
+            Components.Toast.success(`已添加 ${resp.added}/${resp.total} 个服务`);
+            await loadMCPServers();
+            document.getElementById('contentBody').innerHTML = buildPage();
+            bindEvents();
+        } catch (err) {
+            Components.Toast.error(`批量添加失败: ${err.message}`);
+        }
     }
 
     async function addMCPServer() {
@@ -1265,6 +1360,15 @@ const MarketplacePage = (() => {
                     break;
                 case 'refreshMCPServer':
                     await refreshMCPServer(btn.dataset.name);
+                    break;
+                case 'discoverMCPServers':
+                    await discoverMCPServers();
+                    break;
+                case 'addDiscoveredServer':
+                    await addDiscoveredServer(btn.dataset.name, btn.dataset.url);
+                    break;
+                case 'addAllDiscovered':
+                    await addAllDiscovered();
                     break;
 
                 // 技能操作
