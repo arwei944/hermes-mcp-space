@@ -169,18 +169,45 @@ class MCPClientService:
             logger.warning(f"MCP 服务器 '{server_name}' 连接失败: {e}")
             return 0
 
-    def _fetch_tools(self, url: str) -> List[Dict[str, Any]]:
-        """通过 MCP 协议获取工具列表"""
-        payload = json.dumps({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/list",
-            "params": {},
-        }).encode("utf-8")
+    def _mcp_request(self, url: str, payload: dict, session_id: str = "", timeout: int = 15) -> dict:
+        """发送 MCP JSON-RPC 请求，自动处理 SSE 响应格式"""
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+        }
+        if session_id:
+            headers["Mcp-Session-Id"] = session_id
 
         req = urllib.request.Request(
             url,
-            data=payload,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+            # MCP Streamable HTTP 可能返回 SSE 格式: "event: message\ndata: {...}\n\n"
+            # 也可能直接返回 JSON
+            if raw.startswith("event:"):
+                for line in raw.split("\n"):
+                    if line.startswith("data:"):
+                        return json.loads(line[len("data:"):].strip())
+            return json.loads(raw)
+
+    def _initialize_and_get_session(self, url: str) -> str:
+        """低层: 发送 initialize 并从响应头提取 mcp-session-id"""
+        payload = json.dumps({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {"name": "hermes-mcp-space", "version": "5.1.0"},
+            },
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            url, data=payload,
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json, text/event-stream",
@@ -188,35 +215,56 @@ class MCPClientService:
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("result", {}).get("tools", [])
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()  # consume body
+            session_id = resp.headers.get("mcp-session-id", "")
+            if not session_id:
+                raise RuntimeError("MCP 服务器未返回 mcp-session-id")
+
+        # Step 2: 发送 initialized 通知（不需要响应）
+        try:
+            notif_payload = json.dumps({
+                "jsonrpc": "2.0", "method": "notifications/initialized",
+            }).encode("utf-8")
+            notif_req = urllib.request.Request(
+                url, data=notif_payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json, text/event-stream",
+                    "Mcp-Session-Id": session_id,
+                },
+                method="POST",
+            )
+            urllib.request.urlopen(notif_req, timeout=5)
+        except Exception:
+            pass  # 通知失败不影响后续操作
+
+        logger.info(f"MCP session 已建立: {session_id[:12]}...")
+        return session_id
+
+    def _fetch_tools(self, url: str) -> List[Dict[str, Any]]:
+        """通过 MCP 协议获取工具列表（含 session 管理）"""
+        # Step 1: 初始化 session
+        session_id = self._initialize_and_get_session(url)
+
+        # Step 2: 带 session ID 请求 tools/list
+        result = self._mcp_request(url, {
+            "jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {},
+        }, session_id=session_id)
+
+        return result.get("result", {}).get("tools", [])
 
     def _call_tool(self, url: str, tool_name: str, arguments: dict) -> Any:
-        """通过 MCP 协议调用工具"""
-        payload = json.dumps({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/call",
-            "params": {
-                "name": tool_name,
-                "arguments": arguments,
-            },
-        }).encode("utf-8")
+        """通过 MCP 协议调用工具（含 session 管理）"""
+        # 每次调用都重新建立 session（无状态，简单可靠）
+        session_id = self._initialize_and_get_session(url)
 
-        req = urllib.request.Request(
-            url,
-            data=payload,
-            headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json, text/event-stream",
-            },
-            method="POST",
-        )
+        result = self._mcp_request(url, {
+            "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+            "params": {"name": tool_name, "arguments": arguments},
+        }, session_id=session_id, timeout=60)
 
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data
+        return result
 
     def _rebuild_tools_cache(self):
         """重建外部工具缓存（带前缀）"""
