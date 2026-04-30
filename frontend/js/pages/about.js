@@ -5,6 +5,22 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.3.0',
+            date: '2026-04-30',
+            title: '前端去重合并 + 数据同步与热更新',
+            changes: [
+                '扩展管理页面升级为 4 Tab（MCP服务/技能/工具/插件市场），合并 5 个页面功能',
+                'MCP服务 Tab：状态监控、连接测试、重启服务、多平台配置生成、System Prompt 模板',
+                '技能 Tab：统计卡片、搜索过滤、内联编辑器、Markdown 预览、模板插入、删除到回收站',
+                '工具 Tab：Toolset 过滤组、启用/禁用切换、工具详情 Modal（JSON Schema）',
+                '插件市场 Tab：市场/已安装切换、三维过滤、评分/下载量展示、一键安装/卸载',
+                '新增数据同步页面：同步状态面板、手动备份/恢复、后端切换、热更新检测与执行',
+                '新增后端 API：/api/version/check-update、/api/version/hot-update',
+                '移除冗余页面：tools.js、skills.js、mcp.js、plugins.js',
+                '全局搜索关键词重定向到扩展管理页面',
+            ],
+        },
+        {
             version: '5.0.0',
             date: '2026-04-29 22:00',
             title: '功能增强 — 确认弹窗 + 搜索 + 聊天优化',
