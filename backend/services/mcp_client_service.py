@@ -76,12 +76,12 @@ class MCPClientService:
         self._save_config()
 
         # 自动发现工具
-        result = self._discover_tools(name)
+        tools_count = self._discover_tools(name)
         return {
             "success": True,
-            "message": f"服务器 '{name}' 已添加，发现 {len(result)} 个工具",
+            "message": f"服务器 '{name}' 已添加，发现 {tools_count} 个工具",
             "server": name,
-            "tools_count": len(result),
+            "tools_count": tools_count,
         }
 
     def remove_server(self, name: str) -> Dict[str, Any]:

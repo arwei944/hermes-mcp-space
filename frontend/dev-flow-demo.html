@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent MCP Space — 开发流程演示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2128;
+  --bg-terminal: #0a0e14;
+  --border: #30363d;
+  --border-light: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --blue: #58a6ff;
+  --blue-dim: #1f6feb;
+  --green: #3fb950;
+  --green-dim: #238636;
+  --red: #f85149;
+  --yellow: #d29922;
+  --purple: #bc8cff;
+  --orange: #f0883e;
+  --cyan: #39d2c0;
+  --pink: #f778ba;
+  --font-code: 'JetBrains Mono', 'Consolas', monospace;
+  --font-ui: 'Noto Sans SC', -apple-system, sans-serif;
+  --radius: 8px;
+  --transition: 0.3s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.header-logo svg { width: 24px; height: 24px; }
+
+.header-title {
+  font-family: var(--font-code);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.header-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ctrl-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-code);
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.ctrl-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.ctrl-btn.active {
+  background: var(--blue-dim);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.ctrl-btn svg { width: 14px; height: 14px; }
+
+/* Progress */
+.progress-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.progress-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue-dim), var(--blue));
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  position: relative;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -3px;
+  width: 12px;
+  height: 12px;
+  background: var(--blue);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.progress-bar-wrap:hover .progress-bar-fill::after { opacity: 1; }
+
+.progress-text {
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.step-indicator {
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 3px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* ===== MAIN LAYOUT ===== */
+.main {
+  display: flex;
+  height: calc(100vh - 53px);
+  overflow: hidden;
+}
+
+/* ===== LEFT PANEL: FILE TREE ===== */
+.file-tree-panel {
+  width: 15%;
+  min-width: 200px;
+  max-width: 280px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.panel-header svg { width: 14px; height: 14px; color: var(--text-muted); }
+
+.file-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  padding: 1px 14px;
+  cursor: default;
+  transition: background var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-item:hover { background: rgba(88, 166, 255, 0.06); }
+
+.tree-item.active {
+  background: rgba(88, 166, 255, 0.12);
+  border-left: 2px solid var(--blue);
+  padding-left: 12px;
+}
+
+.tree-item .icon { margin-right: 6px; flex-shrink: 0; font-size: 13px; }
+.tree-item .name { color: var(--text-primary); }
+.tree-item .badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.badge-new {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--green);
+}
+
+.badge-modified {
+  background: rgba(210, 153, 34, 0.15);
+  color: var(--yellow);
+}
+
+.tree-indent { padding-left: 20px; }
+.tree-indent-2 { padding-left: 40px; }
+.tree-indent-3 { padding-left: 60px; }
+.tree-indent-4 { padding-left: 80px; }
+
+/* ===== CENTER PANEL: TERMINAL/CODE ===== */
+.center-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tab-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0 12px;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.tab {
+  padding: 8px 16px;
+  font-family: var(--font-code);
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.tab:hover { color: var(--text-primary); }
+
+.tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--blue);
+}
+
+.tab .tab-icon { font-size: 13px; }
+
+.terminal-area {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+  position: relative;
+}
+
+.terminal-content {
+  padding: 16px 20px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 100%;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Terminal styles */
+.terminal-content { background: var(--bg-terminal); }
+
+.term-prompt {
+  color: var(--green);
+  user-select: none;
+}
+
+.term-cmd {
+  color: var(--text-primary);
+}
+
+.term-output {
+  color: var(--text-secondary);
+  padding-left: 4px;
+}
+
+.term-success {
+  color: var(--green);
+}
+
+.term-error {
+  color: var(--red);
+}
+
+.term-warning {
+  color: var(--yellow);
+}
+
+.term-comment {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.term-dim { color: var(--text-muted); }
+
+.term-highlight {
+  color: var(--blue);
+  font-weight: 500;
+}
+
+/* Code block */
+.code-block {
+  background: var(--bg-terminal);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.code-header {
+  background: var(--bg-tertiary);
+  padding: 6px 14px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.code-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.code-dot:nth-child(1) { background: #f85149; }
+.code-dot:nth-child(2) { background: #d29922; }
+.code-dot:nth-child(3) { background: #3fb950; }
+
+.code-body {
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: 12.5px;
+  line-height: 1.75;
+}
+
+.code-line {
+  display: flex;
+}
+
+.line-num {
+  color: var(--text-muted);
+  user-select: none;
+  min-width: 32px;
+  text-align: right;
+  padding-right: 16px;
+  flex-shrink: 0;
+}
+
+.line-content { flex: 1; white-space: pre; }
+
+/* Syntax highlighting */
+.kw { color: var(--pink); }
+.str { color: #a5d6ff; }
+.cm { color: var(--text-muted); font-style: italic; }
+.fn { color: #d2a8ff; }
+.num { color: var(--orange); }
+.op { color: var(--text-primary); }
+.var { color: var(--text-primary); }
+.type { color: var(--cyan); }
+.decorator { color: var(--yellow); }
+.param { color: #ffa657; }
+.bool { color: var(--orange); }
+.self { color: var(--red); }
+.const { color: var(--blue); }
+.tag { color: var(--green); }
+.attr { color: var(--cyan); }
+.punct { color: var(--text-secondary); }
+.diff-add { color: var(--green); }
+.diff-del { color: var(--red); }
+.diff-file { color: var(--blue); }
+
+/* ===== RIGHT PANEL: EXPLANATION ===== */
+.explain-panel {
+  width: 30%;
+  min-width: 260px;
+  max-width: 380px;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.explain-content {
+  padding: 20px;
+  animation: fadeIn 0.4s ease;
+}
+
+.step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--blue);
+  background: rgba(88, 166, 255, 0.1);
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  padding: 3px 10px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.step-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+.step-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.step-desc strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.step-desc code {
+  font-family: var(--font-code);
+  font-size: 12px;
+  background: var(--bg-tertiary);
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: var(--cyan);
+}
+
+.module-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.module-tag {
+  font-family: var(--font-code);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.tag-backend { background: rgba(210, 153, 34, 0.15); color: var(--yellow); border: 1px solid rgba(210, 153, 34, 0.25); }
+.tag-frontend { background: rgba(63, 185, 80, 0.15); color: var(--green); border: 1px solid rgba(63, 185, 80, 0.25); }
+.tag-infra { background: rgba(188, 140, 255, 0.15); color: var(--purple); border: 1px solid rgba(188, 140, 255, 0.25); }
+.tag-mcp { background: rgba(88, 166, 255, 0.15); color: var(--blue); border: 1px solid rgba(88, 166, 255, 0.25); }
+.tag-quality { background: rgba(248, 81, 73, 0.15); color: var(--red); border: 1px solid rgba(248, 81, 73, 0.25); }
+.tag-deploy { background: rgba(57, 210, 192, 0.15); color: var(--cyan); border: 1px solid rgba(57, 210, 192, 0.25); }
+
+.decision-box {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--yellow);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.decision-box .label {
+  font-family: var(--font-code);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--yellow);
+  margin-bottom: 6px;
+}
+
+.decision-box .text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* Summary step */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.summary-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.summary-card .label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.summary-card .value {
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.summary-card .value.green { color: var(--green); }
+.summary-card .value.blue { color: var(--blue); }
+.summary-card .value.purple { color: var(--purple); }
+.summary-card .value.orange { color: var(--orange); }
+
+.summary-list {
+  font-family: var(--font-code);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.summary-list .file-path { color: var(--cyan); }
+.summary-list .arrow { color: var(--text-muted); }
+.summary-list .desc { color: var(--text-secondary); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Keyboard hint */
+.keyboard-hint {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 4px 14px;
+  border-radius: 12px;
+  z-index: 100;
+  opacity: 0.7;
+  transition: opacity var(--transition);
+}
+
+.keyboard-hint:hover { opacity: 1; }
+
+.keyboard-hint kbd {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  margin: 0 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--blue)">
+      <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+    </svg>
+    <span class="header-title">Hermes Agent MCP Space</span>
+    <span class="header-subtitle">开发流程演示</span>
+  </div>
+  <div class="header-divider"></div>
+  <div class="controls">
+    <button class="ctrl-btn" id="btnAutoPlay" onclick="toggleAutoPlay()" title="自动播放">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+      <span>自动播放</span>
+    </button>
+    <button class="ctrl-btn" id="btnPause" onclick="pausePlay()" title="暂停" style="display:none">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      <span>暂停</span>
+    </button>
+    <button class="ctrl-btn" onclick="prevStep()" title="上一步 (←)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="15,3 5,12 15,21"/></svg>
+    </button>
+    <button class="ctrl-btn" onclick="nextStep()" title="下一步 (→)">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="9,3 19,12 9,21"/></svg>
+    </button>
+  </div>
+  <div class="header-divider"></div>
+  <div class="progress-area">
+    <div class="progress-bar-wrap" id="progressBar" onclick="seekProgress(event)">
+      <div class="progress-bar-fill" id="progressFill" style="width:6.67%"></div>
+    </div>
+    <span class="progress-text" id="progressText">1 / 15</span>
+  </div>
+  <div class="step-indicator" id="stepIndicator">STEP 1</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- LEFT: File Tree -->
+  <div class="file-tree-panel">
+    <div class="panel-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      项目文件
+    </div>
+    <div class="file-tree" id="fileTree"></div>
+  </div>
+
+  <!-- CENTER: Terminal/Code -->
+  <div class="center-panel">
+    <div class="tab-bar">
+      <div class="tab active" id="tabTerminal">
+        <span class="tab-icon">$</span>
+        <span id="tabLabel">终端</span>
+      </div>
+      <div class="tab" id="tabCode" style="display:none">
+        <span class="tab-icon">{ }</span>
+        <span id="tabCodeLabel">代码</span>
+      </div>
+    </div>
+    <div class="terminal-area">
+      <div class="terminal-content" id="terminalContent"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Explanation -->
+  <div class="explain-panel">
+    <div class="panel-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      步骤解说
+    </div>
+    <div class="explain-content" id="explainContent"></div>
+  </div>
+</div>
+
+<!-- Keyboard hint -->
+<div class="keyboard-hint">
+  <kbd>←</kbd> 上一步 &nbsp; <kbd>→</kbd> 下一步 &nbsp; <kbd>Space</kbd> 播放/暂停
+</div>
+
+<script>
+// ===== STEP DATA =====
+const steps = [
+  // STEP 1
+  {
+    title: "需求分析 — 了解项目结构",
+    modules: ["后端", "前端", "MCP"],
+    moduleClasses: ["tag-backend", "tag-frontend", "tag-mcp"],
+    description: `首先了解项目的整体架构。运行 <code>find</code> 和 <code>ls</code> 命令查看目录结构：<br><br>
+<strong>后端</strong>：17 个路由、8 个服务<br>
+<strong>前端</strong>：16 个页面<br>
+<strong>MCP 服务器</strong>：注册了 61 个工具<br><br>
+截图功能需要贯穿：<code>MCP 工具</code> → <code>API 路由</code> → <code>服务层</code> → <code>前端页面</code>`,
+    decision: "先摸清项目架构再动手，避免与现有代码风格冲突。项目使用 FastAPI + Gradio + 原生 JS 的技术栈。",
+    activeFiles: [],
+    terminal: () => `<div class="term-comment"># 查看后端 Python 文件结构</div>
+<span class="term-prompt">$</span> <span class="term-cmd">find backend -name "*.py" | head -30</span>
+<span class="term-output">backend/__init__.py
+backend/mcp_server.py
+backend/app.py
+backend/routers/__init__.py
+backend/routers/chat.py
+backend/routers/config.py
+backend/routers/dashboard.py
+backend/routers/screenshot.py
+backend/services/__init__.py
+backend/services/chat_service.py
+backend/services/config_service.py
+backend/services/screenshot_service.py
+backend/services/memory_service.py
+backend/services/knowledge_service.py
+backend/utils/__init__.py
+backend/utils/logger.py
+backend/utils/auth.py</span>
+
+<div class="term-comment"># 查看前端页面文件</div>
+<span class="term-prompt">$</span> <span class="term-cmd">ls frontend/js/pages/</span>
+<span class="term-output">about.js     chat.js      config.js    cron.js
+dashboard.js knowledge.js logs.js     marketplace.js
+mcp.js       memory.js    plugins.js  screenshot.js
+sessions.js  skills.js    tools.js    trash.js</span>
+
+<div class="term-comment"># 统计 MCP 工具数量</div>
+<span class="term-prompt">$</span> <span class="term-cmd">grep -c '"name"' backend/mcp_server.py</span>
+<span class="term-success">61</span>
+
+<div class="term-comment"># 查看路由数量</div>
+<span class="term-prompt">$</span> <span class="term-cmd">ls backend/routers/*.py | wc -l</span>
+<span class="term-success">17</span>
+
+<span class="term-prompt">$</span> <span class="term-cmd">ls backend/services/*.py | wc -l</span>
+<span class="term-success">8</span>`
+  },
+  // STEP 2
+  {
+    title: "后端 — 注册 MCP 工具",
+    modules: ["MCP", "后端"],
+    moduleClasses: ["tag-mcp", "tag-backend"],
+    description: `在 <code>mcp_server.py</code> 的工具列表末尾添加 <code>capture_screenshot</code> 工具定义。<br><br>
+工具接收 <code>url</code>（必填）、<code>width</code>、<code>height</code>、<code>full_page</code> 四个参数。<br><br>
+这样外部 Agent 就可以通过 MCP 协议调用截图功能。`,
+    decision: "MCP 工具定义使用 JSON Schema 格式，与项目现有 61 个工具保持一致。参数命名使用蛇形（snake_case）。",
+    activeFiles: ["backend/mcp_server.py"],
+    terminal: () => `<div class="code-block">
+  <div class="code-header">
+    <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+    backend/mcp_server.py — 新增工具定义
+  </div>
+  <div class="code-body">
+<div class="code-line"><span class="line-num">487</span><span class="line-content"><span class="cm"># ... 前面是其他 61 个工具定义 ...</span></span></div>
+<div class="code-line"><span class="line-num">488</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">489</span><span class="line-content"><span class="diff-add">+    {</span></span></div>
+<div class="code-line"><span class="line-num">490</span><span class="line-content"><span class="diff-add">+        "name": "capture_screenshot",</span></span></div>
+<div class="code-line"><span class="line-num">491</span><span class="line-content"><span class="diff-add">+        "description": "截取网页截图，支持自定义分辨率和长截图",</span></span></div>
+<div class="code-line"><span class="line-num">492</span><span class="line-content"><span class="diff-add">+        "inputSchema": {</span></span></div>
+<div class="code-line"><span class="line-num">493</span><span class="line-content"><span class="diff-add">+            "type": "object",</span></span></div>
+<div class="code-line"><span class="line-num">494</span><span class="line-content"><span class="diff-add">+            "properties": {</span></span></div>
+<div class="code-line"><span class="line-num">495</span><span class="line-content"><span class="diff-add">+                "url": {</span></span></div>
+<div class="code-line"><span class="line-num">496</span><span class="line-content"><span class="diff-add">+                    "type": "string",</span></span></div>
+<div class="code-line"><span class="line-num">497</span><span class="line-content"><span class="diff-add">+                    "description": "要截取的网页 URL"</span></span></div>
+<div class="code-line"><span class="line-num">498</span><span class="line-content"><span class="diff-add">+                },</span></span></div>
+<div class="code-line"><span class="line-num">499</span><span class="line-content"><span class="diff-add">+                "width": { "type": "integer", "default": 1280 },</span></span></div>
+<div class="code-line"><span class="line-num">500</span><span class="line-content"><span class="diff-add">+                "height": { "type": "integer", "default": 720 },</span></span></div>
+<div class="code-line"><span class="line-num">501</span><span class="line-content"><span class="diff-add">+                "full_page": { "type": "boolean", "default": false }</span></span></div>
+<div class="code-line"><span class="line-num">502</span><span class="line-content"><span class="diff-add">+            },</span></span></div>
+<div class="code-line"><span class="line-num">503</span><span class="line-content"><span class="diff-add">+            "required": ["url"]</span></span></div>
+<div class="code-line"><span class="line-num">504</span><span class="line-content"><span class="diff-add">+        }</span></span></div>
+<div class="code-line"><span class="line-num">505</span><span class="line-content"><span class="diff-add">+    }</span></span></div>
+  </div>
+</div>`
+  },
+  // STEP 3
+  {
+    title: "后端 — 创建 API 路由",
+    modules: ["后端", "API"],
+    moduleClasses: ["tag-backend", "tag-mcp"],
+    description: `创建 <code>backend/routers/screenshot.py</code> 路由文件。<br><br>
+提供 4 个 REST API 端点：<br>
+- <code>POST /api/screenshot/capture</code> — 截取截图<br>
+- <code>GET /api/screenshots</code> — 列出所有截图<br>
+- <code>GET /api/screenshots/{filename}</code> — 获取详情<br>
+- <code>DELETE /api/screenshots/{filename}</code> — 删除截图<br><br>
+遵循项目现有的路由风格（FastAPI + Pydantic）。`,
+    decision: "路由风格与项目其他 17 个路由保持一致：使用 APIRouter 前缀、Pydantic 模型校验、统一错误处理。",
+    activeFiles: ["backend/routers/screenshot.py"],
+    terminal: () => `<div class="code-block">
+  <div class="code-header">
+    <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+    backend/routers/screenshot.py — 完整路由文件
+  </div>
+  <div class="code-body">
+<div class="code-line"><span class="line-num"> 1</span><span class="line-content"><span class="kw">from</span> <span class="var">fastapi</span> <span class="kw">import</span> <span class="var">APIRouter</span>, <span class="var">HTTPException</span></span></div>
+<div class="code-line"><span class="line-num"> 2</span><span class="line-content"><span class="kw">from</span> <span class="var">pydantic</span> <span class="kw">import</span> <span class="var">BaseModel</span></span></div>
+<div class="code-line"><span class="line-num"> 3</span><span class="line-content"><span class="kw">from</span> <span class="var">backend.services.screenshot_service</span> <span class="kw">import</span> <span class="var">ScreenshotService</span></span></div>
+<div class="code-line"><span class="line-num"> 4</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num"> 5</span><span class="line-content"><span class="var">router</span> <span class="op">=</span> <span class="fn">APIRouter</span><span class="punct">(</span><span class="param">prefix</span><span class="op">=</span><span class="str">"/api"</span><span class="punct">,</span> <span class="param">tags</span><span class="op">=</span><span class="punct">[</span><span class="str">"screenshot"</span><span class="punct">])</span></span></div>
+<div class="code-line"><span class="line-num"> 6</span><span class="line-content"><span class="var">service</span> <span class="op">=</span> <span class="var">ScreenshotService</span><span class="punct">()</span></span></div>
+<div class="code-line"><span class="line-num"> 7</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num"> 8</span><span class="line-content"><span class="kw">class</span> <span class="type">CaptureRequest</span><span class="punct">(</span><span class="type">BaseModel</span><span class="punct">):</span></span></div>
+<div class="code-line"><span class="line-num"> 9</span><span class="line-content">    <span class="var">url</span><span class="punct">:</span> <span class="type">str</span></span></div>
+<div class="code-line"><span class="line-num">10</span><span class="line-content">    <span class="var">width</span><span class="punct">:</span> <span class="type">int</span> <span class="op">=</span> <span class="num">1280</span></span></div>
+<div class="code-line"><span class="line-num">11</span><span class="line-content">    <span class="var">height</span><span class="punct">:</span> <span class="type">int</span> <span class="op">=</span> <span class="num">720</span></span></div>
+<div class="code-line"><span class="line-num">12</span><span class="line-content">    <span class="var">full_page</span><span class="punct">:</span> <span class="type">bool</span> <span class="op">=</span> <span class="bool">False</span></span></div>
+<div class="code-line"><span class="line-num">13</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">14</span><span class="line-content"><span class="decorator">@router.post</span><span class="punct">(</span><span class="str">"/screenshot/capture"</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">15</span><span class="line-content"><span class="kw">async def</span> <span class="fn">capture_screenshot</span><span class="punct">(</span><span class="param">req</span><span class="punct">:</span> <span class="type">CaptureRequest</span><span class="punct">):</span></span></div>
+<div class="code-line"><span class="line-num">16</span><span class="line-content">    <span class="var">result</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">service</span><span class="punct">.</span><span class="fn">capture</span><span class="punct">(</span></span></div>
+<div class="code-line"><span class="line-num">17</span><span class="line-content">        <span class="param">url</span><span class="op">=</span><span class="var">req</span><span class="punct">.</span><span class="var">url</span><span class="punct">,</span> <span class="param">width</span><span class="op">=</span><span class="var">req</span><span class="punct">.</span><span class="var">width</span><span class="punct">,</span></span></div>
+<div class="code-line"><span class="line-num">18</span><span class="line-content">        <span class="param">height</span><span class="op">=</span><span class="var">req</span><span class="punct">.</span><span class="var">height</span><span class="punct">,</span> <span class="param">full_page</span><span class="op">=</span><span class="var">req</span><span class="punct">.</span><span class="var">full_page</span></span></div>
+<div class="code-line"><span class="line-num">19</span><span class="line-content">    <span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">20</span><span class="line-content">    <span class="kw">if not</span> <span class="var">result</span><span class="punct">[</span><span class="str">"success"</span><span class="punct">]:</span></span></div>
+<div class="code-line"><span class="line-num">21</span><span class="line-content">        <span class="kw">raise</span> <span class="fn">HTTPException</span><span class="punct">(</span><span class="num">500</span><span class="punct">,</span> <span class="var">result</span><span class="punct">[</span><span class="str">"error"</span><span class="punct">])</span></span></div>
+<div class="code-line"><span class="line-num">22</span><span class="line-content">    <span class="kw">return</span> <span class="var">result</span></span></div>
+<div class="code-line"><span class="line-num">23</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">24</span><span class="line-content"><span class="decorator">@router.get</span><span class="punct">(</span><span class="str">"/screenshots"</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">25</span><span class="line-content"><span class="kw">async def</span> <span class="fn">list_screenshots</span><span class="punct">():</span></span></div>
+<div class="code-line"><span class="line-num">26</span><span class="line-content">    <span class="kw">return</span> <span class="var">service</span><span class="punct">.</span><span class="fn">list_all</span><span class="punct">()</span></span></div>
+<div class="code-line"><span class="line-num">27</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">28</span><span class="line-content"><span class="decorator">@router.get</span><span class="punct">(</span><span class="str">"/screenshots/{filename}"</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">29</span><span class="line-content"><span class="kw">async def</span> <span class="fn">get_screenshot</span><span class="punct">(</span><span class="param">filename</span><span class="punct">:</span> <span class="type">str</span><span class="punct">):</span></span></div>
+<div class="code-line"><span class="line-num">30</span><span class="line-content">    <span class="var">result</span> <span class="op">=</span> <span class="var">service</span><span class="punct">.</span><span class="fn">get</span><span class="punct">(</span><span class="var">filename</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">31</span><span class="line-content">    <span class="kw">if not</span> <span class="var">result</span><span class="punct">:</span></span></div>
+<div class="code-line"><span class="line-num">32</span><span class="line-content">        <span class="kw">raise</span> <span class="fn">HTTPException</span><span class="punct">(</span><span class="num">404</span><span class="punct">,</span> <span class="str">"Screenshot not found"</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">33</span><span class="line-content">    <span class="kw">return</span> <span class="var">result</span></span></div>
+<div class="code-line"><span class="line-num">34</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">35</span><span class="line-content"><span class="decorator">@router.delete</span><span class="punct">(</span><span class="str">"/screenshots/{filename}"</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">36</span><span class="line-content"><span class="kw">async def</span> <span class="fn">delete_screenshot</span><span class="punct">(</span><span class="param">filename</span><span class="punct">:</span> <span class="type">str</span><span class="punct">):</span></span></div>
+<div class="code-line"><span class="line-num">37</span><span class="line-content">    <span class="kw">return</span> <span class="var">service</span><span class="punct">.</span><span class="fn">delete</span><span class="punct">(</span><span class="var">filename</span><span class="punct">)</span></span></div>
+  </div>
+</div>`
+  },
+  // STEP 4
+  {
+    title: "后端 — 实现截图服务",
+    modules: ["后端", "服务层"],
+    moduleClasses: ["tag-backend", "tag-backend"],
+    description: `创建 <code>backend/services/screenshot_service.py</code> 服务文件。<br><br>
+核心逻辑：<br>
+1. 使用 <code>Playwright</code> 无头浏览器截取网页<br>
+2. 截图保存到 <code>~/.hermes/data/screenshots/</code> 目录<br>
+3. 元数据保存到 <code>screenshots.json</code>（最多 50 条）<br>
+4. 如果 Playwright 未安装，回退到 httpx 仅记录 URL<br><br>
+遵循项目现有的服务模式（单例 + JSON 持久化）。`,
+    decision: "使用 Playwright 而非 Puppeteer，因为项目后端是 Python 生态。回退机制确保即使 Playwright 未安装也不会崩溃。",
+    activeFiles: ["backend/services/screenshot_service.py"],
+    terminal: () => `<div class="code-block">
+  <div class="code-header">
+    <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+    backend/services/screenshot_service.py — 核心方法
+  </div>
+  <div class="code-body">
+<div class="code-line"><span class="line-num"> 1</span><span class="line-content"><span class="kw">import</span> <span class="var">json</span><span class="punct">,</span> <span class="var">os</span><span class="punct">,</span> <span class="var">time</span><span class="punct">,</span> <span class="var">uuid</span></span></div>
+<div class="code-line"><span class="line-num"> 2</span><span class="line-content"><span class="kw">from</span> <span class="var">pathlib</span> <span class="kw">import</span> <span class="var">Path</span></span></div>
+<div class="code-line"><span class="line-num"> 3</span><span class="line-content"><span class="kw">from</span> <span class="var">datetime</span> <span class="kw">import</span> <span class="var">datetime</span></span></div>
+<div class="code-line"><span class="line-num"> 4</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num"> 5</span><span class="line-content"><span class="kw">class</span> <span class="type">ScreenshotService</span><span class="punct">:</span></span></div>
+<div class="code-line"><span class="line-num"> 6</span><span class="line-content">    <span class="var">DATA_DIR</span> <span class="op">=</span> <span class="var">Path</span><span class="punct">(</span><span class="str">"~/.hermes/data/screenshots"</span><span class="punct">).</span><span class="fn">expanduser</span><span class="punct">()</span></span></div>
+<div class="code-line"><span class="line-num"> 7</span><span class="line-content">    <span class="var">META_FILE</span> <span class="op">=</span> <span class="var">DATA_DIR</span> <span class="op">/</span> <span class="str">"screenshots.json"</span></span></div>
+<div class="code-line"><span class="line-num"> 8</span><span class="line-content">    <span class="var">MAX_ITEMS</span> <span class="op">=</span> <span class="num">50</span></span></div>
+<div class="code-line"><span class="line-num"> 9</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">10</span><span class="line-content">    <span class="kw">def</span> <span class="fn">__init__</span><span class="punct">(</span><span class="self">self</span><span class="punct">):</span></span></div>
+<div class="code-line"><span class="line-num">11</span><span class="line-content">        <span class="self">self</span><span class="punct">.</span><span class="var">DATA_DIR</span><span class="punct">.</span><span class="fn">mkdir</span><span class="punct">(</span><span class="param">parents</span><span class="op">=</span><span class="bool">True</span><span class="punct">,</span> <span class="param">exist_ok</span><span class="op">=</span><span class="bool">True</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">12</span><span class="line-content">        <span class="self">self</span><span class="punct">.</span><span class="var">_metadata</span> <span class="op">=</span> <span class="self">self</span><span class="punct">.</span><span class="fn">_load_meta</span><span class="punct">()</span></span></div>
+<div class="code-line"><span class="line-num">13</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">14</span><span class="line-content">    <span class="kw">async def</span> <span class="fn">capture</span><span class="punct">(</span><span class="self">self</span><span class="punct">,</span> <span class="param">url</span><span class="punct">,</span> <span class="param">width</span><span class="op">=</span><span class="num">1280</span><span class="punct">,</span> <span class="param">height</span><span class="op">=</span><span class="num">720</span><span class="punct">,</span> <span class="param">full_page</span><span class="op">=</span><span class="bool">False</span><span class="punct">):</span></span></div>
+<div class="code-line"><span class="line-num">15</span><span class="line-content">        <span class="var">filename</span> <span class="op">=</span> <span class="str">f"</span><span class="punct">{</span><span class="var">uuid</span><span class="punct">.</span><span class="fn">uuid4</span><span class="punct">().</span><span class="var">hex</span><span class="punct">[:</span><span class="num">8</span><span class="punct">]}</span><span class="str">.png"</span></span></div>
+<div class="code-line"><span class="line-num">16</span><span class="line-content">        <span class="var">filepath</span> <span class="op">=</span> <span class="self">self</span><span class="punct">.</span><span class="var">DATA_DIR</span> <span class="op">/</span> <span class="var">filename</span></span></div>
+<div class="code-line"><span class="line-num">17</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">18</span><span class="line-content">        <span class="kw">try</span><span class="punct">:</span></span></div>
+<div class="code-line"><span class="line-num">19</span><span class="line-content">            <span class="kw">from</span> <span class="var">playwright.async_api</span> <span class="kw">import</span> <span class="var">async_playwright</span></span></div>
+<div class="code-line"><span class="line-num">20</span><span class="line-content">            <span class="kw">async with</span> <span class="fn">async_playwright</span><span class="punct">()</span> <span class="kw">as</span> <span class="var">p</span><span class="punct">:</span></span></div>
+<div class="code-line"><span class="line-num">21</span><span class="line-content">                <span class="var">browser</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">p</span><span class="punct">.</span><span class="var">chromium</span><span class="punct">.</span><span class="fn">launch</span><span class="punct">(</span><span class="param">headless</span><span class="op">=</span><span class="bool">True</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">22</span><span class="line-content">                <span class="var">page</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">browser</span><span class="punct">.</span><span class="fn">new_page</span><span class="punct">(</span></span></div>
+<div class="code-line"><span class="line-num">23</span><span class="line-content">                    <span class="param">viewport</span><span class="op">=</span><span class="punct">{</span><span class="str">"width"</span><span class="punct">:</span> <span class="var">width</span><span class="punct">,</span> <span class="str">"height"</span><span class="punct">:</span> <span class="var">height</span><span class="punct">}</span></span></div>
+<div class="code-line"><span class="line-num">24</span><span class="line-content">                <span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">25</span><span class="line-content">                <span class="kw">await</span> <span class="var">page</span><span class="punct">.</span><span class="fn">goto</span><span class="punct">(</span><span class="var">url</span><span class="punct">,</span> <span class="param">wait_until</span><span class="op">=</span><span class="str">"networkidle"</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">26</span><span class="line-content">                <span class="kw">await</span> <span class="var">page</span><span class="punct">.</span><span class="fn">screenshot</span><span class="punct">(</span></span></div>
+<div class="code-line"><span class="line-num">27</span><span class="line-content">                    <span class="param">path</span><span class="op">=</span><span class="fn">str</span><span class="punct">(</span><span class="var">filepath</span><span class="punct">),</span></span></div>
+<div class="code-line"><span class="line-num">28</span><span class="line-content">                    <span class="param">full_page</span><span class="op">=</span><span class="var">full_page</span></span></div>
+<div class="code-line"><span class="line-num">29</span><span class="line-content">                <span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">30</span><span class="line-content">                <span class="kw">await</span> <span class="var">browser</span><span class="punct">.</span><span class="fn">close</span><span class="punct">()</span></span></div>
+<div class="code-line"><span class="line-num">31</span><span class="line-content">        <span class="kw">except</span> <span class="type">ImportError</span><span class="punct">:</span></span></div>
+<div class="code-line"><span class="line-num">32</span><span class="line-content">            <span class="cm"># Playwright 未安装，回退到仅记录 URL</span></span></div>
+<div class="code-line"><span class="line-num">33</span><span class="line-content">            <span class="kw">import</span> <span class="var">httpx</span></span></div>
+<div class="code-line"><span class="line-num">34</span><span class="line-content">            <span class="var">resp</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">httpx</span><span class="punct">.</span><span class="fn">AsyncClient</span><span class="punct">().</span><span class="fn">get</span><span class="punct">(</span><span class="var">url</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">35</span><span class="line-content">            <span class="var">filepath</span><span class="punct">.</span><span class="fn">write_bytes</span><span class="punct">(</span><span class="var">resp</span><span class="punct">.</span><span class="var">content</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">36</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">37</span><span class="line-content">        <span class="var">meta</span> <span class="op">=</span> <span class="punct">{</span></span></div>
+<div class="code-line"><span class="line-num">38</span><span class="line-content">            <span class="str">"filename"</span><span class="punct">:</span> <span class="var">filename</span><span class="punct">,</span> <span class="str">"url"</span><span class="punct">:</span> <span class="var">url</span><span class="punct">,</span></span></div>
+<div class="code-line"><span class="line-num">39</span><span class="line-content">            <span class="str">"width"</span><span class="punct">:</span> <span class="var">width</span><span class="punct">,</span> <span class="str">"height"</span><span class="punct">:</span> <span class="var">height</span><span class="punct">,</span></span></div>
+<div class="code-line"><span class="line-num">40</span><span class="line-content">            <span class="str">"created_at"</span><span class="punct">:</span> <span class="var">datetime</span><span class="punct">.</span><span class="fn">now</span><span class="punct">().</span><span class="fn">isoformat</span><span class="punct">()</span></span></div>
+<div class="code-line"><span class="line-num">41</span><span class="line-content">        <span class="punct">}</span></span></div>
+<div class="code-line"><span class="line-num">42</span><span class="line-content">        <span class="self">self</span><span class="punct">.</span><span class="var">_metadata</span><span class="punct">.</span><span class="fn">insert</span><span class="punct">(</span><span class="num">0</span><span class="punct">,</span> <span class="var">meta</span><span class="punct">)</span></span></div>
+<div class="code-line"><span class="line-num">43</span><span class="line-content">        <span class="self">self</span><span class="punct">.</span><span class="var">_metadata</span> <span class="op">=</span> <span class="self">self</span><span class="punct">.</span><span class="var">_metadata</span><span class="punct">[:</span><span class="self">self</span><span class="punct">.</span><span class="var">MAX_ITEMS</span><span class="punct">]</span></span></div>
+<div class="code-line"><span class="line-num">44</span><span class="line-content">        <span class="self">self</span><span class="punct">.</span><span class="fn">_save_meta</span><span class="punct">()</span></span></div>
+<div class="code-line"><span class="line-num">45</span><span class="line-content">        <span class="kw">return</span> <span class="punct">{</span><span class="str">"success"</span><span class="punct">:</span> <span class="bool">True</span><span class="punct">,</span> <span class="str">"data"</span><span class="punct">:</span> <span class="var">meta</span><span class="punct">}</span></span></div>
+  </div>
+</div>`
+  },
+  // STEP 5
+  {
+    title: "后端 — 注册路由到 app.py",
+    modules: ["后端", "路由"],
+    moduleClasses: ["tag-backend", "tag-backend"],
+    description: `在 <code>app.py</code> 的路由注册区域添加 screenshot 路由。<br><br>
+项目通过 Monkey-patch Gradio 的方式注入路由，所以需要在 import 列表和 include_router 调用处各加一行。<br><br>
+注意：<code>build_full_html</code> 会自动扫描 pages/*.js，不需要手动添加。`,
+    decision: "只需修改 app.py 两处：import 和 include_router。前端页面由构建脚本自动发现，无需手动注册。",
+    activeFiles: ["app.py"],
+    terminal: () => `<div class="term-comment"># 查看 app.py 中路由注册的上下文</div>
+<span class="term-prompt">$</span> <span class="term-cmd">grep -n "include_router" app.py</span>
+<span class="term-output"> 42:  app.include_router(chat.router)
+ 43:  app.include_router(config.router)
+ 44:  app.include_router(dashboard.router)
+ 45:  app.include_router(tools.router)
+ 46:  app.include_router(sessions.router)
+ 47:  app.include_router(memory.router)
+ 48:  app.include_router(knowledge.router)
+ 49:  app.include_router(plugins.router)
+ 50:  app.include_router(trash.router)</span>
+
+<span class="term-prompt">$</span> <span class="term-cmd">git diff app.py</span>
+<span class="term-output"><span class="diff-del">- from backend.routers import (chat, config, dashboard, tools,
+-     sessions, memory, knowledge, plugins, trash)</span>
+<span class="diff-add">+ from backend.routers import (chat, config, dashboard, tools,
++     sessions, memory, knowledge, plugins, trash, screenshot)</span>
+
+<span class="diff-del">-     app.include_router(trash.router)</span>
+<span class="diff-add">+     app.include_router(trash.router)
++     app.include_router(screenshot.router)</span></span>
+
+<span class="term-comment"># 验证路由注册成功</div>
+<span class="term-prompt">$</span> <span class="term-cmd">python3 -c "from backend.routers import screenshot; print('OK')"</span>
+<span class="term-success">OK</span>`
+  },
+  // STEP 6
+  {
+    title: "前端 — 创建截图页面",
+    modules: ["前端", "页面"],
+    moduleClasses: ["tag-frontend", "tag-frontend"],
+    description: `创建 <code>frontend/js/pages/screenshot.js</code> 页面文件。<br><br>
+遵循项目的全局变量模式：<code>const ScreenshotPage = (() =&gt; { ... })();</code><br><br>
+功能包括：<br>
+- URL 输入框 + 分辨率选择 + 长截图选项<br>
+- 截图列表展示（时间、分辨率、文件大小）<br>
+- 删除确认弹窗（Components.Modal.confirm）<br>
+- 加载状态和错误处理`,
+    decision: "使用项目标准的 IIFE 模式（立即执行函数），通过 window.ScreenshotPage 暴露接口。UI 使用 Components 工具函数。",
+    activeFiles: ["frontend/js/pages/screenshot.js"],
+    terminal: () => `<div class="code-block">
+  <div class="code-header">
+    <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+    frontend/js/pages/screenshot.js — 页面核心结构
+  </div>
+  <div class="code-body">
+<div class="code-line"><span class="line-num"> 1</span><span class="line-content"><span class="cm">/**</span></span></div>
+<div class="code-line"><span class="line-num"> 2</span><span class="line-content"><span class="cm"> * 截图工具页面</span></span></div>
+<div class="code-line"><span class="line-num"> 3</span><span class="line-content"><span class="cm"> * 提供 URL 截图、截图列表管理功能</span></span></div>
+<div class="code-line"><span class="line-num"> 4</span><span class="line-content"><span class="cm"> */</span></span></div>
+<div class="code-line"><span class="line-num"> 5</span><span class="line-content"><span class="kw">const</span> <span class="var">ScreenshotPage</span> <span class="op">=</span> <span class="punct">(() =&gt; {</span></span></div>
+<div class="code-line"><span class="line-num"> 6</span><span class="line-content">  <span class="kw">let</span> <span class="var">screenshots</span> <span class="op">=</span> <span class="punct">[];</span></span></div>
+<div class="code-line"><span class="line-num"> 7</span><span class="line-content">  <span class="kw">let</span> <span class="var">isLoading</span> <span class="op">=</span> <span class="bool">false</span><span class="punct">;</span></span></div>
+<div class="code-line"><span class="line-num"> 8</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num"> 9</span><span class="line-content">  <span class="kw">async function</span> <span class="fn">loadScreenshots</span><span class="punct">() {</span></span></div>
+<div class="code-line"><span class="line-num">10</span><span class="line-content">    <span class="var">isLoading</span> <span class="op">=</span> <span class="bool">true</span><span class="punct">;</span></span></div>
+<div class="code-line"><span class="line-num">11</span><span class="line-content">    <span class="fn">render</span><span class="punct">();</span></span></div>
+<div class="code-line"><span class="line-num">12</span><span class="line-content">    <span class="kw">try</span> <span class="punct">{</span></span></div>
+<div class="code-line"><span class="line-num">13</span><span class="line-content">      <span class="kw">const</span> <span class="var">res</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">API.get</span><span class="punct">(</span><span class="str">'/api/screenshots'</span><span class="punct">);</span></span></div>
+<div class="code-line"><span class="line-num">14</span><span class="line-content">      <span class="var">screenshots</span> <span class="op">=</span> <span class="var">res</span><span class="punct">.</span><span class="var">data</span> <span class="op">||</span> <span class="punct">[];</span></span></div>
+<div class="code-line"><span class="line-num">15</span><span class="line-content">    <span class="punct">}</span> <span class="kw">catch</span> <span class="punct">(</span><span class="var">e</span><span class="punct">) {</span></span></div>
+<div class="code-line"><span class="line-num">16</span><span class="line-content">      <span class="var">Components</span><span class="punct">.</span><span class="fn">toast</span><span class="punct">(</span><span class="str">'加载失败'</span><span class="punct">,</span> <span class="str">'error'</span><span class="punct">);</span></span></div>
+<div class="code-line"><span class="line-num">17</span><span class="line-content">    <span class="punct">}</span> <span class="kw">finally</span> <span class="punct">{</span></span></div>
+<div class="code-line"><span class="line-num">18</span><span class="line-content">      <span class="var">isLoading</span> <span class="op">=</span> <span class="bool">false</span><span class="punct">;</span></span></div>
+<div class="code-line"><span class="line-num">19</span><span class="line-content">      <span class="fn">render</span><span class="punct">();</span></span></div>
+<div class="code-line"><span class="line-num">20</span><span class="line-content">    <span class="punct">}</span></span></div>
+<div class="code-line"><span class="line-num">21</span><span class="line-content">  <span class="punct">}</span></span></div>
+<div class="code-line"><span class="line-num">22</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">23</span><span class="line-content">  <span class="kw">async function</span> <span class="fn">captureScreenshot</span><span class="punct">() {</span></span></div>
+<div class="code-line"><span class="line-num">24</span><span class="line-content">    <span class="kw">const</span> <span class="var">url</span> <span class="op">=</span> <span class="var">document</span><span class="punct">.</span><span class="fn">getElementById</span><span class="punct">(</span><span class="str">'ss-url'</span><span class="punct">).</span><span class="var">value</span><span class="punct">;</span></span></div>
+<div class="code-line"><span class="line-num">25</span><span class="line-content">    <span class="kw">const</span> <span class="var">width</span> <span class="op">=</span> <span class="fn">parseInt</span><span class="punct">(</span><span class="var">document</span><span class="punct">.</span><span class="fn">getElementById</span><span class="punct">(</span><span class="str">'ss-width'</span><span class="punct">).</span><span class="var">value</span><span class="punct">);</span></span></div>
+<div class="code-line"><span class="line-num">26</span><span class="line-content">    <span class="kw">const</span> <span class="var">height</span> <span class="op">=</span> <span class="fn">parseInt</span><span class="punct">(</span><span class="var">document</span><span class="punct">.</span><span class="fn">getElementById</span><span class="punct">(</span><span class="str">'ss-height'</span><span class="punct">).</span><span class="var">value</span><span class="punct">);</span></span></div>
+<div class="code-line"><span class="line-num">27</span><span class="line-content">    <span class="kw">const</span> <span class="var">fullPage</span> <span class="op">=</span> <span class="var">document</span><span class="punct">.</span><span class="fn">getElementById</span><span class="punct">(</span><span class="str">'ss-fullpage'</span><span class="punct">).</span><span class="var">checked</span><span class="punct">;</span></span></div>
+<div class="code-line"><span class="line-num">28</span><span class="line-content">    <span class="cm">// ... API 调用 ...</span></span></div>
+<div class="code-line"><span class="line-num">29</span><span class="line-content">    <span class="kw">const</span> <span class="var">res</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">API.post</span><span class="punct">(</span><span class="str">'/api/screenshot/capture'</span><span class="punct">,</span> <span class="punct">{</span></span></div>
+<div class="code-line"><span class="line-num">30</span><span class="line-content">      <span class="var">url</span><span class="punct">,</span> <span class="var">width</span><span class="punct">,</span> <span class="var">height</span><span class="punct">,</span> <span class="var">full_page</span><span class="punct">:</span> <span class="var">fullPage</span></span></div>
+<div class="code-line"><span class="line-num">31</span><span class="line-content">    <span class="punct">});</span></span></div>
+<div class="code-line"><span class="line-num">32</span><span class="line-content">  <span class="punct">}</span></span></div>
+<div class="code-line"><span class="line-num">33</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">34</span><span class="line-content">  <span class="kw">function</span> <span class="fn">render</span><span class="punct">() {</span></span></div>
+<div class="code-line"><span class="line-num">35</span><span class="line-content">    <span class="kw">const</span> <span class="var">container</span> <span class="op">=</span> <span class="var">document</span><span class="punct">.</span><span class="fn">getElementById</span><span class="punct">(</span><span class="str">'page-content'</span><span class="punct">);</span></span></div>
+<div class="code-line"><span class="line-num">36</span><span class="line-content">    <span class="var">container</span><span class="punct">.</span><span class="var">innerHTML</span> <span class="op">=</span> <span class="fn">buildHTML</span><span class="punct">();</span></span></div>
+<div class="code-line"><span class="line-num">37</span><span class="line-content">  <span class="punct">}</span></span></div>
+<div class="code-line"><span class="line-num">38</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">39</span><span class="line-content">  <span class="kw">return</span> <span class="punct">{</span> <span class="fn">load</span><span class="punct">:</span> <span class="fn">loadScreenshots</span><span class="punct">,</span> <span class="fn">render</span> <span class="punct">};</span></span></div>
+<div class="code-line"><span class="line-num">40</span><span class="line-content"><span class="punct">})();</span></span></div>
+  </div>
+</div>`
+  },
+  // STEP 7
+  {
+    title: "前端 — 注册页面",
+    modules: ["前端", "路由"],
+    moduleClasses: ["tag-frontend", "tag-frontend"],
+    description: `在 <code>app.js</code> 中注册新页面。由于 v4.9.0 的自动化改造，<code>build_full_html</code> 会自动扫描 pages/*.js，不需要修改 app.py。<br><br>
+但还需要：<br>
+1. <code>app.js</code> 的 pageNames 数组添加 <code>'screenshot'</code><br>
+2. <code>app.js</code> 的 pageTitles 添加中文标题 <code>'截图工具'</code><br>
+3. <code>index.html</code> 侧边栏添加导航入口`,
+    decision: "项目 v4.9.0 改造后，前端页面文件会被构建脚本自动发现和打包。只需在 app.js 注册名称和标题。",
+    activeFiles: ["frontend/js/app.js"],
+    terminal: () => `<div class="term-comment"># 查看 app.js 中的页面注册区域</div>
+<span class="term-prompt">$</span> <span class="term-cmd">grep -n "pageNames\|pageTitles" frontend/js/app.js | head -20</span>
+<span class="term-output"> 15:  const pageNames = [
+ 16:    'dashboard', 'chat', 'tools', 'sessions',
+ 17:    'memory', 'knowledge', 'plugins', 'marketplace',
+ 18:    'config', 'cron', 'logs', 'mcp',
+ 19:    'agents', 'skills', 'about', 'trash'
+ 20:  ];
+ 21:
+ 22:  const pageTitles = {
+ 23:    dashboard: '仪表盘',
+ 24:    chat: '对话',
+ ...
+ 37:    trash: '回收站'
+ 38:  };</span>
+
+<span class="term-prompt">$</span> <span class="term-cmd">git diff frontend/js/app.js</span>
+<span class="term-output">  const pageNames = [
+    'dashboard', 'chat', 'tools', 'sessions',
+    'memory', 'knowledge', 'plugins', 'marketplace',
+    'config', 'cron', 'logs', 'mcp',
+    'agents', 'skills', 'about', 'trash',
+<span class="diff-add">+   'screenshot'</span>
+  ];
+
+  const pageTitles = {
+    ...
+    trash: '回收站',
+<span class="diff-add">+   screenshot: '截图工具'</span>
+  };</span>`
+  },
+  // STEP 8
+  {
+    title: "前端 — 添加图标",
+    modules: ["前端", "UI"],
+    moduleClasses: ["tag-frontend", "tag-frontend"],
+    description: `在 <code>components.js</code> 的 ICONS 字典中添加 camera 和 image 图标。<br><br>
+使用 Lucide 风格的 SVG path，24x24 viewBox。<br><br>
+图标通过 <code>Components.icon('camera', 16)</code> 调用。<br>
+侧边栏使用 <code>data-icon='camera'</code> 属性自动渲染。`,
+    decision: "使用 Lucide 图标风格，与项目现有图标保持视觉一致性。24x24 viewBox 支持任意尺寸缩放。",
+    activeFiles: ["frontend/js/components.js"],
+    terminal: () => `<div class="code-block">
+  <div class="code-header">
+    <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+    frontend/js/components.js — ICONS 字典新增
+  </div>
+  <div class="code-body">
+<div class="code-line"><span class="line-num">  1</span><span class="line-content"><span class="cm">// components.js 中的 ICONS 对象</span></span></div>
+<div class="code-line"><span class="line-num">  2</span><span class="line-content"><span class="kw">const</span> <span class="var">ICONS</span> <span class="op">=</span> <span class="punct">{</span></span></div>
+<div class="code-line"><span class="line-num">  3</span><span class="line-content">  <span class="cm">// ... 现有图标 ...</span></span></div>
+<div class="code-line"><span class="line-num">  4</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">  5</span><span class="line-content">  <span class="diff-add">+ camera: '&lt;svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"</span></span></div>
+<div class="code-line"><span class="line-num">  6</span><span class="line-content"><span class="diff-add">+   viewBox="0 0 24 24" fill="none" stroke="currentColor"</span></span></div>
+<div class="code-line"><span class="line-num">  7</span><span class="line-content"><span class="diff-add">+   stroke-width="2" stroke-linecap="round"</span></span></div>
+<div class="code-line"><span class="line-num">  8</span><span class="line-content"><span class="diff-add">+   stroke-linejoin="round"&gt;&lt;path d="M14.5 4h-5L7 7H4a2 2</span></span></div>
+<div class="code-line"><span class="line-num">  9</span><span class="line-content"><span class="diff-add">+   0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2</span></span></div>
+<div class="code-line"><span class="line-num"> 10</span><span class="line-content"><span class="diff-add">+   2 0 0 0-2-2h-3l-2.5-3z"/&gt;&lt;circle cx="12" cy="13"</span></span></div>
+<div class="code-line"><span class="line-num"> 11</span><span class="line-content"><span class="diff-add">+   r="3"/&gt;&lt;/svg&gt;',</span></span></div>
+<div class="code-line"><span class="line-num"> 12</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num"> 13</span><span class="line-content">  <span class="diff-add">+ image: '&lt;svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"</span></span></div>
+<div class="code-line"><span class="line-num"> 14</span><span class="line-content"><span class="diff-add">+   viewBox="0 0 24 24" fill="none" stroke="currentColor"</span></span></div>
+<div class="code-line"><span class="line-num"> 15</span><span class="line-content"><span class="diff-add">+   stroke-width="2" stroke-linecap="round"</span></span></div>
+<div class="code-line"><span class="line-num"> 16</span><span class="line-content"><span class="diff-add">+   stroke-linejoin="round"&gt;&lt;rect x="3" y="3" width="18"</span></span></div>
+<div class="code-line"><span class="line-num"> 17</span><span class="line-content"><span class="diff-add">+   height="18" rx="2" ry="2"/&gt;&lt;circle cx="8.5" cy="8.5"</span></span></div>
+<div class="code-line"><span class="line-num"> 18</span><span class="line-content"><span class="diff-add">+   r="1.5"/&gt;&lt;polyline points="21 15 16 10 5 21"/&gt;&lt;/svg&gt;',</span></span></div>
+<div class="code-line"><span class="line-num"> 19</span><span class="line-content"><span class="punct">};</span></span></div>
+<div class="code-line"><span class="line-num"> 20</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num"> 21</span><span class="line-content"><span class="cm">// 调用方式</span></span></div>
+<div class="code-line"><span class="line-num"> 22</span><span class="line-content"><span class="cm">// Components.icon('camera', 16) → 返回 16x16 的相机 SVG</span></span></div>
+  </div>
+</div>`
+  },
+  // STEP 9
+  {
+    title: "前端 — 侧边栏导航",
+    modules: ["前端", "HTML"],
+    moduleClasses: ["tag-frontend", "tag-frontend"],
+    description: `在 <code>index.html</code> 的侧边栏中添加截图工具入口。<br><br>
+放在回收站后面，使用 <code>data-icon='camera'</code> 属性。<br><br>
+页面加载时 <code>replaceNavIcons()</code> 会自动将 data-icon 渲染为 SVG。`,
+    decision: "侧边栏使用 data-icon 声明式图标，由 JS 统一渲染。保持与其他导航项一致的 HTML 结构。",
+    activeFiles: ["frontend/index.html"],
+    terminal: () => `<div class="code-block">
+  <div class="code-header">
+    <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+    frontend/index.html — 侧边栏新增导航项
+  </div>
+  <div class="code-body">
+<div class="code-line"><span class="line-num">1</span><span class="line-content"><span class="cm">&lt;!-- 侧边栏导航区域 --&gt;</span></span></div>
+<div class="code-line"><span class="line-num">2</span><span class="line-content"><span class="tag">&lt;nav</span> <span class="attr">class</span><span class="op">=</span><span class="str">"sidebar-nav"</span><span class="tag">&gt;</span></span></div>
+<div class="code-line"><span class="line-num">3</span><span class="line-content">  <span class="cm">&lt;!-- ... 其他导航项 ... --&gt;</span></span></div>
+<div class="code-line"><span class="line-num">4</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">5</span><span class="line-content">  <span class="cm">&lt;!-- 回收站 --&gt;</span></span></div>
+<div class="code-line"><span class="line-num">6</span><span class="line-content">  <span class="tag">&lt;a</span> <span class="attr">href</span><span class="op">=</span><span class="str">"#trash"</span> <span class="attr">data-page</span><span class="op">=</span><span class="str">"trash"</span> <span class="attr">data-icon</span><span class="op">=</span><span class="str">"trash-2"</span><span class="tag">&gt;</span></span></div>
+<div class="code-line"><span class="line-num">7</span><span class="line-content">    <span class="tag">&lt;span&gt;</span>回收站<span class="tag">&lt;/span&gt;</span></span></div>
+<div class="code-line"><span class="line-num">8</span><span class="line-content">  <span class="tag">&lt;/a&gt;</span></span></div>
+<div class="code-line"><span class="line-num">9</span><span class="line-content"></span></div>
+<div class="code-line"><span class="line-num">10</span><span class="line-content">  <span class="diff-add">+ &lt;!-- 截图工具 --&gt;</span></span></div>
+<div class="code-line"><span class="line-num">11</span><span class="line-content"><span class="diff-add">+ &lt;a href="#screenshot" data-page="screenshot"</span></span></div>
+<div class="code-line"><span class="line-num">12</span><span class="line-content"><span class="diff-add">+   data-icon="camera"&gt;</span></span></div>
+<div class="code-line"><span class="line-num">13</span><span class="line-content"><span class="diff-add">+   &lt;span&gt;截图工具&lt;/span&gt;</span></span></div>
+<div class="code-line"><span class="line-num">14</span><span class="line-content"><span class="diff-add">+ &lt;/a&gt;</span></span></div>
+<div class="code-line"><span class="line-num">15</span><span class="line-content"><span class="tag">&lt;/nav&gt;</span></span></div>
+  </div>
+</div>
+
+<div style="margin-top:12px">
+<span class="term-comment"># replaceNavIcons() 自动将 data-icon 替换为 SVG</span>
+<span class="term-prompt">$</span> <span class="term-cmd">grep -A5 "replaceNavIcons" frontend/js/app.js | head -8</span>
+<span class="term-output">function replaceNavIcons() {
+  document.querySelectorAll('[data-icon]').forEach(el => {
+    const name = el.dataset.icon;
+    const svg = Components.icon(name, 18);
+    el.prepend(svg);
+  });
+}</span>
+</div>`
+  },
+  // STEP 10
+  {
+    title: "质量检查 — ESLint",
+    modules: ["质量", "ESLint"],
+    moduleClasses: ["tag-quality", "tag-quality"],
+    description: `运行 ESLint 检查新增的 <code>screenshot.js</code>。<br><br>
+第一次发现 1 个 error 和 1 个 warning：<br>
+- <code>full_page</code> 变量未定义（no-undef）<br>
+- <code>fullPage</code> 变量赋值后未使用<br><br>
+原因是 API 参数用蛇形命名 <code>full_page</code>，JS 变量用驼峰 <code>fullPage</code>。<br>
+修复：将参数对象改为 <code>{ url, width, height, full_page: fullPage }</code>`,
+    decision: "API 参数命名（蛇形）和 JS 变量命名（驼峰）的转换必须在发送请求时完成，不能混用。",
+    activeFiles: ["frontend/js/pages/screenshot.js"],
+    terminal: () => `<div class="term-comment"># 第一次运行 ESLint</div>
+<span class="term-prompt">$</span> <span class="term-cmd">npx eslint js/pages/screenshot.js</span>
+<span class="term-output"></span>
+<span class="term-error">  119:92  error    'full_page' is not defined    no-undef
+  111:15  warning  'fullPage' is assigned a value  but never used  no-unused-vars</span>
+
+<span class="term-output">
+✖ 1 error, 1 warning found.</span>
+
+<div class="term-comment"># 查看出错代码</div>
+<span class="term-prompt">$</span> <span class="term-cmd">sed -n '115,122p' js/pages/screenshot.js</span>
+<span class="term-output">    const res = await API.post('/api/screenshot/capture', {
+      url,
+      width,
+      height,
+<span class="term-error">      full_page,    ← 应该是 full_page: fullPage</span>
+    });</span>
+
+<div class="term-comment"># 修复：将 full_page 改为 full_page: fullPage</div>
+<span class="term-prompt">$</span> <span class="term-cmd">sed -i 's/full_page,$/full_page: fullPage,/' js/pages/screenshot.js</span>
+
+<div class="term-comment"># 修复后再次检查</div>
+<span class="term-prompt">$</span> <span class="term-cmd">npx eslint js/</span>
+<span class="term-success">✅ 0 errors, 0 warnings</span>`
+  },
+  // STEP 11
+  {
+    title: "质量检查 — Prettier + 语法检查",
+    modules: ["质量", "格式化"],
+    moduleClasses: ["tag-quality", "tag-quality"],
+    description: `运行 Prettier 格式化代码，确保风格统一。<br><br>
+然后运行 <code>node --check</code> 验证 JS 语法，<code>py_compile</code> 验证 Python 语法。<br><br>
+全部通过后才能提交。`,
+    decision: "三重验证：ESLint（逻辑）+ Prettier（格式）+ 语法检查（编译）。确保代码质量和风格一致性。",
+    activeFiles: [],
+    terminal: () => `<div class="term-comment"># Prettier 格式化</div>
+<span class="term-prompt">$</span> <span class="term-cmd">npx prettier --write js/pages/screenshot.js</span>
+<span class="term-success">js/pages/screenshot.js 69ms</span>
+
+<span class="term-comment"># JS 语法检查</div>
+<span class="term-prompt">$</span> <span class="term-cmd">node --check js/pages/screenshot.js</span>
+<span class="term-success">✅</span>
+
+<span class="term-comment"># Python 语法检查 — 路由文件</div>
+<span class="term-prompt">$</span> <span class="term-cmd">python3 -m py_compile backend/routers/screenshot.py</span>
+<span class="term-success">✅</span>
+
+<div class="term-comment"># Python 语法检查 — 服务文件</div>
+<span class="term-prompt">$</span> <span class="term-cmd">python3 -m py_compile backend/services/screenshot_service.py</span>
+<span class="term-success">✅</span>
+
+<div class="term-comment"># Python 语法检查 — mcp_server.py</div>
+<span class="term-prompt">$</span> <span class="term-cmd">python3 -m py_compile backend/mcp_server.py</span>
+<span class="term-success">✅</span>
+
+<div class="term-comment"># Python 语法检查 — app.py</div>
+<span class="term-prompt">$</span> <span class="term-cmd">python3 -m py_compile app.py</span>
+<span class="term-success">✅</span>
+
+<span class="term-output">
+<span class="term-success">═══════════════════════════════════
+  全部检查通过！可以提交代码
+═══════════════════════════════════</span></span>`
+  },
+  // STEP 12
+  {
+    title: "提交代码 — pre-commit hook",
+    modules: ["基础设施", "Git"],
+    moduleClasses: ["tag-infra", "tag-infra"],
+    description: `执行 <code>git commit</code> 时，pre-commit hook 自动运行。<br><br>
+检查项包括：ESLint、node --check、py_compile。<br><br>
+任何一项失败都会阻止提交。<br>
+这次全部通过，代码成功提交。`,
+    decision: "pre-commit hook 作为质量门禁，确保不会有不合规代码进入仓库。9 个文件共 1607 行新增代码。",
+    activeFiles: [],
+    terminal: () => `<span class="term-prompt">$</span> <span class="term-cmd">git add -A</span>
+
+<span class="term-prompt">$</span> <span class="term-cmd">git commit -m "feat: add screenshot tool with MCP integration</span>
+<span class="term-cmd">
+- Add capture_screenshot MCP tool definition
+- Create screenshot API router (4 endpoints)
+- Implement ScreenshotService with Playwright
+- Add screenshot frontend page
+- Register page in app.js and sidebar nav"</span>
+
+<span class="term-output">
+<span class="term-highlight">🔍 Running pre-commit checks...</span>
+
+  <span class="term-dim">Running ESLint on frontend/js/...</span>
+  <span class="term-success">✅ ESLint passed (0 errors, 0 warnings)</span>
+
+  <span class="term-dim">Running node --check on JS files...</span>
+  <span class="term-success">✅ Syntax check passed</span>
+
+  <span class="term-dim">Running py_compile on Python files...</span>
+  <span class="term-success">✅ Python syntax check passed</span>
+
+<span class="term-success">✅ Pre-commit checks passed</span>
+
+[main <span class="term-highlight">27d4206</span>] feat: add screenshot tool with MCP integration
+ <span class="term-dim"> 9 files changed, 1607 insertions(+)</span>
+ <span class="term-dim"> create mode 100644 backend/routers/screenshot.py</span>
+ <span class="term-dim"> create mode 100644 backend/services/screenshot_service.py</span>
+ <span class="term-dim"> create mode 100644 frontend/js/pages/screenshot.js</span></span>`
+  },
+  // STEP 13
+  {
+    title: "推送部署 — git push",
+    modules: ["部署", "CI/CD"],
+    moduleClasses: ["tag-deploy", "tag-deploy"],
+    description: `代码推送到 GitHub 后，CI 流水线自动触发。<br><br>
+ESLint + 语法检查通过后，自动部署到 HuggingFace Spaces。<br><br>
+Gradio 应用热重载，新页面立即可用。`,
+    decision: "项目使用 GitHub Actions CI/CD，推送到 main 分支自动触发 lint + deploy 两个 job。",
+    activeFiles: [],
+    terminal: () => `<span class="term-prompt">$</span> <span class="term-cmd">git push origin main</span>
+<span class="term-output">
+Enumerating objects: 14, done.
+Counting objects: 100% (14/14), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (10/10), done.
+Writing objects: 100% (10/10), 4.52 KiB | 4.52 MiB/s, done.
+Total 10 (delta 6), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (6/6), completed with 4 local objects.
+To https://github.com/arwei944/hermes-mcp-space.git
+   <span class="term-dim">996f096</span><span class="term-success">..27d4206</span>  main -> main <span class="term-success">✅</span></span>
+
+<span class="term-output">
+<span class="term-highlight">🚀 CI 流水线已触发</span>
+  <span class="term-dim">Run #47: https://github.com/arwei944/hermes-mcp-space/actions/runs/...</span>
+  <span class="term-dim">├── lint (ESLint + syntax check)  ← 运行中...</span>
+  <span class="term-dim">└── deploy (HF Spaces)            ← 等待中...</span></span>`
+  },
+  // STEP 14
+  {
+    title: "验证 — 检查 CI 状态",
+    modules: ["部署", "CI/CD"],
+    moduleClasses: ["tag-deploy", "tag-deploy"],
+    description: `在 GitHub Actions 中查看 CI 运行状态。<br><br>
+lint job 运行 ESLint + JS/Python 语法检查。<br>
+deploy job 自动部署到 HuggingFace Spaces。<br><br>
+两个 job 都通过，功能上线完成。`,
+    decision: "CI 分为 lint 和 deploy 两个阶段，lint 必须先通过才能部署。确保上线代码质量。",
+    activeFiles: [],
+    terminal: () => `<span class="term-prompt">$</span> <span class="term-cmd">gh run view 47 --web</span>
+<span class="term-output">
+<span class="term-highlight">Run #47 — feat: add screenshot tool with MCP integration</span>
+Trigger: push to main
+Status: <span class="term-success">completed</span>
+Conclusion: <span class="term-success">success</span>
+
+<span class="term-success">✅ lint</span> <span class="term-dim">(ESLint + syntax check)</span> — <span class="term-success">passed</span> <span class="term-dim">(32s)</span>
+  <span class="term-dim">├── ESLint: 0 errors, 0 warnings</span>
+  <span class="term-dim">├── node --check: all files passed</span>
+  <span class="term-dim">└── py_compile: all files passed</span>
+
+<span class="term-success">✅ deploy</span> <span class="term-dim">(HF Spaces)</span> — <span class="term-success">passed</span> <span class="term-dim">(1m 12s)</span>
+  <span class="term-dim">├── Build: successful</span>
+  <span class="term-dim">├── Deploy to HF Spaces: successful</span>
+  <span class="term-dim">└── Health check: 200 OK</span>
+
+<span class="term-success">═══════════════════════════════════
+  🎉 截图工具已成功上线！
+  🌐 https://arwei944-hermes-mcp-space.hf.space
+═══════════════════════════════════</span></span>`
+  },
+  // STEP 15
+  {
+    title: "总结 — 完整路径回顾",
+    modules: ["全部", "总结"],
+    moduleClasses: ["tag-infra", "tag-backend"],
+    description: `截图小工具开发完成！<br><br>
+<strong>后端（3 个文件）</strong>：<br>
+mcp_server.py → 添加 MCP 工具定义<br>
+routers/screenshot.py → 4 个 REST API<br>
+services/screenshot_service.py → 截图核心逻辑<br><br>
+<strong>前端（3 个文件）</strong>：<br>
+pages/screenshot.js → 页面 UI + 交互<br>
+app.js → 页面注册（2 处）<br>
+index.html → 侧边栏导航<br><br>
+<strong>基础设施（自动触发）</strong>：<br>
+ESLint → 发现并修复 2 个问题<br>
+Prettier → 格式化代码<br>
+pre-commit → 自动质量门禁<br>
+CI/CD → 自动部署`,
+    decision: null,
+    activeFiles: [],
+    terminal: () => `<span class="term-success">╔══════════════════════════════════════════════════════╗</span>
+<span class="term-success">║</span>          <span class="term-highlight">截图小工具 — 开发完成总结</span>              <span class="term-success">║</span>
+<span class="term-success">╚══════════════════════════════════════════════════════╝</span>
+
+<span class="term-highlight">后端（3 个文件）</span>
+  <span class="term-dim">mcp_server.py</span>              <span class="term-success">→ 添加 MCP 工具定义</span>
+  <span class="term-dim">routers/screenshot.py</span>       <span class="term-success">→ 4 个 REST API</span>
+  <span class="term-dim">services/screenshot_service.py</span> <span class="term-success">→ 截图核心逻辑</span>
+
+<span class="term-highlight">前端（3 个文件）</span>
+  <span class="term-dim">pages/screenshot.js</span>         <span class="term-success">→ 页面 UI + 交互</span>
+  <span class="term-dim">app.js</span>                      <span class="term-success">→ 页面注册（2 处）</span>
+  <span class="term-dim">index.html</span>                  <span class="term-success">→ 侧边栏导航</span>
+
+<span class="term-highlight">基础设施（自动触发）</span>
+  <span class="term-dim">ESLint</span>     <span class="term-success">→ 发现并修复 2 个问题</span>
+  <span class="term-dim">Prettier</span>   <span class="term-success">→ 格式化代码</span>
+  <span class="term-dim">pre-commit</span> <span class="term-success">→ 自动质量门禁</span>
+  <span class="term-dim">CI/CD</span>      <span class="term-success">→ 自动部署</span>
+
+<span class="term-output">
+┌─────────────────────────────────────┐
+│  新增代码:  <span class="term-highlight">1607 行</span>                  │
+│  涉及文件:  <span class="term-highlight">9 个</span>                    │
+│  质量检查:  <span class="term-success">0 error / 0 warning</span>       │
+│  从零到上线: <span class="term-highlight">约 15 分钟</span>              │
+└─────────────────────────────────────┘</span>`
+  }
+];
+
+// ===== FILE TREE DATA =====
+const fileTree = [
+  { name: "hermes-mcp-space/", icon: "📁", indent: 0, type: "dir" },
+  { name: "app.py", icon: "📄", indent: 1, type: "file", status: "modified", steps: [5] },
+  { name: "backend/", icon: "📁", indent: 1, type: "dir" },
+  { name: "routers/", icon: "📁", indent: 2, type: "dir" },
+  { name: "screenshot.py", icon: "📄", indent: 3, type: "file", status: "new", steps: [3] },
+  { name: "services/", icon: "📁", indent: 2, type: "dir" },
+  { name: "screenshot_service.py", icon: "📄", indent: 3, type: "file", status: "new", steps: [4] },
+  { name: "mcp_server.py", icon: "📄", indent: 2, type: "file", status: "modified", steps: [2] },
+  { name: "frontend/", icon: "📁", indent: 1, type: "dir" },
+  { name: "js/", icon: "📁", indent: 2, type: "dir" },
+  { name: "app.js", icon: "📄", indent: 3, type: "file", status: "modified", steps: [7] },
+  { name: "components.js", icon: "📄", indent: 3, type: "file", status: "modified", steps: [8] },
+  { name: "pages/", icon: "📁", indent: 3, type: "dir" },
+  { name: "screenshot.js", icon: "📄", indent: 4, type: "file", status: "new", steps: [6, 10] },
+  { name: "index.html", icon: "📄", indent: 2, type: "file", status: "modified", steps: [9] },
+];
+
+// ===== STATE =====
+let currentStep = 0;
+let autoPlayTimer = null;
+let isPlaying = false;
+
+// ===== RENDER FUNCTIONS =====
+function renderFileTree() {
+  const container = document.getElementById('fileTree');
+  const step = steps[currentStep];
+  let html = '';
+
+  fileTree.forEach(item => {
+    const isActive = item.steps && item.steps.includes(currentStep + 1);
+    const indentClass = item.indent === 0 ? '' : `tree-indent${item.indent > 1 ? '-' + (item.indent - 1) : ''}`;
+    const activeClass = isActive ? ' active' : '';
+
+    let badge = '';
+    if (item.status === 'new') badge = '<span class="badge badge-new">新增</span>';
+    else if (item.status === 'modified') badge = '<span class="badge badge-modified">修改</span>';
+
+    html += `<div class="tree-item${indentClass}${activeClass}">
+      <span class="icon">${item.icon}</span>
+      <span class="name">${item.name}</span>
+      ${badge}
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderTerminal() {
+  const container = document.getElementById('terminalContent');
+  const step = steps[currentStep];
+  container.innerHTML = step.terminal();
+
+  // Update tab
+  const tabLabel = document.getElementById('tabLabel');
+  if (currentStep === 0) tabLabel.textContent = '终端';
+  else if ([2, 3, 4, 6, 8].includes(currentStep)) tabLabel.textContent = step.activeFiles[0] || '代码';
+  else if (currentStep === 5) tabLabel.textContent = 'app.py — git diff';
+  else if (currentStep === 7) tabLabel.textContent = 'app.js — git diff';
+  else if (currentStep === 9) tabLabel.textContent = 'ESLint 检查';
+  else if (currentStep === 10) tabLabel.textContent = 'Prettier + 语法检查';
+  else if (currentStep === 11) tabLabel.textContent = 'git commit';
+  else if (currentStep === 12) tabLabel.textContent = 'git push';
+  else if (currentStep === 13) tabLabel.textContent = 'CI 状态';
+  else if (currentStep === 14) tabLabel.textContent = '总结';
+}
+
+function renderExplanation() {
+  const container = document.getElementById('explainContent');
+  const step = steps[currentStep];
+  let html = '';
+
+  html += `<div class="step-badge">STEP ${currentStep + 1} / ${steps.length}</div>`;
+  html += `<div class="step-title">${step.title}</div>`;
+  html += `<div class="step-desc">${step.description}</div>`;
+
+  // Module tags
+  html += '<div class="module-tags">';
+  step.modules.forEach((mod, i) => {
+    html += `<span class="module-tag ${step.moduleClasses[i]}">${mod}</span>`;
+  });
+  html += '</div>';
+
+  // Decision box
+  if (step.decision) {
+    html += `<div class="decision-box">
+      <div class="label">关键决策</div>
+      <div class="text">${step.decision}</div>
+    </div>`;
+  }
+
+  // Summary cards for step 15
+  if (currentStep === 14) {
+    html += `
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="label">新增代码</div>
+        <div class="value green">1,607 行</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">涉及文件</div>
+        <div class="value blue">9 个</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">质量检查</div>
+        <div class="value green">0 error</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">开发耗时</div>
+        <div class="value orange">~15 分钟</div>
+      </div>
+    </div>
+    <div class="summary-list">
+      <div><span class="file-path">mcp_server.py</span> <span class="arrow">→</span> <span class="desc">MCP 工具定义</span></div>
+      <div><span class="file-path">routers/screenshot.py</span> <span class="arrow">→</span> <span class="desc">4 个 REST API</span></div>
+      <div><span class="file-path">screenshot_service.py</span> <span class="arrow">→</span> <span class="desc">截图核心逻辑</span></div>
+      <div><span class="file-path">pages/screenshot.js</span> <span class="arrow">→</span> <span class="desc">页面 UI + 交互</span></div>
+      <div><span class="file-path">app.js</span> <span class="arrow">→</span> <span class="desc">页面注册</span></div>
+      <div><span class="file-path">index.html</span> <span class="arrow">→</span> <span class="desc">侧边栏导航</span></div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function updateProgress() {
+  const pct = ((currentStep + 1) / steps.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${currentStep + 1} / ${steps.length}`;
+  document.getElementById('stepIndicator').textContent = `STEP ${currentStep + 1}`;
+}
+
+function render() {
+  renderFileTree();
+  renderTerminal();
+  renderExplanation();
+  updateProgress();
+}
+
+// ===== CONTROLS =====
+function goToStep(index) {
+  if (index < 0 || index >= steps.length) return;
+  currentStep = index;
+  render();
+}
+
+function nextStep() {
+  if (currentStep < steps.length - 1) {
+    goToStep(currentStep + 1);
+  } else {
+    pausePlay();
+  }
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    goToStep(currentStep - 1);
+  }
+}
+
+function toggleAutoPlay() {
+  if (isPlaying) {
+    pausePlay();
+  } else {
+    startAutoPlay();
+  }
+}
+
+function startAutoPlay() {
+  isPlaying = true;
+  document.getElementById('btnAutoPlay').style.display = 'none';
+  document.getElementById('btnPause').style.display = 'flex';
+  autoPlayTimer = setInterval(() => {
+    if (currentStep < steps.length - 1) {
+      nextStep();
+    } else {
+      pausePlay();
+    }
+  }, 8000);
+}
+
+function pausePlay() {
+  isPlaying = false;
+  document.getElementById('btnAutoPlay').style.display = 'flex';
+  document.getElementById('btnPause').style.display = 'none';
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer);
+    autoPlayTimer = null;
+  }
+}
+
+function seekProgress(event) {
+  const bar = document.getElementById('progressBar');
+  const rect = bar.getBoundingClientRect();
+  const pct = (event.clientX - rect.left) / rect.width;
+  const step = Math.round(pct * (steps.length - 1));
+  goToStep(Math.max(0, Math.min(steps.length - 1, step)));
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  switch (e.key) {
+    case 'ArrowRight':
+      e.preventDefault();
+      nextStep();
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      prevStep();
+      break;
+    case ' ':
+      e.preventDefault();
+      toggleAutoPlay();
+      break;
+  }
+});
+
+// ===== INIT =====
+render();
+</script>
+</body>
+</html>
