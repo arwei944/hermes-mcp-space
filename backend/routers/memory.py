@@ -19,7 +19,7 @@ class MemoryUpdateRequest:
 
 
 @router.get("", summary="读取当前记忆")
-async def read_memory() -> Dict[str, str]:
+async def read_memory() -> Dict[str, Any]:
     """
     读取 Hermes Agent 的当前记忆内容
 
