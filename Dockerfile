@@ -34,7 +34,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY . .
 
 # 创建 Hermes 数据目录
-RUN mkdir -p /root/.hermes/{data,skills,memories,cron,agents}
+RUN mkdir -p /root/.hermes/{data,skills,memories,cron,agents,logs}
+
+# 配置 Git（用于数据持久化备份）
+RUN git config --global user.email "hermes-bot@users.noreply.github.com" && \
+    git config --global user.name "Hermes Bot" && \
+    git config --global init.defaultBranch main
 
 # 环境变量
 ENV PYTHONUNBUFFERED=1
@@ -45,8 +50,6 @@ ENV ENABLE_MCP_SSE=true
 ENV LOG_LEVEL=INFO
 
 # 暴露端口
-# 7860: Gradio / 管理面板
-# 8765: MCP SSE 服务
 EXPOSE 7860 8765
 
 # 健康检查

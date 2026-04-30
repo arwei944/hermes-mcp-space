@@ -144,7 +144,9 @@ def _patched_create_app(blocks, **kwargs):
     # Mount all backend API routers
     try:
         from backend.routers import (
-            sessions, tools, skills, memory, cron, agents, mcp, config_api, dashboard, logs, events, plugins, trash, evals, stats, knowledge, screenshot
+            sessions, tools, skills, memory, cron, agents, mcp, config_api,
+            dashboard, logs, events, plugins, trash, evals, stats, knowledge,
+            screenshot, persistence
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -163,6 +165,7 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(stats.router, prefix="/api", tags=["stats"])
         app.include_router(knowledge.router)
         app.include_router(screenshot.router)
+        app.include_router(persistence.router)
         logger.info("Backend API routers mounted successfully")
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")
@@ -195,6 +198,18 @@ def _patched_create_app(blocks, **kwargs):
         logger.warning(f"Failed to mount API docs: {e}")
 
     logger.info("Custom routes injected into Gradio app")
+
+    # Initialize persistence manager (data backup/restore)
+    try:
+        from backend.services.persistence_manager import persistence_manager
+        init_result = persistence_manager.initialize()
+        logger.info(f"Persistence manager initialized: {init_result}")
+        # Restore data from persistence backend on startup
+        restore_result = persistence_manager.restore_on_startup()
+        msg = restore_result.get("message", "skipped")
+        logger.info(f"Startup restore: {msg}")
+    except Exception as e:
+        logger.warning(f"Failed to initialize persistence manager: {e}")
 
     # Initialize seed data (demo data for first launch)
     try:
