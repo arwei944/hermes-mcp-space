@@ -1,3 +1,4 @@
+from backend.version import __version__
 # -*- coding: utf-8 -*-
 """
 MCP 客户端服务 - 连接外部 MCP 服务器，自动发现并注册工具
@@ -202,7 +203,7 @@ class MCPClientService:
             "params": {
                 "protocolVersion": "2025-03-26",
                 "capabilities": {},
-                "clientInfo": {"name": "hermes-mcp-space", "version": "5.1.0"},
+                "clientInfo": {"name": "hermes-mcp-space", "version": __version__},
             },
         }).encode("utf-8")
 
