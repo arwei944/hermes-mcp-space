@@ -1,1 +1,262 @@
-IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KIiIiCkhlcm1lcyBBZ2VudCBNQ1AgU3BhY2UgLSDpg6jnvbLlhaXlj6MK562W55Wl77yaTW9ua2V5LXBhdGNoIEdyYWRpbyDnmoQgQXBwLmNyZWF0ZV9hcHDvvIzlnKjliJvlu7ogYXBwIOWQjueri+WNs+azqOWGjOiHquWumuS5iei3r+eUseOAggoiIiIKCiMgQ1JJVElDQUw6IERpc2FibGUgU1NSIG1vZGUgYmVmb3JlIGltcG9ydGluZyBncmFkaW8KIyBIRiBTcGFjZXMgZW5hYmxlcyBTU1IgYnkgZGVmYXVsdCwgd2hpY2ggcmVuZGVycyBvbiBwb3J0IDc4NjEgdmlhIE5vZGUuanMKIyBhbmQgYnlwYXNzZXMgb3VyIGN1c3RvbSByb3V0ZXMgb24gcG9ydCA3ODYwCmltcG9ydCBvcwpvcy5lbnZpcm9uWyJHUkFESU9fU1NSX01PREUiXSA9ICJmYWxzZSIKCmltcG9ydCBqc29uCmltcG9ydCBsb2dnaW5nCmltcG9ydCByZQppbXBvcnQgdGltZQpmcm9tIGRhdGV0aW1lIGltcG9ydCBkYXRldGltZQpmcm9tIHBhdGhsaWIgaW1wb3J0IFBhdGgKZnJvbSBmYXN0YXBpIGltcG9ydCBSZXF1ZXN0CmZyb20gZmFzdGFwaS5yZXNwb25zZXMgaW1wb3J0IEhUTUxSZXNwb25zZQoKTE9HX0xFVkVMID0gb3MuZW52aXJvbi5nZXQoIkxPR19MRVZFTCIsICJJTkZPIikudXBwZXIoKQpsb2dnaW5nLmJhc2ljQ29uZmlnKAogICAgbGV2ZWw9Z2V0YXR0cihsb2dnaW5nLCBMT0dfTEVWRUwsIGxvZ2dpbmcuSU5GTyksCiAgICBmb3JtYXQ9IlslKGFzY3RpbWUpc10gJShsZXZlbG5hbWUpcyAlKG1lc3NhZ2UpcyIsCiAgICBkYXRlZm10PSIlWS0lbS0lZCAlSDolTTolUyIsCikKbG9nZ2VyID0gbG9nZ2luZy5nZXRMb2dnZXIoImhlcm1lcy1zcGFjZSIpCgpBUFBfVkVSU0lPTiA9IG9zLmVudmlyb24uZ2V0KCJBUFBfVkVSU0lPTiIsICI1LjEuMCIpCkJVSUxEX1RJTUUgPSBvcy5lbnZpcm9uLmdldCgiQlVJTERfVElNRSIsIGRhdGV0aW1lLm5vdygpLnN0cmZ0aW1lKCIlWS0lbS0lZCAlSDolTSIpKQpTVEFSVF9USU1FID0gdGltZS50aW1lKCkgICMg6L+b56iL5ZCv5Yqo5pe26Ze05oizCgoKZGVmIGxvYWRfZmlsZShwYXRoKToKICAgIHRyeToKICAgICAgICB3aXRoIG9wZW4ocGF0aCwgInIiLCBlbmNvZGluZz0idXRmLTgiKSBhcyBmOgogICAgICAgICAgICByZXR1cm4gZi5yZWFkKCkKICAgIGV4Y2VwdCBGaWxlTm90Rm91bmRFcnJvcjoKICAgICAgICBsb2dnZXIuZXJyb3IoZiJDUklUSUNBTDogRnJvbnRlbmQgZmlsZSBub3QgZm91bmQ6IHtwYXRofSIpCiAgICAgICAgcmFpc2UgUnVudGltZUVycm9yKGYiRnJvbnRlbmQgZmlsZSBtaXNzaW5nOiB7cGF0aH0iKSBmcm9tIE5vbmUKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBsb2dnZXIuZXJyb3IoZiJDUklUSUNBTDogRmFpbGVkIHRvIGxvYWQge3BhdGh9OiB7ZX0iKQogICAgICAgIHJhaXNlIFJ1bnRpbWVFcnJvcihmIkZhaWxlZCB0byBsb2FkIGZyb250ZW5kIGZpbGU6IHtwYXRofSIpIGZyb20gTm9uZQoKCmRlZiBidWlsZF9mdWxsX2h0bWwoKToKICAgICIiIkJ1aWxkIGEgY29tcGxldGVseSBzZWxmLWNvbnRhaW5lZCBIVE1MIHBhZ2Ugd2l0aCBhbGwgQ1NTIGFuZCBKUyBpbmxpbmVkLiIiIgogICAgZnJvbnRlbmRfZGlyID0gUGF0aChfX2ZpbGVfXykucmVzb2x2ZSgpLnBhcmVudCAvICJmcm9udGVuZCIKCiAgICBjc3MgPSBsb2FkX2ZpbGUoZnJvbnRlbmRfZGlyIC8gImNzcyIgLyAic3R5bGUuY3NzIikKCiAgICAjIOiHquWKqOaJq+aPjyBKUyDmlofku7bvvIjkuI3lho3miYvliqjnu7TmiqTliJfooajvvIkKICAgIGNvcmVfanMgPSBbImpzL2FwaS5qcyIsICJqcy9jb21wb25lbnRzLmpzIl0KICAgIHBhZ2VzX2RpciA9IGZyb250ZW5kX2RpciAvICJqcyIgLyAicGFnZXMiCiAgICBwYWdlX2ZpbGVzID0gc29ydGVkKAogICAgICAgIGYianMvcGFnZXMve2YubmFtZX0iIGZvciBmIGluIHBhZ2VzX2Rpci5nbG9iKCIqLmpzIikKICAgICkKICAgIGFwcF9qcyA9IFsianMvYXBwLmpzIl0KICAgIGpzX2ZpbGVzID0gY29yZV9qcyArIHBhZ2VfZmlsZXMgKyBhcHBfanMKCiAgICBsb2dnZXIuaW5mbyhmIkF1dG8tZGlzY292ZXJlZCB7bGVuKHBhZ2VfZmlsZXMpfSBwYWdlIGZpbGVzOiB7W2Yuc3BsaXQoJy8nKVstMV0gZm9yIGYgaW4gcGFnZV9maWxlc119IikKCiAgICBhbGxfanMgPSAiIgogICAgZm9yIGpzZiBpbiBqc19maWxlczoKICAgICAgICBjb250ZW50ID0gbG9hZF9maWxlKGZyb250ZW5kX2RpciAvIGpzZikKICAgICAgICBpZiBjb250ZW50OgogICAgICAgICAgICBhbGxfanMgKz0gZiJcbi8vID09PSB7anNmfSA9PT1cbntjb250ZW50fVxuIgoKICAgIGluZGV4X2h0bWwgPSBsb2FkX2ZpbGUoZnJvbnRlbmRfZGlyIC8gImluZGV4Lmh0bWwiKQoKICAgICMgUmVwbGFjZSBDU1MgbGluayB3aXRoIGlubGluZSBzdHlsZQogICAgaHRtbCA9IGluZGV4X2h0bWwucmVwbGFjZSgKICAgICAgICAnPGxpbmsgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSIvY3NzL3N0eWxlLmNzcyI+JywKICAgICAgICBmJzxzdHlsZT5cbntjc3N9XG48L3N0eWxlPicKICAgICkKCiAgICAjIFJlbW92ZSBhbGwgPHNjcmlwdCBzcmM9Li4uPiB0YWdzCiAgICBodG1sID0gcmUuc3ViKHInPHNjcmlwdFxzK3NyYz0iW14iXSoiPjwvc2NyaXB0PicsICcnLCBodG1sKQoKICAgICMgSW5zZXJ0IGFsbCBKUyBpbmxpbmUgYmVmb3JlIDwvYm9keT4KICAgIGh0bWwgPSBodG1sLnJlcGxhY2UoJzwvYm9keT4nLCBmJzxzY3JpcHQ+XG57YWxsX2pzfVxuPC9zY3JpcHQ+XG48L2JvZHk+JykKCiAgICByZXR1cm4gaHRtbAoKCmxvZ2dlci5pbmZvKCJJbml0aWFsaXppbmcgSGVybWVzIEFnZW50IE1DUCBTcGFjZS4uLiIpCgppbXBvcnQgZ3JhZGlvIGFzIGdyCmZyb20gZ3JhZGlvLnJvdXRlcyBpbXBvcnQgQXBwCgojIEJ1aWxkIHRoZSBmdWxsIEhUTUwgRklSU1QKZnVsbF9odG1sID0gYnVpbGRfZnVsbF9odG1sKCkKbG9nZ2VyLmluZm8oZiJGcm9udGVuZCBIVE1MIGJ1aWx0ICh7bGVuKGZ1bGxfaHRtbCl9IGJ5dGVzKSIpCgojIE1vbmtleS1wYXRjaCBBcHAuY3JlYXRlX2FwcCB0byBpbmplY3Qgb3VyIGN1c3RvbSByb3V0ZXMgYWZ0ZXIgR3JhZGlvIGNyZWF0ZXMgdGhlIGFwcApfb3JpZ2luYWxfY3JlYXRlX2FwcCA9IEFwcC5jcmVhdGVfYXBwCgpkZWYgX3BhdGNoZWRfY3JlYXRlX2FwcChibG9ja3MsICoqa3dhcmdzKToKICAgIGFwcCA9IF9vcmlnaW5hbF9jcmVhdGVfYXBwKGJsb2NrcywgKiprd2FyZ3MpCgogICAgIyBSZW1vdmUgR3JhZGlvJ3MgZGVmYXVsdCBHRVQgLyByb3V0ZSBzbyBvdXJzIHRha2VzIHByaW9yaXR5CiAgICBmb3Igcm91dGUgaW4gbGlzdChhcHAucm91dGVyLnJvdXRlcyk6CiAgICAgICAgaWYgZ2V0YXR0cihyb3V0ZSwgJ3BhdGgnLCBOb25lKSA9PSAiLyIgYW5kIGdldGF0dHIocm91dGUsICdtZXRob2RzJywgc2V0KCkpID09IHsiR0VUIn06CiAgICAgICAgICAgIGFwcC5yb3V0ZXIucm91dGVzLnJlbW92ZShyb3V0ZSkKICAgICAgICAgICAgbG9nZ2VyLmluZm8oIlJlbW92ZWQgZGVmYXVsdCBHcmFkaW8gaW5kZXggcm91dGUiKQoKICAgICMgSW5qZWN0IGN1c3RvbSBIVE1MIGluZGV4CiAgICBAYXBwLmdldCgiLyIsIHJlc3BvbnNlX2NsYXNzPUhUTUxSZXNwb25zZSwgaW5jbHVkZV9pbl9zY2hlbWE9RmFsc2UpCiAgICBhc3luYyBkZWYgY3VzdG9tX2luZGV4KHJlcXVlc3Q6IFJlcXVlc3QpOgogICAgICAgIGZyb20gc3RhcmxldHRlLnJlc3BvbnNlcyBpbXBvcnQgUmVzcG9uc2UgYXMgU3RhcmxldHRlUmVzcG9uc2UKICAgICAgICByZXR1cm4gU3RhcmxldHRlUmVzcG9uc2UoCiAgICAgICAgICAgIGNvbnRlbnQ9ZnVsbF9odG1sLCBtZWRpYV90eXBlPSJ0ZXh0L2h0bWwiLAogICAgICAgICAgICBoZWFkZXJzPXsKICAgICAgICAgICAgICAgICJDYWNoZS1Db250cm9sIjogIm5vLWNhY2hlLCBuby1zdG9yZSwgbXVzdC1yZXZhbGlkYXRlIiwKICAgICAgICAgICAgICAgICJQcmFnbWEiOiAibm8tY2FjaGUiLAogICAgICAgICAgICAgICAgIkV4cGlyZXMiOiAiMCIsCiAgICAgICAgICAgIH0KICAgICAgICApCgogICAgIyBJbmplY3QgdmVyc2lvbi9oZWFsdGgvbWV0YSBlbmRwb2ludHMKICAgIEBhcHAuZ2V0KCIvYXBpL21ldGEiKQogICAgYXN5bmMgZGVmIGdldF9tZXRhKCk6CiAgICAgICAgIiIi57uf5LiA55qE5YWD5pWw5o2u56uv54K577ya54mI5pys5Y+344CB5p6E5bu65pe26Ze044CB6L+Q6KGM5pe26ZW/562J5Yqo5oCB5L+h5oGvIiIiCiAgICAgICAgdXB0aW1lID0gaW50KHRpbWUudGltZSgpIC0gU1RBUlRfVElNRSkKICAgICAgICBob3VycywgcmVtYWluZGVyID0gZGl2bW9kKHVwdGltZSwgMzYwMCkKICAgICAgICBtaW51dGVzLCBzZWNvbmRzID0gZGl2bW9kKHJlbWFpbmRlciwgNjApCiAgICAgICAgcmV0dXJuIHsKICAgICAgICAgICAgInZlcnNpb24iOiBBUFBfVkVSU0lPTiwKICAgICAgICAgICAgImJ1aWxkX3RpbWUiOiBCVUlMRF9USU1FLAogICAgICAgICAgICAidXB0aW1lX3NlY29uZHMiOiB1cHRpbWUsCiAgICAgICAgICAgICJ1cHRpbWVfaHVtYW4iOiBmIntob3Vyc31oIHttaW51dGVzfW0ge3NlY29uZHN9cyIgaWYgaG91cnMgZWxzZSBmInttaW51dGVzfW0ge3NlY29uZHN9cyIsCiAgICAgICAgICAgICJub3ciOiBkYXRldGltZS5ub3coKS5zdHJmdGltZSgiJVktJW0tJWQgJUg6JU06JVMiKSwKICAgICAgICB9CgogICAgQGFwcC5nZXQoIi9hcGkvdmVyc2lvbiIpCiAgICBhc3luYyBkZWYgZ2V0X3ZlcnNpb24oKToKICAgICAgICByZXR1cm4geyJ2ZXJzaW9uIjogQVBQX1ZFUlNJT04sICJidWlsZF90aW1lIjogQlVJTERfVElNRX0KCiAgICBAYXBwLmdldCgiL2FwaS9oZWFsdGgiKQogICAgYXN5bmMgZGVmIGhlYWx0aCgpOgogICAgICAgIHJldHVybiB7InN0YXR1cyI6ICJvayIsICJzZXJ2aWNlIjogImhlcm1lcy1tY3Atc3BhY2UiLCAidmVyc2lvbiI6IEFQUF9WRVJTSU9OfQoKICAgICMgTW91bnQgYWxsIGJhY2tlbmQgQVBJIHJvdXRlcnMKICAgIHRyeToKICAgICAgICBmcm9tIGJhY2tlbmQucm91dGVycyBpbXBvcnQgKAogICAgICAgICAgICBzZXNzaW9ucywgdG9vbHMsIHNraWxscywgbWVtb3J5LCBjcm9uLCBhZ2VudHMsIG1jcCwgY29uZmlnX2FwaSwKICAgICAgICAgICAgZGFzaGJvYXJkLCBsb2dzLCBldmVudHMsIHBsdWdpbnMsIHRyYXNoLCBldmFscywgc3RhdHMsIGtub3dsZWRnZSwKICAgICAgICAgICAgc2NyZWVuc2hvdCwgcGVyc2lzdGVuY2UKICAgICAgICApCiAgICAgICAgYXBwLmluY2x1ZGVfcm91dGVyKHNlc3Npb25zLnJvdXRlcikKICAgICAgICBhcHAuaW5jbHVkZV9yb3V0ZXIodG9vbHMucm91dGVyKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihza2lsbHMucm91dGVyKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihtZW1vcnkucm91dGVyKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihjcm9uLnJvdXRlcikKICAgICAgICBhcHAuaW5jbHVkZV9yb3V0ZXIoYWdlbnRzLnJvdXRlcikKICAgICAgICBhcHAuaW5jbHVkZV9yb3V0ZXIobWNwLnJvdXRlcikKICAgICAgICBhcHAuaW5jbHVkZV9yb3V0ZXIoY29uZmlnX2FwaS5yb3V0ZXIpCiAgICAgICAgYXBwLmluY2x1ZGVfcm91dGVyKGRhc2hib2FyZC5yb3V0ZXIpCiAgICAgICAgYXBwLmluY2x1ZGVfcm91dGVyKGxvZ3Mucm91dGVyKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihldmVudHMucm91dGVyKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihwbHVnaW5zLnJvdXRlcikKICAgICAgICBhcHAuaW5jbHVkZV9yb3V0ZXIodHJhc2gucm91dGVyKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihldmFscy5yb3V0ZXIsIHByZWZpeD0iL2FwaSIsIHRhZ3M9WyJldmFscyJdKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihzdGF0cy5yb3V0ZXIsIHByZWZpeD0iL2FwaSIsIHRhZ3M9WyJzdGF0cyJdKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihrbm93bGVkZ2Uucm91dGVyKQogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihzY3JlZW5zaG90LnJvdXRlcikKICAgICAgICBhcHAuaW5jbHVkZV9yb3V0ZXIocGVyc2lzdGVuY2Uucm91dGVyKQogICAgICAgIGxvZ2dlci5pbmZvKCJCYWNrZW5kIEFQSSByb3V0ZXJzIG1vdW50ZWQgc3VjY2Vzc2Z1bGx5IikKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBsb2dnZXIud2FybmluZyhmIkZhaWxlZCB0byBtb3VudCBiYWNrZW5kIEFQSSByb3V0ZXJzOiB7ZX0iKQoKICAgICMgTW91bnQgTUNQIHNlcnZlciAobWFudWFsIGltcGxlbWVudGF0aW9uIC0gU3RyZWFtYWJsZSBIVFRQICsgU1NFKQogICAgdHJ5OgogICAgICAgIGZyb20gYmFja2VuZC5tY3Bfc2VydmVyIGltcG9ydCByb3V0ZXIgYXMgbWNwX3JvdXRlcgogICAgICAgIGFwcC5pbmNsdWRlX3JvdXRlcihtY3Bfcm91dGVyKQogICAgICAgIGxvZ2dlci5pbmZvKCJNQ1Agc2VydmVyIHJvdXRlcyBtb3VudGVkICgvbWNwICsgL3NzZSkiKQogICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgIGxvZ2dlci53YXJuaW5nKGYiRmFpbGVkIHRvIG1vdW50IE1DUCBzZXJ2ZXI6IHtlfSIpCgogICAgIyBNb3VudCBBUEkgZG9jcyAoU3dhZ2dlciBVSSArIFJlRG9jKQogICAgdHJ5OgogICAgICAgIGZyb20gZmFzdGFwaS5vcGVuYXBpLmRvY3MgaW1wb3J0IGdldF9zd2FnZ2VyX3VpX2h0bWwsIGdldF9yZWRvY19odG1sCiAgICAgICAgZnJvbSBmYXN0YXBpLm9wZW5hcGkudXRpbHMgaW1wb3J0IGdldF9vcGVuYXBpCiAgICAgICAgQGFwcC5nZXQoIi9kb2NzIiwgaW5jbHVkZV9pbl9zY2hlbWE9RmFsc2UpCiAgICAgICAgYXN5bmMgZGVmIGN1c3RvbV9zd2FnZ2VyX3VpKCk6CiAgICAgICAgICAgIHJldHVybiBnZXRfc3dhZ2dlcl91aV9odG1sKAogICAgICAgICAgICAgICAgb3BlbmFwaV91cmw9Ii9vcGVuYXBpLmpzb24iLCB0aXRsZT0iSGVybWVzIEFnZW50IEFQSSIsIHN3YWdnZXJfZmF2aWNvbl91cmw9IiIsCiAgICAgICAgICAgICkKICAgICAgICBAYXBwLmdldCgiL3JlZG9jIiwgaW5jbHVkZV9pbl9zY2hlbWE9RmFsc2UpCiAgICAgICAgYXN5bmMgZGVmIGN1c3RvbV9yZWRvYygpOgogICAgICAgICAgICByZXR1cm4gZ2V0X3JlZG9jX2h0bWwob3BlbmFwaV91cmw9Ii9vcGVuYXBpLmpzb24iLCB0aXRsZT0iSGVybWVzIEFnZW50IEFQSSIpCiAgICAgICAgQGFwcC5nZXQoIi9vcGVuYXBpLmpzb24iLCBpbmNsdWRlX2luX3NjaGVtYT1GYWxzZSkKICAgICAgICBhc3luYyBkZWYgY3VzdG9tX29wZW5hcGkoKToKICAgICAgICAgICAgcmV0dXJuIGdldF9vcGVuYXBpKHRpdGxlPSJIZXJtZXMgQWdlbnQgQVBJIiwgdmVyc2lvbj1BUFBfVkVSU0lPTiwgcm91dGVzPWFwcC5yb3V0ZXMpCiAgICAgICAgbG9nZ2VyLmluZm8oIkFQSSBkb2NzIG1vdW50ZWQgKC9kb2NzICsgL3JlZG9jKSIpCiAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgbG9nZ2VyLndhcm5pbmcoZiJGYWlsZWQgdG8gbW91bnQgQVBJIGRvY3M6IHtlfSIpCgogICAgbG9nZ2VyLmluZm8oIkN1c3RvbSByb3V0ZXMgaW5qZWN0ZWQgaW50byBHcmFkaW8gYXBwIikKCiAgICAjIEluaXRpYWxpemUgcGVyc2lzdGVuY2UgbWFuYWdlciAoZGF0YSBiYWNrdXAvcmVzdG9yZSkKICAgIHRyeToKICAgICAgICBmcm9tIGJhY2tlbmQuc2VydmljZXMucGVyc2lzdGVuY2VfbWFuYWdlciBpbXBvcnQgcGVyc2lzdGVuY2VfbWFuYWdlcgogICAgICAgIGluaXRfcmVzdWx0ID0gcGVyc2lzdGVuY2VfbWFuYWdlci5pbml0aWFsaXplKCkKICAgICAgICBsb2dnZXIuaW5mbyhmIlBlcnNpc3RlbmNlIG1hbmFnZXIgaW5pdGlhbGl6ZWQ6IHtpbml0X3Jlc3VsdH0iKQogICAgICAgICMgUmVzdG9yZSBkYXRhIGZyb20gcGVyc2lzdGVuY2UgYmFja2VuZCBvbiBzdGFydHVwCiAgICAgICAgcmVzdG9yZV9yZXN1bHQgPSBwZXJzaXN0ZW5jZV9tYW5hZ2VyLnJlc3RvcmVfb25fc3RhcnR1cCgpCiAgICAgICAgbXNnID0gcmVzdG9yZV9yZXN1bHQuZ2V0KCJtZXNzYWdlIiwgInNraXBwZWQiKQogICAgICAgIGxvZ2dlci5pbmZvKGYiU3RhcnR1cCByZXN0b3JlOiB7bXNnfSIpCiAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgbG9nZ2VyLndhcm5pbmcoZiJGYWlsZWQgdG8gaW5pdGlhbGl6ZSBwZXJzaXN0ZW5jZSBtYW5hZ2VyOiB7ZX0iKQoKICAgICMgSW5pdGlhbGl6ZSBzZWVkIGRhdGEgKGRlbW8gZGF0YSBmb3IgZmlyc3QgbGF1bmNoKQogICAgdHJ5OgogICAgICAgIGZyb20gYmFja2VuZC5zZWVkX2RhdGEgaW1wb3J0IGluaXRfc2VlZF9kYXRhCiAgICAgICAgaWYgaW5pdF9zZWVkX2RhdGEoKToKICAgICAgICAgICAgbG9nZ2VyLmluZm8oIlNlZWQgZGF0YSBpbml0aWFsaXplZCAoZmlyc3QgbGF1bmNoKSIpCiAgICAgICAgZWxzZToKICAgICAgICAgICAgbG9nZ2VyLmluZm8oIlNlZWQgZGF0YSBhbHJlYWR5IGV4aXN0cywgc2tpcHBlZCIpCiAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgbG9nZ2VyLndhcm5pbmcoZiJGYWlsZWQgdG8gaW5pdGlhbGl6ZSBzZWVkIGRhdGE6IHtlfSIpCgogICAgIyBTdGFydCBjcm9uIHNjaGVkdWxlcgogICAgdHJ5OgogICAgICAgIGZyb20gYmFja2VuZC5zZXJ2aWNlcy5jcm9uX3NjaGVkdWxlciBpbXBvcnQgc3RhcnRfc2NoZWR1bGVyCiAgICAgICAgc3RhcnRfc2NoZWR1bGVyKCkKICAgICAgICBsb2dnZXIuaW5mbygiQ3JvbiBzY2hlZHVsZXIgc3RhcnRlZCIpCiAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgbG9nZ2VyLndhcm5pbmcoZiJGYWlsZWQgdG8gc3RhcnQgY3JvbiBzY2hlZHVsZXI6IHtlfSIpCgogICAgIyBJbml0aWFsaXplIE1DUCBjbGllbnQgc2VydmljZSAoZ2F0ZXdheSBtb2RlKQogICAgdHJ5OgogICAgICAgIGZyb20gYmFja2VuZC5zZXJ2aWNlcy5tY3BfY2xpZW50X3NlcnZpY2UgaW1wb3J0IG1jcF9jbGllbnRfc2VydmljZQogICAgICAgIGZyb20gYmFja2VuZC5jb25maWcgaW1wb3J0IGdldF9oZXJtZXNfaG9tZQogICAgICAgIG1jcF9jb25maWdfcGF0aCA9IGdldF9oZXJtZXNfaG9tZSgpIC8gIm1jcF9zZXJ2ZXJzLmpzb24iCiAgICAgICAgbWNwX2NsaWVudF9zZXJ2aWNlLmluaXQobWNwX2NvbmZpZ19wYXRoKQogICAgICAgIGxvZ2dlci5pbmZvKCJNQ1AgY2xpZW50IHNlcnZpY2UgaW5pdGlhbGl6ZWQiKQogICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgIGxvZ2dlci53YXJuaW5nKGYiRmFpbGVkIHRvIGluaXRpYWxpemUgTUNQIGNsaWVudCBzZXJ2aWNlOiB7ZX0iKQoKICAgICMgQWRkIFNTRSBldmVudCBlbWl0IG1pZGRsZXdhcmUKICAgIHRyeToKICAgICAgICBmcm9tIGJhY2tlbmQubWlkZGxld2FyZS5ldmVudHMgaW1wb3J0IEV2ZW50RW1pdE1pZGRsZXdhcmUKICAgICAgICBhcHAuYWRkX21pZGRsZXdhcmUoRXZlbnRFbWl0TWlkZGxld2FyZSkKICAgICAgICBsb2dnZXIuaW5mbygiRXZlbnQgZW1pdCBtaWRkbGV3YXJlIGFkZGVkIikKICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToKICAgICAgICBsb2dnZXIud2FybmluZyhmIkZhaWxlZCB0byBhZGQgZXZlbnQgbWlkZGxld2FyZToge2V9IikKCiAgICByZXR1cm4gYXBwCgpBcHAuY3JlYXRlX2FwcCA9IHN0YXRpY21ldGhvZChfcGF0Y2hlZF9jcmVhdGVfYXBwKQoKIyBDcmVhdGUgR3JhZGlvIEJsb2NrcyAoSEYgU3BhY2VzIFNESyBuZWVkcyB0aGUgYGRlbW9gIHZhcmlhYmxlKQp3aXRoIGdyLkJsb2Nrcyh0aXRsZT0iSGVybWVzIEFnZW50IE1DUCBTcGFjZSIpIGFzIGRlbW86CiAgICBnci5IVE1MKCI8IS0tIEhlcm1lcyBBZ2VudCBNQ1AgU3BhY2UgLS0+IikKCmxvZ2dlci5pbmZvKGYiSGVybWVzIEFnZW50IE1DUCBTcGFjZSB2e0FQUF9WRVJTSU9OfSBpbml0aWFsaXplZCIpCgojIEhGIFNwYWNlcyBHcmFkaW8gU0RLIHdpbGwgY2FsbCBkZW1vLmxhdW5jaCgpIGZvciB1cwppZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgogICAgZGVtby5sYXVuY2goc2VydmVyX25hbWU9IjAuMC4wLjAiLCBzZXJ2ZXJfcG9ydD03ODYwLCBzaG93X2Vycm9yPVRydWUsIHNzcl9tb2RlPUZhbHNlKQo=
+# -*- coding: utf-8 -*-
+"""
+Hermes Agent MCP Space - 部署入口
+策略：Monkey-patch Gradio 的 App.create_app，在创建 app 后立即注册自定义路由。
+"""
+
+# CRITICAL: Disable SSR mode before importing gradio
+# HF Spaces enables SSR by default, which renders on port 7861 via Node.js
+# and bypasses our custom routes on port 7860
+import os
+os.environ["GRADIO_SSR_MODE"] = "false"
+
+import json
+import logging
+import re
+import time
+from datetime import datetime
+from pathlib import Path
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
+    format="[%(asctime)s] %(levelname)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("hermes-space")
+
+APP_VERSION = os.environ.get("APP_VERSION", "5.1.0")
+BUILD_TIME = os.environ.get("BUILD_TIME", datetime.now().strftime("%Y-%m-%d %H:%M"))
+START_TIME = time.time()  # 进程启动时间戳
+
+
+def load_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        logger.error(f"CRITICAL: Frontend file not found: {path}")
+        raise RuntimeError(f"Frontend file missing: {path}") from None
+    except Exception as e:
+        logger.error(f"CRITICAL: Failed to load {path}: {e}")
+        raise RuntimeError(f"Failed to load frontend file: {path}") from None
+
+
+def build_full_html():
+    """Build a completely self-contained HTML page with all CSS and JS inlined."""
+    frontend_dir = Path(__file__).resolve().parent / "frontend"
+
+    css = load_file(frontend_dir / "css" / "style.css")
+
+    # 自动扫描 JS 文件（不再手动维护列表）
+    core_js = ["js/api.js", "js/components.js"]
+    pages_dir = frontend_dir / "js" / "pages"
+    page_files = sorted(
+        f"js/pages/{f.name}" for f in pages_dir.glob("*.js")
+    )
+    app_js = ["js/app.js"]
+    js_files = core_js + page_files + app_js
+
+    logger.info(f"Auto-discovered {len(page_files)} page files: {[f.split('/')[-1] for f in page_files]}")
+
+    all_js = ""
+    for jsf in js_files:
+        content = load_file(frontend_dir / jsf)
+        if content:
+            all_js += f"\n// === {jsf} ===\n{content}\n"
+
+    index_html = load_file(frontend_dir / "index.html")
+
+    # Replace CSS link with inline style
+    html = index_html.replace(
+        '<link rel="stylesheet" href="/css/style.css">',
+        f'<style>\n{css}\n</style>'
+    )
+
+    # Remove all <script src=...> tags
+    html = re.sub(r'<script\s+src="[^"]*"></script>', '', html)
+
+    # Insert all JS inline before </body>
+    html = html.replace('</body>', f'<script>\n{all_js}\n</script>\n</body>')
+
+    return html
+
+
+logger.info("Initializing Hermes Agent MCP Space...")
+
+import gradio as gr
+from gradio.routes import App
+
+# Build the full HTML FIRST
+full_html = build_full_html()
+logger.info(f"Frontend HTML built ({len(full_html)} bytes)")
+
+# Monkey-patch App.create_app to inject our custom routes after Gradio creates the app
+_original_create_app = App.create_app
+
+def _patched_create_app(blocks, **kwargs):
+    app = _original_create_app(blocks, **kwargs)
+
+    # Remove Gradio's default GET / route so ours takes priority
+    for route in list(app.router.routes):
+        if getattr(route, 'path', None) == "/" and getattr(route, 'methods', set()) == {"GET"}:
+            app.router.routes.remove(route)
+            logger.info("Removed default Gradio index route")
+
+    # Inject custom HTML index
+    @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+    async def custom_index(request: Request):
+        from starlette.responses import Response as StarletteResponse
+        return StarletteResponse(
+            content=full_html, media_type="text/html",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+
+    # Inject version/health/meta endpoints
+    @app.get("/api/meta")
+    async def get_meta():
+        """统一的元数据端点：版本号、构建时间、运行时长等动态信息"""
+        uptime = int(time.time() - START_TIME)
+        hours, remainder = divmod(uptime, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return {
+            "version": APP_VERSION,
+            "build_time": BUILD_TIME,
+            "uptime_seconds": uptime,
+            "uptime_human": f"{hours}h {minutes}m {seconds}s" if hours else f"{minutes}m {seconds}s",
+            "now": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+    @app.get("/api/version")
+    async def get_version():
+        return {"version": APP_VERSION, "build_time": BUILD_TIME}
+
+    @app.get("/api/health")
+    async def health():
+        return {"status": "ok", "service": "hermes-mcp-space", "version": APP_VERSION}
+
+    # Mount all backend API routers
+    try:
+        from backend.routers import (
+            sessions, tools, skills, memory, cron, agents, mcp, config_api,
+            dashboard, logs, events, plugins, trash, evals, stats, knowledge,
+            screenshot, persistence
+        )
+        app.include_router(sessions.router)
+        app.include_router(tools.router)
+        app.include_router(skills.router)
+        app.include_router(memory.router)
+        app.include_router(cron.router)
+        app.include_router(agents.router)
+        app.include_router(mcp.router)
+        app.include_router(config_api.router)
+        app.include_router(dashboard.router)
+        app.include_router(logs.router)
+        app.include_router(events.router)
+        app.include_router(plugins.router)
+        app.include_router(trash.router)
+        app.include_router(evals.router, prefix="/api", tags=["evals"])
+        app.include_router(stats.router, prefix="/api", tags=["stats"])
+        app.include_router(knowledge.router)
+        app.include_router(screenshot.router)
+        app.include_router(persistence.router)
+        logger.info("Backend API routers mounted successfully")
+    except Exception as e:
+        logger.warning(f"Failed to mount backend API routers: {e}")
+
+    # Mount MCP server (manual implementation - Streamable HTTP + SSE)
+    try:
+        from backend.mcp_server import router as mcp_router
+        app.include_router(mcp_router)
+        logger.info("MCP server routes mounted (/mcp + /sse)")
+    except Exception as e:
+        logger.warning(f"Failed to mount MCP server: {e}")
+
+    # Mount API docs (Swagger UI + ReDoc)
+    try:
+        from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+        from fastapi.openapi.utils import get_openapi
+        @app.get("/docs", include_in_schema=False)
+        async def custom_swagger_ui():
+            return get_swagger_ui_html(
+                openapi_url="/openapi.json", title="Hermes Agent API", swagger_favicon_url="",
+            )
+        @app.get("/redoc", include_in_schema=False)
+        async def custom_redoc():
+            return get_redoc_html(openapi_url="/openapi.json", title="Hermes Agent API")
+        @app.get("/openapi.json", include_in_schema=False)
+        async def custom_openapi():
+            return get_openapi(title="Hermes Agent API", version=APP_VERSION, routes=app.routes)
+        logger.info("API docs mounted (/docs + /redoc)")
+    except Exception as e:
+        logger.warning(f"Failed to mount API docs: {e}")
+
+    logger.info("Custom routes injected into Gradio app")
+
+    # Initialize persistence manager (data backup/restore)
+    try:
+        from backend.services.persistence_manager import persistence_manager
+        init_result = persistence_manager.initialize()
+        logger.info(f"Persistence manager initialized: {init_result}")
+        # Restore data from persistence backend on startup
+        restore_result = persistence_manager.restore_on_startup()
+        msg = restore_result.get("message", "skipped")
+        logger.info(f"Startup restore: {msg}")
+    except Exception as e:
+        logger.warning(f"Failed to initialize persistence manager: {e}")
+
+    # Initialize seed data (demo data for first launch)
+    try:
+        from backend.seed_data import init_seed_data
+        if init_seed_data():
+            logger.info("Seed data initialized (first launch)")
+        else:
+            logger.info("Seed data already exists, skipped")
+    except Exception as e:
+        logger.warning(f"Failed to initialize seed data: {e}")
+
+    # Start cron scheduler
+    try:
+        from backend.services.cron_scheduler import start_scheduler
+        start_scheduler()
+        logger.info("Cron scheduler started")
+    except Exception as e:
+        logger.warning(f"Failed to start cron scheduler: {e}")
+
+    # Initialize MCP client service (gateway mode)
+    try:
+        from backend.services.mcp_client_service import mcp_client_service
+        from backend.config import get_hermes_home
+        mcp_config_path = get_hermes_home() / "mcp_servers.json"
+        mcp_client_service.init(mcp_config_path)
+        logger.info("MCP client service initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize MCP client service: {e}")
+
+    # Add SSE event emit middleware
+    try:
+        from backend.middleware.events import EventEmitMiddleware
+        app.add_middleware(EventEmitMiddleware)
+        logger.info("Event emit middleware added")
+    except Exception as e:
+        logger.warning(f"Failed to add event middleware: {e}")
+
+    return app
+
+App.create_app = staticmethod(_patched_create_app)
+
+# Create Gradio Blocks (HF Spaces SDK needs the `demo` variable)
+with gr.Blocks(title="Hermes Agent MCP Space") as demo:
+    gr.HTML("<!-- Hermes Agent MCP Space -->")
+
+logger.info(f"Hermes Agent MCP Space v{APP_VERSION} initialized")
+
+# HF Spaces Gradio SDK will call demo.launch() for us
+if __name__ == "__main__":
+    demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True, ssr_mode=False)
