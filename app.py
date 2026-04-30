@@ -1,3 +1,4 @@
+from backend.version import __version__ as _APP_VERSION
 # -*- coding: utf-8 -*-
 """
 Hermes Agent MCP Space - 部署入口
@@ -27,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("hermes-space")
 
-APP_VERSION = os.environ.get("APP_VERSION", "5.1.0")
+APP_VERSION = os.environ.get("APP_VERSION", __version__)
 BUILD_TIME = os.environ.get("BUILD_TIME", datetime.now().strftime("%Y-%m-%d %H:%M"))
 START_TIME = time.time()  # 进程启动时间戳
 
@@ -146,7 +147,7 @@ def _patched_create_app(blocks, **kwargs):
         from backend.routers import (
             sessions, tools, skills, memory, cron, agents, mcp, config_api,
             dashboard, logs, events, plugins, trash, evals, stats, knowledge,
-            screenshot, persistence
+            screenshot, persistence, version
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -166,6 +167,7 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(knowledge.router)
         app.include_router(screenshot.router)
         app.include_router(persistence.router)
+        app.include_router(version.router)
         logger.info("Backend API routers mounted successfully")
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")
