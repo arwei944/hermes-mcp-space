@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.4.0',
+            date: '2026-04-30',
+            title: '会话重构 — 消除重复代码 + 统计数据',
+            changes: [
+                '抽取公共渲染函数：buildSessionItem/buildSessionList/buildMessageList/buildMessageItem/buildSessionHeader',
+                '新增会话统计栏：总会话/活跃/总消息/今日新增 4 个统计卡片',
+                '新增后端 /api/sessions/stats 统计端点',
+                '筛选器选项渲染抽取为 buildFilterOptions()',
+                '代码行数从 406 行优化为 378 行，消除约 80 行重复代码',
+            ],
+        },
+        {
             version: '5.3.1',
             date: '2026-04-30',
             title: '紧急修复与基础完善',

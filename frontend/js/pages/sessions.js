@@ -9,6 +9,7 @@ const SessionsPage = (() => {
     let _messages = [];
     let _searchTerm = '';
     let _statusFilter = '';
+    let _stats = { total: 0, active: 0, messages: 0, today: 0 };
 
     async function render(sessionId) {
         const container = document.getElementById('contentBody');
@@ -18,6 +19,13 @@ const SessionsPage = (() => {
             _sessions = await API.sessions.list();
         } catch (_err) {
             _sessions = [];
+        }
+
+        // 加载统计数据
+        try {
+            _stats = await API.get('/api/sessions/stats');
+        } catch (_err) {
+            _stats = { total: 0, active: 0, messages: 0, today: 0 };
         }
 
         if (sessionId) {
@@ -61,81 +69,131 @@ const SessionsPage = (() => {
         return result;
     }
 
-    function buildPage() {
-        const filtered = getFilteredSessions();
-        const activeCount = _sessions.filter((s) => s.status === 'active').length;
+    // ==========================================
+    // 抽取的公共渲染函数 — 消除重复代码
+    // ==========================================
 
-        const listHtml =
-            filtered.length === 0
-                ? `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)">
+    /** 渲染会话列表项 */
+    function buildSessionItem(s) {
+        const id = s.id || s.session_id;
+        const isActive = id === _currentId;
+        const msgCount = s.message_count || s.messages || 0;
+        return `<div class="session-item ${isActive ? 'active' : ''}" data-action="select" data-id="${id}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
+                <div style="display:flex;gap:4px;align-items:center">
+                    ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
+                    <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">${Components.icon('x', 14)}</button>
+                </div>
+            </div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
+                <span>${Components.escapeHtml(s.source || '-')}</span>
+                <span>${Components.escapeHtml(s.model || '-')}</span>
+                <span>${msgCount} 条消息</span>
+            </div>
+        </div>`;
+    }
+
+    /** 渲染会话列表（空状态或列表） */
+    function buildSessionList(filtered) {
+        if (filtered.length === 0) {
+            return `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)">
                 <div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div>
                 <div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div>
                 <div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div>
-              </div>`
-                : filtered
-                      .map((s) => {
-                          const id = s.id || s.session_id;
-                          const isActive = id === _currentId;
-                          const msgCount = s.message_count || s.messages || 0;
-                          return `<div class="session-item ${isActive ? 'active' : ''}" data-action="select" data-id="${id}">
-                    <div style="display:flex;justify-content:space-between;align-items:center">
-                        <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
-                        <div style="display:flex;gap:4px;align-items:center">
-                            ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
-                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">${Components.icon('x', 14)}</button>
-                        </div>
-                    </div>
-                    <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
-                        <span>${Components.escapeHtml(s.source || '-')}</span>
-                        <span>${Components.escapeHtml(s.model || '-')}</span>
-                        <span>${msgCount} 条消息</span>
-                    </div>
-                </div>`;
-                      })
-                      .join('');
+            </div>`;
+        }
+        return filtered.map(buildSessionItem).join('');
+    }
 
-        const currentSession = _sessions.find((s) => (s.id || s.session_id) === _currentId);
-        const headerHtml = currentSession
-            ? `
-            <div class="chat-main-header">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-weight:500">${Components.escapeHtml(currentSession.title || currentSession.id)}</span>
-                    ${Components.renderBadge(currentSession.source, currentSession.source === 'Trae' ? 'purple' : currentSession.source === 'Web' ? 'blue' : 'green')}
-                </div>
-                <div style="display:flex;gap:8px;align-items:center">
-                    <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
-                    <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
-                </div>
-            </div>`
-            : '';
-
-        const messagesHtml = !_currentId
-            ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
+    /** 渲染消息列表（空状态或消息列表） */
+    function buildMessageList(messages) {
+        if (!_currentId) {
+            return `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
                 <div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div>
                 <div style="font-size:14px;margin-bottom:4px">选择左侧会话查看对话记录</div>
                 <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
-              </div>`
-            : _messages.length === 0
-              ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
+            </div>`;
+        }
+        if (messages.length === 0) {
+            return `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
                 <div style="font-size:24px;margin-bottom:8px">${Components.icon('edit', 24)}</div>
                 <div>等待消息...</div>
-              </div>`
-              : `<div class="chat-messages" id="chatMessages">
-                ${_messages
-                    .map((m) => {
-                        const isUser = m.role === 'user';
-                        const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
-                        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
-                        <div class="chat-message-header">
-                            <span class="chat-message-role">${roleText}</span>
-                            <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
-                        </div>
-                        <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
-                    </div>`;
-                    })
-                    .join('')}
             </div>`;
+        }
+        return `<div class="chat-messages" id="chatMessages">
+            ${messages.map(buildMessageItem).join('')}
+        </div>`;
+    }
+
+    /** 渲染单条消息 */
+    function buildMessageItem(m) {
+        const isUser = m.role === 'user';
+        const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
+        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+            <div class="chat-message-header">
+                <span class="chat-message-role">${roleText}</span>
+                <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
+            </div>
+            <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
+        </div>`;
+    }
+
+    /** 渲染会话头部信息 */
+    function buildSessionHeader(currentSession) {
+        if (!currentSession) return '';
+        return `<div class="chat-main-header">
+            <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:500">${Components.escapeHtml(currentSession.title || currentSession.id)}</span>
+                ${Components.renderBadge(currentSession.source, currentSession.source === 'Trae' ? 'purple' : currentSession.source === 'Web' ? 'blue' : 'green')}
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
+                <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
+            </div>
+        </div>`;
+    }
+
+    /** 渲染统计栏 */
+    function buildStatsBar() {
+        return `<div style="display:flex;gap:12px;margin-bottom:16px">
+            <div class="stat-card" style="flex:1;padding:12px 16px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)">
+                <div style="font-size:20px;font-weight:600;color:var(--text-primary)">${_stats.total}</div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">总会话</div>
+            </div>
+            <div class="stat-card" style="flex:1;padding:12px 16px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)">
+                <div style="font-size:20px;font-weight:600;color:var(--green)">${_stats.active}</div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">活跃</div>
+            </div>
+            <div class="stat-card" style="flex:1;padding:12px 16px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)">
+                <div style="font-size:20px;font-weight:600;color:var(--text-primary)">${_stats.messages}</div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">总消息</div>
+            </div>
+            <div class="stat-card" style="flex:1;padding:12px 16px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)">
+                <div style="font-size:20px;font-weight:600;color:var(--blue)">${_stats.today}</div>
+                <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">今日新增</div>
+            </div>
+        </div>`;
+    }
+
+    /** 渲染筛选器选项 */
+    function buildFilterOptions() {
+        const activeCount = _sessions.filter((s) => s.status === 'active').length;
+        return `
+            <option value="">全部 (${_sessions.length})</option>
+            <option value="active" ${_statusFilter === 'active' ? 'selected' : ''}>活跃 (${activeCount})</option>
+            <option value="completed" ${_statusFilter === 'completed' ? 'selected' : ''}>完成 (${_sessions.length - activeCount})</option>
+        `;
+    }
+
+    // ==========================================
+    // 页面构建
+    // ==========================================
+
+    function buildPage() {
+        const filtered = getFilteredSessions();
+        const currentSession = _sessions.find((s) => (s.id || s.session_id) === _currentId);
 
         return `<div class="chat-layout">
             <div class="chat-sidebar">
@@ -148,16 +206,14 @@ const SessionsPage = (() => {
                 </div>
                 <div style="padding:4px 12px;display:flex;gap:4px">
                     <select id="statusFilter" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:11px;outline:none;color:var(--text-secondary)">
-                        <option value="">全部 (${_sessions.length})</option>
-                        <option value="active" ${_statusFilter === 'active' ? 'selected' : ''}>活跃 (${activeCount})</option>
-                        <option value="completed" ${_statusFilter === 'completed' ? 'selected' : ''}>完成 (${_sessions.length - activeCount})</option>
+                        ${buildFilterOptions()}
                     </select>
                 </div>
-                <div class="chat-sidebar-list">${listHtml}</div>
+                <div class="chat-sidebar-list">${buildSessionList(filtered)}</div>
             </div>
             <div class="chat-main">
-                ${headerHtml}
-                ${messagesHtml}
+                ${buildSessionHeader(currentSession)}
+                ${buildMessageList(_messages)}
             </div>
         </div>`;
     }
@@ -167,45 +223,12 @@ const SessionsPage = (() => {
         const listEl = document.querySelector('.chat-sidebar-list');
         if (!listEl) return;
         const filtered = getFilteredSessions();
-        const activeCount = _sessions.filter((s) => s.status === 'active').length;
-
-        if (filtered.length === 0) {
-            listEl.innerHTML =
-                '<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary)"><div style="font-size:32px;margin-bottom:12px">' +
-                Components.icon('radio', 32) +
-                '</div><div style="font-size:14px;margin-bottom:4px">等待智能体创建会话</div><div style="font-size:12px">会话将通过 MCP 自动创建并实时同步</div></div>';
-        } else {
-            listEl.innerHTML = filtered
-                .map((s) => {
-                    const id = s.id || s.session_id;
-                    const isActive = id === _currentId;
-                    const msgCount = s.message_count || s.messages || 0;
-                    return `<div class="session-item ${isActive ? 'active' : ''}" data-action="select" data-id="${id}">
-                    <div style="display:flex;justify-content:space-between;align-items:center">
-                        <span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Components.escapeHtml(s.title || s.source || id)}</span>
-                        <div style="display:flex;gap:4px;align-items:center">
-                            ${Components.renderBadge(s.status === 'active' ? '活跃' : '完成', s.status === 'active' ? 'green' : 'blue')}
-                            <button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--red);opacity:0.5" data-action="deleteSession" data-id="${id}" title="删除">${Components.icon('x', 14)}</button>
-                        </div>
-                    </div>
-                    <div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;display:flex;gap:8px">
-                        <span>${Components.escapeHtml(s.source || '-')}</span>
-                        <span>${Components.escapeHtml(s.model || '-')}</span>
-                        <span>${msgCount} 条消息</span>
-                    </div>
-                </div>`;
-                })
-                .join('');
-        }
+        listEl.innerHTML = buildSessionList(filtered);
 
         // 更新筛选器计数
         const filterEl = document.getElementById('statusFilter');
         if (filterEl) {
-            filterEl.innerHTML = `
-                <option value="">全部 (${_sessions.length})</option>
-                <option value="active" ${_statusFilter === 'active' ? 'selected' : ''}>活跃 (${activeCount})</option>
-                <option value="completed" ${_statusFilter === 'completed' ? 'selected' : ''}>完成 (${_sessions.length - activeCount})</option>
-            `;
+            filterEl.innerHTML = buildFilterOptions();
         }
     }
 
@@ -213,51 +236,8 @@ const SessionsPage = (() => {
     function refreshMain() {
         const mainEl = document.querySelector('.chat-main');
         if (!mainEl) return;
-
         const currentSession = _sessions.find((s) => (s.id || s.session_id) === _currentId);
-        const headerHtml = currentSession
-            ? `
-            <div class="chat-main-header">
-                <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-weight:500">${Components.escapeHtml(currentSession.title || currentSession.id)}</span>
-                    ${Components.renderBadge(currentSession.source, currentSession.source === 'Trae' ? 'purple' : currentSession.source === 'Web' ? 'blue' : 'green')}
-                </div>
-                <div style="display:flex;gap:8px;align-items:center">
-                    <span style="font-size:12px;color:var(--text-tertiary)">${_messages.length} 条消息</span>
-                    <button type="button" class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteSession" data-id="${_currentId}">删除</button>
-                </div>
-            </div>`
-            : '';
-
-        const messagesHtml = !_currentId
-            ? `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:32px;margin-bottom:12px">${Components.icon('radio', 32)}</div>
-                <div style="font-size:14px;margin-bottom:4px">选择左侧会话查看对话记录</div>
-                <div style="font-size:12px">会话由智能体自动创建，消息实时同步</div>
-              </div>`
-            : _messages.length === 0
-              ? `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">
-                <div style="font-size:24px;margin-bottom:8px">${Components.icon('edit', 24)}</div>
-                <div>等待消息...</div>
-              </div>`
-              : `<div class="chat-messages" id="chatMessages">
-                ${_messages
-                    .map((m) => {
-                        const isUser = m.role === 'user';
-                        const roleText = { user: '用户', assistant: '助手', system: '系统' }[m.role] || m.role;
-                        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
-                        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
-                        <div class="chat-message-header">
-                            <span class="chat-message-role">${roleText}</span>
-                            <span class="chat-message-time">${m.timestamp ? Components.formatDateTime(m.timestamp) : ''}</span>
-                        </div>
-                        <div class="chat-message-content">${Components.renderMarkdown(content)}</div>
-                    </div>`;
-                    })
-                    .join('')}
-            </div>`;
-
-        mainEl.innerHTML = headerHtml + messagesHtml;
+        mainEl.innerHTML = buildSessionHeader(currentSession) + buildMessageList(_messages);
         scrollToBottom();
     }
 
@@ -272,17 +252,9 @@ const SessionsPage = (() => {
     function appendMessage(msg) {
         const container = document.getElementById('chatMessages');
         if (!container) return;
-        const isUser = msg.role === 'user';
-        const roleText = { user: '用户', assistant: '助手', system: '系统' }[msg.role] || msg.role;
-        const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
         const div = document.createElement('div');
-        div.className = `chat-message ${isUser ? 'user' : 'assistant'}`;
-        div.innerHTML = `<div class="chat-message-header">
-            <span class="chat-message-role">${roleText}</span>
-            <span class="chat-message-time">${msg.timestamp ? Components.formatDateTime(msg.timestamp) : ''}</span>
-        </div>
-        <div class="chat-message-content">${Components.renderMarkdown(content)}</div>`;
-        container.appendChild(div);
+        div.innerHTML = buildMessageItem(msg);
+        container.appendChild(div.firstElementChild);
     }
 
     function scrollToBottom() {
@@ -325,7 +297,7 @@ const SessionsPage = (() => {
         const container = document.getElementById('contentBody');
         if (!container) return;
 
-        // 只保留 select 和 deleteSession 事件
+        // 事件委托：select 和 deleteSession
         container.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;

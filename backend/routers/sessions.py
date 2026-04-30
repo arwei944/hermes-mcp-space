@@ -19,6 +19,31 @@ async def list_sessions() -> List[Dict[str, Any]]:
     return hermes_service.list_sessions()
 
 
+@router.get("/stats", summary="获取会话统计")
+async def get_session_stats() -> Dict[str, Any]:
+    """获取会话统计数据：总会话数、活跃数、总消息数、今日新增数"""
+    sessions = hermes_service.list_sessions()
+    total = len(sessions)
+    active = len([s for s in sessions if s.get("status") == "active"])
+    
+    # 统计总消息数
+    try:
+        messages_data = hermes_service._load_messages()
+        if isinstance(messages_data, dict):
+            total_messages = sum(len(msgs) for msgs in messages_data.values())
+        else:
+            total_messages = 0
+    except Exception:
+        total_messages = 0
+    
+    # 今日新增
+    from datetime import datetime
+    today = datetime.now().strftime("%Y-%m-%d")
+    today_count = len([s for s in sessions if str(s.get("created_at", "")).startswith(today)])
+    
+    return {"total": total, "active": active, "messages": total_messages, "today": today_count}
+
+
 @router.post("", summary="创建会话")
 async def create_session(body: Dict[str, str] = None) -> Dict[str, Any]:
     """创建新会话"""
