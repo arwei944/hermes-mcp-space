@@ -214,56 +214,6 @@ def _patched_create_app(blocks, **kwargs):
     except Exception as e:
         logger.warning(f"Failed to start cron scheduler: {e}")
 
-    # === HOTFIX: Patch mcp_client_service before init ===
-    try:
-        import backend.services.mcp_client_service as _mcs
-        import urllib.request
-        _orig_add = _mcs.MCPClientService.add_server
-        def _patched_add_server(self, name, url, prefix=""):
-            if not name or not url:
-                return {"success": False, "message": "名称和 URL 不能为空"}
-            if name in self._servers:
-                return {"success": False, "message": f"服务器 '{name}' 已存在"}
-            prefix = prefix or f"mcp_{name}_"
-            self._servers[name] = {
-                "url": url, "tools": [], "status": "disconnected",
-                "last_check": None, "prefix": prefix,
-            }
-            self._save_config()
-            tools_count = self._discover_tools(name)
-            return {
-                "success": True,
-                "message": f"服务器 '{name}' 已添加，发现 {tools_count} 个工具",
-                "server": name, "tools_count": tools_count,
-            }
-        _mcs.MCPClientService.add_server = _patched_add_server
-
-        _orig_fetch = _mcs.MCPClientService._fetch_tools
-        def _patched_fetch(self, url):
-            payload = json.dumps({"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}).encode("utf-8")
-            req = urllib.request.Request(url, data=payload, headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json, text/event-stream",
-            }, method="POST")
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                return data.get("result", {}).get("tools", [])
-        _mcs.MCPClientService._fetch_tools = _patched_fetch
-
-        _orig_call_tool = _mcs.MCPClientService._call_tool
-        def _patched_call_tool(self, url, tool_name, arguments):
-            payload = json.dumps({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":tool_name,"arguments":arguments}}).encode("utf-8")
-            req = urllib.request.Request(url, data=payload, headers={
-                "Content-Type": "application/json",
-                "Accept": "application/json, text/event-stream",
-            }, method="POST")
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        _mcs.MCPClientService._call_tool = _patched_call_tool
-        logger.info("HOTFIX: mcp_client_service patched (len bug + Accept header)")
-    except Exception as e:
-        logger.warning(f"HOTFIX patch failed: {e}")
-
     # Initialize MCP client service (gateway mode)
     try:
         from backend.services.mcp_client_service import mcp_client_service
