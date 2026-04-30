@@ -20,6 +20,9 @@ const SessionsPage = (() => {
     var _toolCards = {};
     var _batchMode = false;
     var _selectedIds = {};
+    var _viewMode = 'chat'; // 'chat' | 'analytics'
+    var _analyticsData = null;
+    var _trendPeriod = 'daily';
 
     // ==========================================
     // 工具函数
@@ -64,6 +67,14 @@ const SessionsPage = (() => {
 
         try { _sessions = await API.sessions.list(); } catch (_e) { _sessions = []; }
         try { _allTags = await API.sessions.tags(); } catch (_e) { _allTags = []; }
+
+        if (_viewMode === 'analytics') {
+            await loadAnalytics();
+            container.innerHTML = buildPage();
+            bindEvents();
+            loadTrends(_trendPeriod);
+            return;
+        }
 
         if (sessionId) {
             _currentId = sessionId;
@@ -344,6 +355,49 @@ const SessionsPage = (() => {
     // ==========================================
 
     function buildPage() {
+        // View mode toggle bar
+        var viewToggle = '<div style="display:flex;align-items:center;gap:4px;padding:8px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border)">' +
+            '<div style="display:flex;gap:2px;background:var(--bg);border-radius:var(--radius-xs);padding:2px">' +
+                '<button type="button" class="btn btn-sm" data-action="toggleViewMode" data-mode="chat" style="font-size:12px;padding:4px 12px;border-radius:var(--radius-xs);' + (_viewMode === 'chat' ? 'background:var(--accent);color:#fff' : 'color:var(--text-secondary)') + ';display:flex;align-items:center;gap:4px">' + Components.icon('messageCircle', 13) + ' 对话</button>' +
+                '<button type="button" class="btn btn-sm" data-action="toggleViewMode" data-mode="analytics" style="font-size:12px;padding:4px 12px;border-radius:var(--radius-xs);' + (_viewMode === 'analytics' ? 'background:var(--accent);color:#fff' : 'color:var(--text-secondary)') + ';display:flex;align-items:center;gap:4px">' + Components.icon('chart', 13) + ' 分析</button>' +
+            '</div>' +
+            '<div style="flex:1"></div>' +
+            '<span style="font-size:11px;color:var(--text-tertiary)">' + _sessions.length + ' 个会话</span>' +
+        '</div>';
+
+        if (_viewMode === 'analytics') {
+            return '<style>' +
+                '.analytics-card { background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px; }' +
+                '.analytics-card-title { font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:12px;color:var(--text-primary); }' +
+                '.overview-grid { display:grid;grid-template-columns:repeat(5,1fr);gap:12px; }' +
+                '.overview-card { background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center; }' +
+                '.overview-card .num { font-size:28px;font-weight:700;color:var(--text-primary);line-height:1.2; }' +
+                '.overview-card .label { font-size:11px;color:var(--text-tertiary);margin-top:4px; }' +
+                '.trend-bar-container { display:flex;align-items:flex-end;gap:3px;height:120px;padding:0 4px; }' +
+                '.trend-bar { flex:1;min-width:0;border-radius:3px 3px 0 0;background:var(--blue);transition:height .3s ease;position:relative;cursor:pointer; }' +
+                '.trend-bar:hover { opacity:0.8; }' +
+                '.trend-labels { display:flex;gap:3px;padding:4px 4px 0;font-size:10px;color:var(--text-tertiary); }' +
+                '.trend-labels span { flex:1;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }' +
+                '.period-toggle { display:inline-flex;gap:2px;background:var(--bg-secondary);border-radius:var(--radius-xs);padding:2px; }' +
+                '.period-btn { font-size:11px;padding:3px 10px;border-radius:var(--radius-xs);cursor:pointer;border:none;background:transparent;color:var(--text-secondary); }' +
+                '.period-btn.active { background:var(--accent);color:#fff; }' +
+                '.dist-row { display:flex;align-items:center;gap:8px;margin-bottom:8px; }' +
+                '.dist-label { font-size:12px;color:var(--text-secondary);width:100px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }' +
+                '.dist-bar { flex:1;height:20px;border-radius:var(--radius-xs);min-width:4px;transition:width .3s ease; }' +
+                '.dist-count { font-size:11px;color:var(--text-tertiary);width:40px;text-align:right;flex-shrink:0; }' +
+                '.hour-bar-container { display:flex;align-items:flex-end;gap:4px;height:80px;padding:0 4px; }' +
+                '.hour-bar { flex:1;min-width:0;border-radius:3px 3px 0 0;transition:height .3s ease; }' +
+                '.hour-labels { display:flex;gap:4px;padding:4px 4px 0;font-size:10px;color:var(--text-tertiary); }' +
+                '.hour-labels span { flex:1;text-align:center; }' +
+                '.behavior-row { display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px; }' +
+                '.behavior-row:last-child { border-bottom:none; }' +
+                '.behavior-key { color:var(--text-secondary); }' +
+                '.behavior-val { color:var(--text-primary);font-weight:500; }' +
+            '</style>' +
+            viewToggle +
+            buildAnalyticsDashboard();
+        }
+
         var filtered = getFilteredSessions();
         var cs = currentSession();
 
@@ -359,6 +413,7 @@ const SessionsPage = (() => {
             '.batch-action-bar { position:sticky;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:10px 12px;display:flex;align-items:center;gap:8px;z-index:40;box-shadow:0 -2px 8px rgba(0,0,0,0.1); }' +
             '.batch-action-bar .btn { font-size: 12px; padding: 4px 10px; }' +
         '</style>' +
+        viewToggle +
         '<div class="chat-layout">' +
             '<div class="chat-sidebar">' +
                 '<div class="chat-sidebar-header">' +
@@ -808,6 +863,12 @@ const SessionsPage = (() => {
                     break;
                 case 'toggleSummary':
                     toggleSummary();
+                    break;
+                case 'toggleViewMode':
+                    toggleViewMode(btn.dataset.mode);
+                    break;
+                case 'changeTrendPeriod':
+                    changeTrendPeriod(btn.dataset.period);
                     break;
             }
         });
@@ -1286,6 +1347,275 @@ const SessionsPage = (() => {
                 appendToolCard(key, data);
             }
         }
+    }
+
+    // ==========================================
+    // 分析仪表盘
+    // ==========================================
+
+    async function loadAnalytics() {
+        try {
+            var results = await Promise.all([
+                API.sessions.analyticsOverview(),
+                API.sessions.analyticsDistribution(),
+                API.sessions.analyticsBehavior(),
+            ]);
+            _analyticsData = {
+                overview: results[0],
+                distribution: results[1],
+                behavior: results[2],
+            };
+        } catch (_err) {
+            _analyticsData = null;
+        }
+    }
+
+    async function loadTrends(period) {
+        _trendPeriod = period;
+        try {
+            var data = await API.sessions.analyticsTrends({ period: period, days: 30 });
+            if (_analyticsData) _analyticsData.trends = data;
+            var trendsEl = document.getElementById('trendsSection');
+            if (trendsEl) trendsEl.innerHTML = buildTrendsChart(data);
+        } catch (_err) {}
+    }
+
+    function toggleViewMode(mode) {
+        if (_viewMode === mode) return;
+        _viewMode = mode;
+        render();
+    }
+
+    function changeTrendPeriod(period) {
+        _trendPeriod = period;
+        // Update active button styles
+        document.querySelectorAll('.period-btn').forEach(function (btn) {
+            btn.classList.toggle('active', btn.dataset.period === period);
+        });
+        loadTrends(period);
+    }
+
+    function buildAnalyticsDashboard() {
+        var d = _analyticsData;
+        var overview = d && d.overview || {};
+        var dist = d && d.distribution || {};
+        var behavior = d && d.behavior || {};
+
+        var totalSessions = overview.total_sessions || 0;
+        var totalMessages = overview.total_messages || 0;
+        var todaySessions = overview.today_sessions || 0;
+        var avgMessages = overview.avg_messages_per_session || '0';
+        var totalTags = overview.total_tags || 0;
+
+        // Overview cards
+        var overviewHtml = '<div class="overview-grid">' +
+            buildOverviewCard(totalSessions, '总会话', 'var(--blue)') +
+            buildOverviewCard(totalMessages, '总消息', 'var(--green)') +
+            buildOverviewCard(todaySessions, '今日会话', 'var(--orange)') +
+            buildOverviewCard(avgMessages, '平均消息数', 'var(--purple)') +
+            buildOverviewCard(totalTags, '标签数', 'var(--text-tertiary)') +
+        '</div>';
+
+        // Trends section
+        var trendsData = d && d.trends || null;
+        var trendsHtml = '<div class="analytics-card" id="trendsSection">' +
+            '<div class="analytics-card-title">' + Components.icon('activity', 15) + ' 会话趋势' +
+                '<div class="period-toggle" style="margin-left:auto">' +
+                    '<button type="button" class="period-btn ' + (_trendPeriod === 'daily' ? 'active' : '') + '" data-action="changeTrendPeriod" data-period="daily">日</button>' +
+                    '<button type="button" class="period-btn ' + (_trendPeriod === 'weekly' ? 'active' : '') + '" data-action="changeTrendPeriod" data-period="weekly">周</button>' +
+                    '<button type="button" class="period-btn ' + (_trendPeriod === 'monthly' ? 'active' : '') + '" data-action="changeTrendPeriod" data-period="monthly">月</button>' +
+                '</div>' +
+            '</div>' +
+            (trendsData ? buildTrendsChart(trendsData) : '<div style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:12px">加载中...</div>') +
+        '</div>';
+
+        // Distribution section - two columns
+        var modelDist = dist.models || dist.model_distribution || [];
+        var sourceDist = dist.sources || dist.source_distribution || [];
+
+        var modelDistHtml = '<div class="analytics-card">' +
+            '<div class="analytics-card-title">' + Components.icon('bot', 15) + ' 模型使用分布</div>' +
+            buildDistributionBars(modelDist, 'var(--blue)') +
+        '</div>';
+
+        var sourceDistHtml = '<div class="analytics-card">' +
+            '<div class="analytics-card-title">' + Components.icon('pin', 15) + ' 来源分布</div>' +
+            buildDistributionBars(sourceDist, 'var(--green)') +
+        '</div>';
+
+        // Hourly heatmap
+        var hourlyData = behavior.hourly_distribution || behavior.hourly || [];
+        var hourlyHtml = '<div class="analytics-card">' +
+            '<div class="analytics-card-title">' + Components.icon('clock', 15) + ' 活跃时段分布</div>' +
+            buildHourlyChart(hourlyData) +
+        '</div>';
+
+        // Behavior profile
+        var behaviorHtml = '<div class="analytics-card">' +
+            '<div class="analytics-card-title">' + Components.icon('user', 15) + ' Agent 行为画像</div>' +
+            buildBehaviorProfile(behavior) +
+        '</div>';
+
+        return '<div style="padding:20px;max-width:1200px;margin:0 auto">' +
+            '<div style="font-size:16px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px">' +
+                Components.icon('chart', 18) + ' 会话分析仪表盘' +
+            '</div>' +
+            overviewHtml +
+            '<div style="height:16px"></div>' +
+            trendsHtml +
+            '<div style="height:16px"></div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+                modelDistHtml +
+                sourceDistHtml +
+            '</div>' +
+            '<div style="height:16px"></div>' +
+            hourlyHtml +
+            '<div style="height:16px"></div>' +
+            behaviorHtml +
+        '</div>';
+    }
+
+    function buildOverviewCard(value, label, color) {
+        return '<div class="overview-card">' +
+            '<div class="num" style="color:' + color + '">' + value + '</div>' +
+            '<div class="label">' + label + '</div>' +
+        '</div>';
+    }
+
+    function buildTrendsChart(data) {
+        var items = data.data || data.points || data || [];
+        if (!Array.isArray(items) || items.length === 0) {
+            return '<div style="text-align:center;padding:30px;color:var(--text-tertiary);font-size:12px">暂无趋势数据</div>';
+        }
+        var maxVal = 0;
+        items.forEach(function (item) {
+            var val = typeof item === 'object' ? (item.count || item.value || 0) : item;
+            if (val > maxVal) maxVal = val;
+        });
+        if (maxVal === 0) maxVal = 1;
+
+        var barsHtml = items.map(function (item) {
+            var val = typeof item === 'object' ? (item.count || item.value || 0) : item;
+            var pct = Math.max(2, (val / maxVal) * 100);
+            var label = typeof item === 'object' ? (item.date || item.label || item.period || '') : '';
+            return '<div class="trend-bar" style="height:' + pct + '%" title="' + Components.escapeHtml(label) + ': ' + val + '"></div>';
+        }).join('');
+
+        var labelsHtml = items.map(function (item) {
+            var label = typeof item === 'object' ? (item.date || item.label || item.period || '') : '';
+            // Shorten label for display
+            if (label.length > 5) label = label.substring(label.length - 5);
+            return '<span>' + Components.escapeHtml(label) + '</span>';
+        }).join('');
+
+        return '<div class="trend-bar-container">' + barsHtml + '</div>' +
+            '<div class="trend-labels">' + labelsHtml + '</div>';
+    }
+
+    function buildDistributionBars(data, baseColor) {
+        if (!Array.isArray(data) || data.length === 0) {
+            return '<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px">暂无数据</div>';
+        }
+        var maxVal = 0;
+        data.forEach(function (item) {
+            var val = typeof item === 'object' ? (item.count || item.value || 0) : item;
+            if (val > maxVal) maxVal = val;
+        });
+        if (maxVal === 0) maxVal = 1;
+
+        var colors = ['var(--blue)', 'var(--green)', 'var(--orange)', 'var(--purple)', 'var(--text-tertiary)'];
+
+        return data.map(function (item, idx) {
+            var name = typeof item === 'object' ? (item.name || item.label || item.model || item.source || '') : item;
+            var val = typeof item === 'object' ? (item.count || item.value || 0) : 0;
+            var pct = Math.max(2, (val / maxVal) * 100);
+            var color = colors[idx % colors.length];
+            return '<div class="dist-row">' +
+                '<span class="dist-label" title="' + Components.escapeHtml(name) + '">' + Components.escapeHtml(name) + '</span>' +
+                '<div class="dist-bar" style="width:' + pct + '%;background:' + color + '"></div>' +
+                '<span class="dist-count">' + val + '</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    function buildHourlyChart(data) {
+        // Build array of 24 hours
+        var hours = [];
+        for (var i = 0; i < 24; i++) {
+            hours.push({ hour: i, count: 0 });
+        }
+        if (Array.isArray(data)) {
+            data.forEach(function (item) {
+                var h = typeof item === 'object' ? (item.hour || item.h || 0) : 0;
+                var c = typeof item === 'object' ? (item.count || item.value || 0) : (item || 0);
+                if (h >= 0 && h < 24) hours[h].count = c;
+            });
+        }
+
+        var maxVal = 0;
+        hours.forEach(function (h) { if (h.count > maxVal) maxVal = h.count; });
+        if (maxVal === 0) maxVal = 1;
+
+        var barsHtml = hours.map(function (h) {
+            var pct = Math.max(2, (h.count / maxVal) * 100);
+            // Color intensity based on value
+            var intensity = Math.max(0.15, h.count / maxVal);
+            return '<div class="hour-bar" style="height:' + pct + '%;background:rgba(79,70,229,' + intensity + ')" title="' + h.hour + ':00 - ' + h.count + ' 次会话"></div>';
+        }).join('');
+
+        var labelsHtml = hours.map(function (h) {
+            return '<span>' + (h.hour % 4 === 0 ? h.hour : '') + '</span>';
+        }).join('');
+
+        return '<div class="hour-bar-container">' + barsHtml + '</div>' +
+            '<div class="hour-labels">' + labelsHtml + '</div>';
+    }
+
+    function buildBehaviorProfile(behavior) {
+        var rows = [];
+
+        if (behavior.message_distribution) {
+            var md = behavior.message_distribution;
+            rows.push({ key: '消息分布', val: '用户 ' + (md.user || 0) + ' / 助手 ' + (md.assistant || 0) });
+        }
+        if (behavior.avg_response_length !== undefined) {
+            rows.push({ key: '平均回复长度', val: behavior.avg_response_length + ' 字' });
+        }
+        if (behavior.avg_response_chars !== undefined) {
+            rows.push({ key: '平均回复长度', val: behavior.avg_response_chars + ' 字' });
+        }
+        if (behavior.most_used_model) {
+            rows.push({ key: '最常用模型', val: behavior.most_used_model });
+        }
+        if (behavior.top_model) {
+            rows.push({ key: '最常用模型', val: behavior.top_model });
+        }
+        if (behavior.sessions_with_summary !== undefined) {
+            rows.push({ key: '有摘要的会话', val: behavior.sessions_with_summary });
+        }
+        if (behavior.summary_count !== undefined) {
+            rows.push({ key: '有摘要的会话', val: behavior.summary_count });
+        }
+        if (behavior.total_tools_used !== undefined) {
+            rows.push({ key: '工具调用次数', val: behavior.total_tools_used });
+        }
+        if (behavior.avg_session_duration !== undefined) {
+            rows.push({ key: '平均会话时长', val: behavior.avg_session_duration });
+        }
+        if (behavior.active_days !== undefined) {
+            rows.push({ key: '活跃天数', val: behavior.active_days });
+        }
+
+        if (rows.length === 0) {
+            return '<div style="text-align:center;padding:20px;color:var(--text-tertiary);font-size:12px">暂无行为数据</div>';
+        }
+
+        return rows.map(function (r) {
+            return '<div class="behavior-row">' +
+                '<span class="behavior-key">' + r.key + '</span>' +
+                '<span class="behavior-val">' + Components.escapeHtml(String(r.val)) + '</span>' +
+            '</div>';
+        }).join('');
     }
 
     return { render: render, select: select, onSSEEvent: onSSEEvent };

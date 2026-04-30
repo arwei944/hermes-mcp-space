@@ -289,6 +289,39 @@ async def create_session(body: Dict[str, str] = None) -> Dict[str, Any]:
     )
 
 
+# --- Analytics ---
+
+@router.get("/analytics/overview", summary="会话分析概览")
+async def analytics_overview() -> Dict[str, Any]:
+    """会话分析概览统计数据"""
+    return hermes_service.get_analytics_overview()
+
+@router.get("/analytics/trends", summary="会话趋势数据")
+async def analytics_trends(
+    period: str = Query("daily", description="时间粒度: daily/weekly/monthly"),
+    days: int = Query(30, ge=1, le=365, description="统计天数"),
+) -> Dict[str, Any]:
+    """获取会话趋势数据"""
+    return hermes_service.get_analytics_trends(period, days)
+
+@router.get("/analytics/distribution", summary="会话分布数据")
+async def analytics_distribution() -> Dict[str, Any]:
+    """获取会话分布数据（模型/标签/来源/时段）"""
+    return hermes_service.get_analytics_distribution()
+
+@router.get("/analytics/tools", summary="工具调用统计")
+async def analytics_tools(
+    days: int = Query(7, ge=1, le=90, description="统计天数"),
+) -> Dict[str, Any]:
+    """获取工具调用统计数据"""
+    return hermes_service.get_analytics_tools(days)
+
+@router.get("/analytics/behavior", summary="Agent 行为画像")
+async def analytics_behavior() -> Dict[str, Any]:
+    """获取 Agent 行为画像数据"""
+    return hermes_service.get_analytics_behavior()
+
+
 @router.get("/{session_id}", summary="获取会话详情")
 async def get_session(session_id: str) -> Dict[str, Any]:
     """根据 ID 获取会话详情"""
