@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '6.0.0',
+            date: '2026-04-30',
+            title: '智能体行为管理 + 仪表盘增强 + 关于页重构',
+            changes: [
+                '新增「行为管理」页面：人格定义编辑器/行为日志/行为统计 3 Tab',
+                '仪表盘新增智能体信息卡片和调用可视化卡片',
+                '关于页重构为 3 Tab：版本信息/变更记录/技术栈',
+                '新增导航项和页面注册（agents_behavior）',
+                '完整版本路线图 v5.3.1 → v6.0.0 全部完成',
+            ],
+        },
+        {
             version: '5.9.0',
             date: '2026-04-30',
             title: '数据同步完善 — 进度指示 + 自动同步 + 日志',
@@ -535,6 +547,12 @@ const AboutPage = (() => {
         },
     ];
 
+    // Tab 状态
+    let _activeTab = 'version';
+
+    // 缓存的数据（render 时获取，tab 切换时复用）
+    let _versionData = null;
+
     async function render() {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
@@ -562,7 +580,8 @@ const AboutPage = (() => {
             var apiCount = 0;
         }
 
-        container.innerHTML = buildPage(version, totalUptime, firstDeploy, mcpToolCount, apiCount);
+        _versionData = { version, totalUptime, firstDeploy, mcpToolCount, apiCount };
+        container.innerHTML = buildPage(_versionData);
     }
 
     function formatUptime(seconds) {
@@ -577,8 +596,42 @@ const AboutPage = (() => {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
 
-    function buildPage(version, totalUptime, firstDeploy, mcpToolCount, apiCount) {
-        const uptimeStr = formatUptime(totalUptime);
+    // ==========================================
+    // Tab 切换
+    // ==========================================
+
+    function switchTab(tab) {
+        _activeTab = tab;
+        const contentEl = document.getElementById('aboutTabContent');
+        if (contentEl) {
+            contentEl.innerHTML = buildTabContent();
+        }
+        // 更新 tab 高亮
+        document.querySelectorAll('#aboutTabs .tab-item').forEach((el) => {
+            el.classList.toggle('active', el.dataset.key === tab);
+        });
+    }
+
+    // ==========================================
+    // Tab 内容构建
+    // ==========================================
+
+    function buildTabContent() {
+        switch (_activeTab) {
+            case 'version':
+                return buildVersionTab();
+            case 'changelog':
+                return buildChangelogTab();
+            case 'techstack':
+                return buildTechStackTab();
+            default:
+                return buildVersionTab();
+        }
+    }
+
+    function buildVersionTab() {
+        const { version, totalUptime, firstDeploy, mcpToolCount, apiCount } = _versionData || {};
+        const uptimeStr = formatUptime(totalUptime || 0);
 
         return `<div style="max-width:960px">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -593,7 +646,7 @@ const AboutPage = (() => {
                             <h2 style="font-size:20px;font-weight:600;margin-bottom:4px">Hermes Agent MCP Space</h2>
                             <p style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px">AI Agent 管理面板 + MCP 服务</p>
                             <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px 20px;font-size:13px;color:var(--text-secondary)">
-                                <span>版本 <strong class="mono">${version}</strong></span>
+                                <span>版本 <strong class="mono">${version || '-'}</strong></span>
                                 <span>总运行 <strong>${uptimeStr}</strong></span>
                                 <span>首次部署 <strong>${formatDeployTime(firstDeploy) || '-'}</strong></span>
                                 <span>MCP 工具 <strong>${mcpToolCount || '?'}</strong> 个</span>
@@ -603,35 +656,41 @@ const AboutPage = (() => {
                     `,
                     )}
                 </div>
-                <!-- 右侧：技术栈 -->
+                <!-- 右侧：系统信息 -->
                 <div>
-                    ${Components.sectionTitle('技术栈')}
+                    ${Components.sectionTitle('系统信息')}
                     ${Components.renderSection(
                         '',
                         `
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
                             <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                                <div style="font-weight:600;margin-bottom:6px">后端</div>
+                                <div style="font-weight:600;margin-bottom:6px">后端框架</div>
                                 <div style="color:var(--text-tertiary)">Python · FastAPI · Gradio</div>
                             </div>
                             <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                                <div style="font-weight:600;margin-bottom:6px">前端</div>
-                                <div style="color:var(--text-tertiary)">原生 JS · CSS · SVG 图表</div>
+                                <div style="font-weight:600;margin-bottom:6px">MCP 协议</div>
+                                <div style="color:var(--text-tertiary)">Streamable HTTP + SSE</div>
                             </div>
                             <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                                <div style="font-weight:600;margin-bottom:6px">协议</div>
-                                <div style="color:var(--text-tertiary)">MCP Streamable HTTP + SSE</div>
+                                <div style="font-weight:600;margin-bottom:6px">部署平台</div>
+                                <div style="color:var(--text-tertiary)">HuggingFace Spaces</div>
                             </div>
                             <div style="padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-                                <div style="font-weight:600;margin-bottom:6px">部署</div>
-                                <div style="color:var(--text-tertiary)">GitHub Actions → HF Spaces</div>
+                                <div style="font-weight:600;margin-bottom:6px">CI/CD</div>
+                                <div style="color:var(--text-tertiary)">GitHub Actions</div>
                             </div>
                         </div>
                     `,
                     )}
                 </div>
             </div>
+        </div>`;
+    }
 
+    function buildChangelogTab() {
+        const { version } = _versionData || {};
+
+        return `<div style="max-width:960px">
             ${Components.sectionTitle('版本变更记录')}
             ${CHANGELOG.map((rel) => {
                 const isCurrent = rel.version === version;
@@ -648,17 +707,89 @@ const AboutPage = (() => {
                     </ul>
                 </div>`;
             }).join('')}
+        </div>`;
+    }
 
-            <div style="text-align:center;padding:24px 0;color:var(--text-tertiary);font-size:12px">
-                <p>© 2026 Hermes Agent · MIT License</p>
-                <p style="margin-top:4px">
-                    <a href="https://github.com/arwei944/hermes-mcp-space" target="_blank" style="color:var(--accent);text-decoration:none">GitHub</a>
-                    ·
-                    <a href="https://huggingface.co/spaces/arwei944/hermes-mcp-space" target="_blank" style="color:var(--accent);text-decoration:none">HuggingFace</a>
-                </p>
+    function buildTechStackTab() {
+        const techGroups = [
+            {
+                title: '后端',
+                icon: 'server',
+                items: ['Python 3.10+', 'FastAPI', 'Gradio', 'Uvicorn'],
+            },
+            {
+                title: '前端',
+                icon: 'monitor',
+                items: ['Vanilla JS (IIFE 模块)', 'CSS Variables', 'SSE 实时通信'],
+            },
+            {
+                title: '存储',
+                icon: 'database',
+                items: ['Git 持久化', 'HF Buckets'],
+            },
+            {
+                title: 'AI',
+                icon: 'brain',
+                items: ['MCP Protocol (JSON-RPC)', 'Multi-agent 架构'],
+            },
+            {
+                title: '部署',
+                icon: 'cloud',
+                items: ['HuggingFace Spaces', 'Docker 支持'],
+            },
+        ];
+
+        return `<div style="max-width:960px">
+            ${Components.sectionTitle('技术栈')}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                ${techGroups.map((group) => `
+                    ${Components.renderSection(
+                        '',
+                        `
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                            <span>${Components.icon(group.icon, 18)}</span>
+                            <span style="font-weight:600;font-size:14px">${group.title}</span>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px">
+                            ${group.items.map((item) => `
+                                <span style="padding:4px 10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-tag);font-size:12px;color:var(--text-secondary)">${item}</span>
+                            `).join('')}
+                        </div>
+                    `,
+                    )}
+                `).join('')}
             </div>
         </div>`;
     }
 
-    return { render };
+    // ==========================================
+    // 页面构建
+    // ==========================================
+
+    function buildPage(data) {
+        const tabs = Components.createTabs(
+            [
+                { key: 'version', label: '版本信息' },
+                { key: 'changelog', label: '变更记录' },
+                { key: 'techstack', label: '技术栈' },
+            ],
+            _activeTab,
+            'AboutPage.switchTab',
+        );
+
+        return `${tabs}
+            <div id="aboutTabContent">
+                ${buildTabContent()}
+            </div>
+            <div style="max-width:960px;text-align:center;padding:24px 0;color:var(--text-tertiary);font-size:12px">
+                <p>&copy; 2026 Hermes Agent &middot; MIT License</p>
+                <p style="margin-top:4px">
+                    <a href="https://github.com/arwei944/hermes-mcp-space" target="_blank" style="color:var(--accent);text-decoration:none">GitHub</a>
+                    &middot;
+                    <a href="https://huggingface.co/spaces/arwei944/hermes-mcp-space" target="_blank" style="color:var(--accent);text-decoration:none">HuggingFace</a>
+                </p>
+            </div>`;
+    }
+
+    return { render, switchTab };
 })();

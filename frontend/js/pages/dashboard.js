@@ -375,6 +375,35 @@ const DashboardPage = (() => {
             ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'plug', s.mcpConnected ? 'green' : 'red')}
         </div>`;
 
+        // --- 智能体信息卡片 ---
+        const agentCardHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:16px">
+            <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid var(--border);border-left:3px solid var(--accent)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    ${Components.icon('ghost', 18)}
+                    <span style="font-weight:600;font-size:14px">Hermes Agent</span>
+                    ${Components.renderBadge('运行中', 'green')}
+                </div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.8">
+                    <div>版本: <span class="mono">${Components.escapeHtml(sys.version || '-')}</span></div>
+                    <div>运行时间: ${Components.escapeHtml(sys.uptime || '-')}</div>
+                    <div>MCP 工具: ${s.tools || 0} 个</div>
+                    <div>技能: ${s.skills || 0} 个</div>
+                </div>
+            </div>
+            <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;border:1px solid var(--border);border-left:3px solid var(--blue)">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    ${Components.icon('activity', 18)}
+                    <span style="font-weight:600;font-size:14px">调用可视化</span>
+                </div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.8">
+                    <div>总调用: <span style="font-weight:600;color:var(--text-primary)">${s.totalToolCalls || 0}</span> 次</div>
+                    <div>成功率: <span style="font-weight:600;color:var(--green)">${s.successRate || 0}%</span></div>
+                    <div>平均延迟: <span style="font-weight:600">${s.avgLatency || 0}ms</span></div>
+                    <div>活跃会话: <span style="font-weight:600;color:var(--blue)">${s.activeSessions || 0}</span></div>
+                </div>
+            </div>
+        </div>`;
+
         // --- 系统心跳 ---
         const memPct = sys.totalMemMb > 0 ? (sys.memMb / sys.totalMemMb) * 100 : 0;
         const heartbeatHtml = Components.renderSection(
@@ -417,6 +446,7 @@ const DashboardPage = (() => {
 
         // 组装布局
         return `${statsHtml}
+        ${agentCardHtml}
         ${heartbeatHtml}
         <div class="two-col" style="margin-top:16px">
             ${activityHtml}
