@@ -138,7 +138,32 @@ class PersistenceManager:
             except Exception:
                 pass
 
-        # 3. 默认配置
+        # 3. 从环境变量推断
+        git_url = os.environ.get("PERSISTENCE_GIT_REPO_URL", "")
+        hf_repo = os.environ.get("PERSISTENCE_HF_REPO_ID", "")
+        if git_url:
+            logger.info(f"Auto-detected persistence backend 'git' from PERSISTENCE_GIT_REPO_URL")
+            return {
+                "backend": "git",
+                "auto_backup_interval": 600,
+                "backup_on_shutdown": True,
+                "git": {
+                    "repo_url": git_url,
+                    "branch": "main",
+                },
+            }
+        if hf_repo:
+            logger.info(f"Auto-detected persistence backend 'hf_buckets' from PERSISTENCE_HF_REPO_ID")
+            return {
+                "backend": "hf_buckets",
+                "auto_backup_interval": 600,
+                "backup_on_shutdown": True,
+                "hf_buckets": {
+                    "repo_id": hf_repo,
+                },
+            }
+
+        # 4. 默认配置
         return {
             "backend": "none",
             "auto_backup_interval": 0,
