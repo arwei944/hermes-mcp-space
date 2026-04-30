@@ -1,1 +1,286 @@
-IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0KIiIiCk1DUCDlrqLmiLfnq6/mnI3liqEgLSDov57mjqXlpJbpg6ggTUNQIOacjeWKoeWZqO+8jOiHquWKqOWPkeeOsOW5tuazqOWGjOW3peWFtwrlrp7njrAgTUNQIOe9keWFs+iDveWKm++8muS4gOS4quWFpeWPo+iuv+mXruaJgOaciSBNQ1Ag5pyN5YqhCiIiIgoKaW1wb3J0IGpzb24KaW1wb3J0IGxvZ2dpbmcKaW1wb3J0IHJlCmltcG9ydCB1cmxsaWIucmVxdWVzdAppbXBvcnQgdXJsbGliLmVycm9yCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aApmcm9tIHR5cGluZyBpbXBvcnQgQW55LCBEaWN0LCBMaXN0LCBPcHRpb25hbApmcm9tIGRhdGV0aW1lIGltcG9ydCBkYXRldGltZQoKbG9nZ2VyID0gbG9nZ2luZy5nZXRMb2dnZXIoImhlcm1lcy1tY3AiKQoKCmNsYXNzIE1DUENsaWVudFNlcnZpY2U6CiAgICAiIiJNQ1Ag5a6i5oi356uv77ya566h55CG5aSW6YOoIE1DUCDmnI3liqHlmajov57mjqUiIiIKCiAgICBkZWYgX19pbml0X18oc2VsZik6CiAgICAgICAgc2VsZi5fc2VydmVyczogRGljdFtzdHIsIERpY3Rbc3RyLCBBbnldXSA9IHt9ICAjIG5hbWUgLT4ge3VybCwgdG9vbHMsIHN0YXR1cywgbGFzdF9jaGVja30KICAgICAgICBzZWxmLl90b29sc19jYWNoZTogTGlzdFtEaWN0W3N0ciwgQW55XV0gPSBbXSAgIyDogZrlkIjnmoTlpJbpg6jlt6XlhbfliJfooagKICAgICAgICBzZWxmLl9jb25maWdfcGF0aDogT3B0aW9uYWxbUGF0aF0gPSBOb25lCgogICAgZGVmIGluaXQoc2VsZiwgY29uZmlnX3BhdGg6IFBhdGgpOgogICAgICAgICIiIuWIneWni+WMlu+8jOWKoOi9veW3sumFjee9rueahOWklumDqOacjeWKoeWZqCIiIgogICAgICAgIHNlbGYuX2NvbmZpZ19wYXRoID0gY29uZmlnX3BhdGgKICAgICAgICBjb25maWdfcGF0aC5wYXJlbnQubWtkaXIocGFyZW50cz1UcnVlLCBleGlzdF9vaz1UcnVlKQogICAgICAgIGlmIGNvbmZpZ19wYXRoLmV4aXN0cygpOgogICAgICAgICAgICB0cnk6CiAgICAgICAgICAgICAgICBkYXRhID0ganNvbi5sb2Fkcyhjb25maWdfcGF0aC5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikpCiAgICAgICAgICAgICAgICBmb3IgbmFtZSwgaW5mbyBpbiBkYXRhLml0ZW1zKCk6CiAgICAgICAgICAgICAgICAgICAgc2VsZi5fc2VydmVyc1tuYW1lXSA9IHsKICAgICAgICAgICAgICAgICAgICAgICAgInVybCI6IGluZm8uZ2V0KCJ1cmwiLCAiIiksCiAgICAgICAgICAgICAgICAgICAgICAgICJ0b29scyI6IGluZm8uZ2V0KCJ0b29scyIsIFtdKSwKICAgICAgICAgICAgICAgICAgICAgICAgInN0YXR1cyI6ICJkaXNjb25uZWN0ZWQiLAogICAgICAgICAgICAgICAgICAgICAgICAibGFzdF9jaGVjayI6IE5vbmUsCiAgICAgICAgICAgICAgICAgICAgICAgICJwcmVmaXgiOiBpbmZvLmdldCgicHJlZml4IiwgZiJtY3Bfe25hbWV9XyIpLAogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIGxvZ2dlci5pbmZvKGYi5Yqg6L29IHtsZW4oc2VsZi5fc2VydmVycyl9IOS4quWklumDqCBNQ1Ag5pyN5Yqh5Zmo6YWN572uIikKICAgICAgICAgICAgZXhjZXB0IEV4Y2VwdGlvbiBhcyBlOgogICAgICAgICAgICAgICAgbG9nZ2VyLndhcm5pbmcoZiLliqDovb3lpJbpg6ggTUNQIOmFjee9ruWksei0pToge2V9IikKCiAgICBkZWYgX3NhdmVfY29uZmlnKHNlbGYpOgogICAgICAgICIiIuS/neWtmOmFjee9ruWIsOaWh+S7tiIiIgogICAgICAgIGlmIG5vdCBzZWxmLl9jb25maWdfcGF0aDoKICAgICAgICAgICAgcmV0dXJuCiAgICAgICAgZGF0YSA9IHt9CiAgICAgICAgZm9yIG5hbWUsIGluZm8gaW4gc2VsZi5fc2VydmVycy5pdGVtcygpOgogICAgICAgICAgICBkYXRhW25hbWVdID0gewogICAgICAgICAgICAgICAgInVybCI6IGluZm9bInVybCJdLAogICAgICAgICAgICAgICAgInRvb2xzIjogaW5mby5nZXQoInRvb2xzIiwgW10pLAogICAgICAgICAgICAgICAgInByZWZpeCI6IGluZm8uZ2V0KCJwcmVmaXgiLCBmIm1jcF97bmFtZX1fIiksCiAgICAgICAgICAgIH0KICAgICAgICBzZWxmLl9jb25maWdfcGF0aC53cml0ZV90ZXh0KAogICAgICAgICAgICBqc29uLmR1bXBzKGRhdGEsIGluZGVudD0yLCBlbnN1cmVfYXNjaWk9RmFsc2UpLCBlbmNvZGluZz0idXRmLTgiCiAgICAgICAgKQoKICAgIGRlZiBhZGRfc2VydmVyKHNlbGYsIG5hbWU6IHN0ciwgdXJsOiBzdHIsIHByZWZpeDogc3RyID0gIiIpIC0+IERpY3Rbc3RyLCBBbnldOgogICAgICAgICIiIua3u+WKoOWklumDqCBNQ1Ag5pyN5Yqh5ZmoIiIiCiAgICAgICAgaWYgbm90IG5hbWUgb3Igbm90IHVybDoKICAgICAgICAgICAgcmV0dXJuIHsic3VjY2VzcyI6IEZhbHNlLCAibWVzc2FnZSI6ICLlkI3np7DlkowgVVJMIOS4jeiDveS4uuepuiJ9CiAgICAgICAgaWYgbmFtZSBpbiBzZWxmLl9zZXJ2ZXJzOgogICAgICAgICAgICByZXR1cm4geyJzdWNjZXNzIjogRmFsc2UsICJtZXNzYWdlIjogZiLmnI3liqHlmaggJ3tuYW1lfScg5bey5a2Y5ZyoIn0KCiAgICAgICAgcHJlZml4ID0gcHJlZml4IG9yIGYibWNwX3tuYW1lfV8iCiAgICAgICAgc2VsZi5fc2VydmVyc1tuYW1lXSA9IHsKICAgICAgICAgICAgInVybCI6IHVybCwKICAgICAgICAgICAgInRvb2xzIjogW10sCiAgICAgICAgICAgICJzdGF0dXMiOiAiZGlzY29ubmVjdGVkIiwKICAgICAgICAgICAgImxhc3RfY2hlY2siOiBOb25lLAogICAgICAgICAgICAicHJlZml4IjogcHJlZml4LAogICAgICAgIH0KICAgICAgICBzZWxmLl9zYXZlX2NvbmZpZygpCgogICAgICAgICMg6Ieq5Yqo5Y+R546w5bel5YW3CiAgICAgICAgdG9vbHNfY291bnQgPSBzZWxmLl9kaXNjb3Zlcl90b29scyhuYW1lKQogICAgICAgIHJldHVybiB7CiAgICAgICAgICAgICJzdWNjZXNzIjogVHJ1ZSwKICAgICAgICAgICAgIm1lc3NhZ2UiOiBmIuacjeWKoeWZqCAne25hbWV9JyDlt7Lmt7vliqDvvIzlj5HnjrAge3Rvb2xzX2NvdW50fSDkuKrlt6XlhbciLAogICAgICAgICAgICAic2VydmVyIjogbmFtZSwKICAgICAgICAgICAgInRvb2xzX2NvdW50IjogdG9vbHNfY291bnQsCiAgICAgICAgfQoKICAgIGRlZiByZW1vdmVfc2VydmVyKHNlbGYsIG5hbWU6IHN0cikgLT4gRGljdFtzdHIsIEFueV06CiAgICAgICAgIiIi56e76Zmk5aSW6YOoIE1DUCDmnI3liqHlmagiIiIKICAgICAgICBpZiBuYW1lIG5vdCBpbiBzZWxmLl9zZXJ2ZXJzOgogICAgICAgICAgICByZXR1cm4geyJzdWNjZXNzIjogRmFsc2UsICJtZXNzYWdlIjogZiLmnI3liqHlmaggJ3tuYW1lfScg5LiN5a2Y5ZyoIn0KCiAgICAgICAgZGVsIHNlbGYuX3NlcnZlcnNbbmFtZV0KICAgICAgICBzZWxmLl9zYXZlX2NvbmZpZygpCiAgICAgICAgc2VsZi5fcmVidWlsZF90b29sc19jYWNoZSgpCiAgICAgICAgcmV0dXJuIHsic3VjY2VzcyI6IFRydWUsICJtZXNzYWdlIjogZiLmnI3liqHlmaggJ3tuYW1lfScg5bey56e76ZmkIn0KCiAgICBkZWYgbGlzdF9zZXJ2ZXJzKHNlbGYpIC0+IExpc3RbRGljdFtzdHIsIEFueV1dOgogICAgICAgICIiIuWIl+WHuuaJgOacieWklumDqCBNQ1Ag5pyN5Yqh5ZmoIiIiCiAgICAgICAgcmVzdWx0ID0gW10KICAgICAgICBmb3IgbmFtZSwgaW5mbyBpbiBzZWxmLl9zZXJ2ZXJzLml0ZW1zKCk6CiAgICAgICAgICAgIHJlc3VsdC5hcHBlbmQoewogICAgICAgICAgICAgICAgIm5hbWUiOiBuYW1lLAogICAgICAgICAgICAgICAgInVybCI6IGluZm9bInVybCJdLAogICAgICAgICAgICAgICAgInRvb2xzX2NvdW50IjogbGVuKGluZm8uZ2V0KCJ0b29scyIsIFtdKSksCiAgICAgICAgICAgICAgICAic3RhdHVzIjogaW5mby5nZXQoInN0YXR1cyIsICJ1bmtub3duIiksCiAgICAgICAgICAgICAgICAicHJlZml4IjogaW5mby5nZXQoInByZWZpeCIsICIiKSwKICAgICAgICAgICAgICAgICJsYXN0X2NoZWNrIjogaW5mby5nZXQoImxhc3RfY2hlY2siLCAiIiksCiAgICAgICAgICAgIH0pCiAgICAgICAgcmV0dXJuIHJlc3VsdAoKICAgIGRlZiByZWZyZXNoX3NlcnZlcihzZWxmLCBuYW1lOiBzdHIpIC0+IERpY3Rbc3RyLCBBbnldOgogICAgICAgICIiIuWIt+aWsOWNleS4quacjeWKoeWZqOeahOW3peWFt+WIl+ihqCIiIgogICAgICAgIGlmIG5hbWUgbm90IGluIHNlbGYuX3NlcnZlcnM6CiAgICAgICAgICAgIHJldHVybiB7InN1Y2Nlc3MiOiBGYWxzZSwgIm1lc3NhZ2UiOiBmIuacjeWKoeWZqCAne25hbWV9JyDkuI3lrZjlnKgifQogICAgICAgIGNvdW50ID0gc2VsZi5fZGlzY292ZXJfdG9vbHMobmFtZSkKICAgICAgICByZXR1cm4geyJzdWNjZXNzIjogVHJ1ZSwgIm1lc3NhZ2UiOiBmIuWIt+aWsOWujOaIkO+8jHtjb3VudH0g5Liq5bel5YW3IiwgInRvb2xzX2NvdW50IjogY291bnR9CgogICAgZGVmIHJlZnJlc2hfYWxsKHNlbGYpIC0+IERpY3Rbc3RyLCBBbnldOgogICAgICAgICIiIuWIt+aWsOaJgOacieacjeWKoeWZqCIiIgogICAgICAgIHRvdGFsID0gMAogICAgICAgIGZvciBuYW1lIGluIGxpc3Qoc2VsZi5fc2VydmVycy5rZXlzKCkpOgogICAgICAgICAgICB0b3RhbCArPSBzZWxmLl9kaXNjb3Zlcl90b29scyhuYW1lKQogICAgICAgIHJldHVybiB7InN1Y2Nlc3MiOiBUcnVlLCAibWVzc2FnZSI6IGYi5bey5Yi35pawIHtsZW4oc2VsZi5fc2VydmVycyl9IOS4quacjeWKoeWZqO+8jOWFsSB7dG90YWx9IOS4quW3peWFtyJ9CgogICAgZGVmIGdldF9leHRlcm5hbF90b29scyhzZWxmKSAtPiBMaXN0W0RpY3Rbc3RyLCBBbnldXToKICAgICAgICAiIiLojrflj5bmiYDmnInlpJbpg6jlt6XlhbfvvIjluKbliY3nvIDvvIkiIiIKICAgICAgICBpZiBub3Qgc2VsZi5fdG9vbHNfY2FjaGU6CiAgICAgICAgICAgIHNlbGYuX3JlYnVpbGRfdG9vbHNfY2FjaGUoKQogICAgICAgIHJldHVybiBzZWxmLl90b29sc19jYWNoZQoKICAgIGRlZiBjYWxsX2V4dGVybmFsX3Rvb2woc2VsZiwgdG9vbF9uYW1lOiBzdHIsIGFyZ3VtZW50czogZGljdCkgLT4gQW55OgogICAgICAgICIiIuiwg+eUqOWklumDqCBNQ1Ag5pyN5Yqh5Zmo55qE5bel5YW3IiIiCiAgICAgICAgIyDmib7liLDlt6XlhbfmiYDlsZ7nmoTmnI3liqHlmagKICAgICAgICBmb3IgbmFtZSwgaW5mbyBpbiBzZWxmLl9zZXJ2ZXJzLml0ZW1zKCk6CiAgICAgICAgICAgIHByZWZpeCA9IGluZm8uZ2V0KCJwcmVmaXgiLCBmIm1jcF97bmFtZX1fIikKICAgICAgICAgICAgaWYgdG9vbF9uYW1lLnN0YXJ0c3dpdGgocHJlZml4KToKICAgICAgICAgICAgICAgIG9yaWdpbmFsX25hbWUgPSB0b29sX25hbWVbbGVuKHByZWZpeCk6XQogICAgICAgICAgICAgICAgcmV0dXJuIHNlbGYuX2NhbGxfdG9vbChpbmZvWyJ1cmwiXSwgb3JpZ2luYWxfbmFtZSwgYXJndW1lbnRzKQoKICAgICAgICByZXR1cm4geyJlcnJvciI6IGYi5pyq5om+5Yiw5bel5YW3ICd7dG9vbF9uYW1lfScg5a+55bqU55qE5aSW6YOo5pyN5Yqh5ZmoIn0KCiAgICBkZWYgaXNfZXh0ZXJuYWxfdG9vbChzZWxmLCB0b29sX25hbWU6IHN0cikgLT4gYm9vbDoKICAgICAgICAiIiLliKTmlq3lt6XlhbfmmK/lkKbmmK/lpJbpg6jlt6XlhbciIiIKICAgICAgICBmb3IgbmFtZSwgaW5mbyBpbiBzZWxmLl9zZXJ2ZXJzLml0ZW1zKCk6CiAgICAgICAgICAgIHByZWZpeCA9IGluZm8uZ2V0KCJwcmVmaXgiLCBmIm1jcF97bmFtZX1fIikKICAgICAgICAgICAgaWYgdG9vbF9uYW1lLnN0YXJ0c3dpdGgocHJlZml4KToKICAgICAgICAgICAgICAgIHJldHVybiBUcnVlCiAgICAgICAgcmV0dXJuIEZhbHNlCgogICAgZGVmIF9kaXNjb3Zlcl90b29scyhzZWxmLCBzZXJ2ZXJfbmFtZTogc3RyKSAtPiBpbnQ6CiAgICAgICAgIiIi5Y+R546w5aSW6YOo5pyN5Yqh5Zmo55qE5bel5YW35YiX6KGoIiIiCiAgICAgICAgaW5mbyA9IHNlbGYuX3NlcnZlcnMuZ2V0KHNlcnZlcl9uYW1lKQogICAgICAgIGlmIG5vdCBpbmZvOgogICAgICAgICAgICByZXR1cm4gMAoKICAgICAgICB1cmwgPSBpbmZvWyJ1cmwiXQogICAgICAgIHRyeToKICAgICAgICAgICAgdG9vbHMgPSBzZWxmLl9mZXRjaF90b29scyh1cmwpCiAgICAgICAgICAgIGluZm9bInRvb2xzIl0gPSB0b29scwogICAgICAgICAgICBpbmZvWyJzdGF0dXMiXSA9ICJjb25uZWN0ZWQiCiAgICAgICAgICAgIGluZm9bImxhc3RfY2hlY2siXSA9IGRhdGV0aW1lLm5vdygpLmlzb2Zvcm1hdCgpCiAgICAgICAgICAgIHNlbGYuX3JlYnVpbGRfdG9vbHNfY2FjaGUoKQogICAgICAgICAgICBsb2dnZXIuaW5mbyhmIk1DUCDmnI3liqHlmaggJ3tzZXJ2ZXJfbmFtZX0nIOWPkeeOsCB7bGVuKHRvb2xzKX0g5Liq5bel5YW3IikKICAgICAgICAgICAgcmV0dXJuIGxlbih0b29scykKICAgICAgICBleGNlcHQgRXhjZXB0aW9uIGFzIGU6CiAgICAgICAgICAgIGluZm9bInN0YXR1cyJdID0gImVycm9yIgogICAgICAgICAgICBpbmZvWyJsYXN0X2NoZWNrIl0gPSBkYXRldGltZS5ub3coKS5pc29mb3JtYXQoKQogICAgICAgICAgICBpbmZvWyJlcnJvciJdID0gc3RyKGUpCiAgICAgICAgICAgIGxvZ2dlci53YXJuaW5nKGYiTUNQIOacjeWKoeWZqCAne3NlcnZlcl9uYW1lfScg6L+e5o6l5aSx6LSlOiB7ZX0iKQogICAgICAgICAgICByZXR1cm4gMAoKICAgIGRlZiBfbWNwX3JlcXVlc3Qoc2VsZiwgdXJsOiBzdHIsIHBheWxvYWQ6IGRpY3QsIHNlc3Npb25faWQ6IHN0ciA9ICIiLCB0aW1lb3V0OiBpbnQgPSAxNSkgLT4gZGljdDoKICAgICAgICAiIiLlj5HpgIEgTUNQIEpTT04tUlBDIOivt+axgu+8jOiHquWKqOWkhOeQhiBTU0Ug5ZON5bqU5qC85byPIiIiCiAgICAgICAgaGVhZGVycyA9IHsKICAgICAgICAgICAgIkNvbnRlbnQtVHlwZSI6ICJhcHBsaWNhdGlvbi9qc29uIiwKICAgICAgICAgICAgIkFjY2VwdCI6ICJhcHBsaWNhdGlvbi9qc29uLCB0ZXh0L2V2ZW50LXN0cmVhbSIsCiAgICAgICAgfQogICAgICAgIGlmIHNlc3Npb25faWQ6CiAgICAgICAgICAgIGhlYWRlcnNbIk1jcC1TZXNzaW9uLUlkIl0gPSBzZXNzaW9uX2lkCgogICAgICAgIHJlcSA9IHVybGxpYi5yZXF1ZXN0LlJlcXVlc3QoCiAgICAgICAgICAgIHVybCwKICAgICAgICAgICAgZGF0YT1qc29uLmR1bXBzKHBheWxvYWQpLmVuY29kZSgidXRmLTgiKSwKICAgICAgICAgICAgaGVhZGVycz1oZWFkZXJzLAogICAgICAgICAgICBtZXRob2Q9IlBPU1QiLAogICAgICAgICkKCiAgICAgICAgd2l0aCB1cmxsaWIucmVxdWVzdC51cmxvcGVuKHJlcSwgdGltZW91dD10aW1lb3V0KSBhcyByZXNwOgogICAgICAgICAgICByYXcgPSByZXNwLnJlYWQoKS5kZWNvZGUoInV0Zi04IikKICAgICAgICAgICAgIyBNQ1AgU3RyZWFtYWJsZSBIVFRQIOWPr+iDvei/lOWbniBTU0Ug5qC85byPOiAiZXZlbnQ6IG1lc3NhZ2VcbmRhdGE6IHsuLi59XG5cbiIKICAgICAgICAgICAgIyDkuZ/lj6/og73nm7TmjqXov5Tlm54gSlNPTgogICAgICAgICAgICBpZiByYXcuc3RhcnRzd2l0aCgiZXZlbnQ6Iik6CiAgICAgICAgICAgICAgICBmb3IgbGluZSBpbiByYXcuc3BsaXQoIlxuIik6CiAgICAgICAgICAgICAgICAgICAgaWYgbGluZS5zdGFydHN3aXRoKCJkYXRhOiIpOgogICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4ganNvbi5sb2FkcyhsaW5lW2xlbigiZGF0YToiKTpdLnN0cmlwKCkpCiAgICAgICAgICAgIHJldHVybiBqc29uLmxvYWRzKHJhdykKCiAgICBkZWYgX2luaXRpYWxpemVfYW5kX2dldF9zZXNzaW9uKHNlbGYsIHVybDogc3RyKSAtPiBzdHI6CiAgICAgICAgIiIi5L2O5bGCOiDlj5HpgIEgaW5pdGlhbGl6ZSDlubbku47lk43lupTlpLTmj5Dlj5YgbWNwLXNlc3Npb24taWQiIiIKICAgICAgICBwYXlsb2FkID0ganNvbi5kdW1wcyh7CiAgICAgICAgICAgICJqc29ucnBjIjogIjIuMCIsICJpZCI6IDEsICJtZXRob2QiOiAiaW5pdGlhbGl6ZSIsCiAgICAgICAgICAgICJwYXJhbXMiOiB7CiAgICAgICAgICAgICAgICAicHJvdG9jb2xWZXJzaW9uIjogIjIwMjUtMDMtMjYiLAogICAgICAgICAgICAgICAgImNhcGFiaWxpdGllcyI6IHt9LAogICAgICAgICAgICAgICAgImNsaWVudEluZm8iOiB7Im5hbWUiOiAiaGVybWVzLW1jcC1zcGFjZSIsICJ2ZXJzaW9uIjogIjUuMS4wIn0sCiAgICAgICAgICAgIH0sCiAgICAgICAgfSkuZW5jb2RlKCJ1dGYtOCIpCgogICAgICAgIHJlcSA9IHVybGxpYi5yZXF1ZXN0LlJlcXVlc3QoCiAgICAgICAgICAgIHVybCwgZGF0YT1wYXlsb2FkLAogICAgICAgICAgICBoZWFkZXJzPXsKICAgICAgICAgICAgICAgICJDb250ZW50LVR5cGUiOiAiYXBwbGljYXRpb24vanNvbiIsCiAgICAgICAgICAgICAgICAiQWNjZXB0IjogImFwcGxpY2F0aW9uL2pzb24sIHRleHQvZXZlbnQtc3RyZWFtIiwKICAgICAgICAgICAgfSwKICAgICAgICAgICAgbWV0aG9kPSJQT1NUIiwKICAgICAgICApCgogICAgICAgIHdpdGggdXJsbGliLnJlcXVlc3QudXJsb3BlbihyZXEsIHRpbWVvdXQ9MTUpIGFzIHJlc3A6CiAgICAgICAgICAgIHJlc3AucmVhZCgpICAjIGNvbnN1bWUgYm9keQogICAgICAgICAgICBzZXNzaW9uX2lkID0gcmVzcC5oZWFkZXJzLmdldCgibWNwLXNlc3Npb24taWQiLCAiIikKICAgICAgICAgICAgaWYgbm90IHNlc3Npb25faWQ6CiAgICAgICAgICAgICAgICByYWlzZSBSdW50aW1lRXJyb3IoIk1DUCDmnI3liqHlmajmnKrov5Tlm54gbWNwLXNlc3Npb24taWQiKQoKICAgICAgICAjIFN0ZXAgMjog5Y+R6YCBIGluaXRpYWxpemVkIOmAmuefpe+8iOS4jemcgOimgeWTjeW6lO+8iQogICAgICAgIHRyeToKICAgICAgICAgICAgbm90aWZfcGF5bG9hZCA9IGpzb24uZHVtcHMoewogICAgICAgICAgICAgICAgImpzb25ycGMiOiAiMi4wIiwgIm1ldGhvZCI6ICJub3RpZmljYXRpb25zL2luaXRpYWxpemVkIiwKICAgICAgICAgICAgfSkuZW5jb2RlKCJ1dGYtOCIpCiAgICAgICAgICAgIG5vdGlmX3JlcSA9IHVybGxpYi5yZXF1ZXN0LlJlcXVlc3QoCiAgICAgICAgICAgICAgICB1cmwsIGRhdGE9bm90aWZfcGF5bG9hZCwKICAgICAgICAgICAgICAgIGhlYWRlcnM9ewogICAgICAgICAgICAgICAgICAgICJDb250ZW50LVR5cGUiOiAiYXBwbGljYXRpb24vanNvbiIsCiAgICAgICAgICAgICAgICAgICAgIkFjY2VwdCI6ICJhcHBsaWNhdGlvbi9qc29uLCB0ZXh0L2V2ZW50LXN0cmVhbSIsCiAgICAgICAgICAgICAgICAgICAgIk1jcC1TZXNzaW9uLUlkIjogc2Vzc2lvbl9pZCwKICAgICAgICAgICAgICAgIH0sCiAgICAgICAgICAgICAgICBtZXRob2Q9IlBPU1QiLAogICAgICAgICAgICApCiAgICAgICAgICAgIHVybGxpYi5yZXF1ZXN0LnVybG9wZW4obm90aWZfcmVxLCB0aW1lb3V0PTUpCiAgICAgICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICAgICAgcGFzcyAgIyDpgJrnn6XlpLHotKXkuI3lvbHlk43lkI7nu63mk43kvZwKCiAgICAgICAgbG9nZ2VyLmluZm8oZiJNQ1Agc2Vzc2lvbiDlt7Llu7rnq4s6IHtzZXNzaW9uX2lkWzoxMl19Li4uIikKICAgICAgICByZXR1cm4gc2Vzc2lvbl9pZAoKICAgIGRlZiBfZmV0Y2hfdG9vbHMoc2VsZiwgdXJsOiBzdHIpIC0+IExpc3RbRGljdFtzdHIsIEFueV1dOgogICAgICAgICIiIumAmui/hyBNQ1Ag5Y2P6K6u6I635Y+W5bel5YW35YiX6KGo77yI5ZCrIHNlc3Npb24g566h55CG77yJIiIiCiAgICAgICAgIyBTdGVwIDE6IOWIneWni+WMliBzZXNzaW9uCiAgICAgICAgc2Vzc2lvbl9pZCA9IHNlbGYuX2luaXRpYWxpemVfYW5kX2dldF9zZXNzaW9uKHVybCkKCiAgICAgICAgIyBTdGVwIDI6IOW4piBzZXNzaW9uIElEIOivt+axgiB0b29scy9saXN0CiAgICAgICAgcmVzdWx0ID0gc2VsZi5fbWNwX3JlcXVlc3QodXJsLCB7CiAgICAgICAgICAgICJqc29ucnBjIjogIjIuMCIsICJpZCI6IDIsICJtZXRob2QiOiAidG9vbHMvbGlzdCIsICJwYXJhbXMiOiB7fSwKICAgICAgICB9LCBzZXNzaW9uX2lkPXNlc3Npb25faWQpCgogICAgICAgIHJldHVybiByZXN1bHQuZ2V0KCJyZXN1bHQiLCB7fSkuZ2V0KCJ0b29scyIsIFtdKQoKICAgIGRlZiBfY2FsbF90b29sKHNlbGYsIHVybDogc3RyLCB0b29sX25hbWU6IHN0ciwgYXJndW1lbnRzOiBkaWN0KSAtPiBBbnk6CiAgICAgICAgIiIi6YCa6L+HIE1DUCDljY/orq7osIPnlKjlt6XlhbfvvIjlkKsgc2Vzc2lvbiDnrqHnkIbvvIkiIiIKICAgICAgICAjIOavj+asoeiwg+eUqOmDvemHjeaWsOW7uueriyBzZXNzaW9u77yI5peg54q25oCB77yM566A5Y2V5Y+v6Z2g77yJCiAgICAgICAgc2Vzc2lvbl9pZCA9IHNlbGYuX2luaXRpYWxpemVfYW5kX2dldF9zZXNzaW9uKHVybCkKCiAgICAgICAgcmVzdWx0ID0gc2VsZi5fbWNwX3JlcXVlc3QodXJsLCB7CiAgICAgICAgICAgICJqc29ucnBjIjogIjIuMCIsICJpZCI6IDIsICJtZXRob2QiOiAidG9vbHMvY2FsbCIsCiAgICAgICAgICAgICJwYXJhbXMiOiB7Im5hbWUiOiB0b29sX25hbWUsICJhcmd1bWVudHMiOiBhcmd1bWVudHN9LAogICAgICAgIH0sIHNlc3Npb25faWQ9c2Vzc2lvbl9pZCwgdGltZW91dD02MCkKCiAgICAgICAgcmV0dXJuIHJlc3VsdAoKICAgIGRlZiBfcmVidWlsZF90b29sc19jYWNoZShzZWxmKToKICAgICAgICAiIiLph43lu7rlpJbpg6jlt6XlhbfnvJPlrZjvvIjluKbliY3nvIDvvIkiIiIKICAgICAgICBzZWxmLl90b29sc19jYWNoZSA9IFtdCiAgICAgICAgZm9yIG5hbWUsIGluZm8gaW4gc2VsZi5fc2VydmVycy5pdGVtcygpOgogICAgICAgICAgICBwcmVmaXggPSBpbmZvLmdldCgicHJlZml4IiwgZiJtY3Bfe25hbWV9XyIpCiAgICAgICAgICAgIGZvciB0b29sIGluIGluZm8uZ2V0KCJ0b29scyIsIFtdKToKICAgICAgICAgICAgICAgIGV4dGVybmFsX3Rvb2wgPSB7CiAgICAgICAgICAgICAgICAgICAgIm5hbWUiOiBmIntwcmVmaXh9e3Rvb2xbJ25hbWUnXX0iLAogICAgICAgICAgICAgICAgICAgICJkZXNjcmlwdGlvbiI6IGYiW3tuYW1lfV0ge3Rvb2wuZ2V0KCdkZXNjcmlwdGlvbicsICcnKX0iLAogICAgICAgICAgICAgICAgICAgICJpbnB1dFNjaGVtYSI6IHRvb2wuZ2V0KCJpbnB1dFNjaGVtYSIsIHsidHlwZSI6ICJvYmplY3QiLCAicHJvcGVydGllcyI6IHt9fSksCiAgICAgICAgICAgICAgICAgICAgIl9zZXJ2ZXIiOiBuYW1lLAogICAgICAgICAgICAgICAgICAgICJfb3JpZ2luYWxfbmFtZSI6IHRvb2xbIm5hbWUiXSwKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIHNlbGYuX3Rvb2xzX2NhY2hlLmFwcGVuZChleHRlcm5hbF90b29sKQoKCiMg5YWo5bGA5Y2V5L6LCm1jcF9jbGllbnRfc2VydmljZSA9IE1DUENsaWVudFNlcnZpY2UoKQo=
+# -*- coding: utf-8 -*-
+"""
+MCP 客户端服务 - 连接外部 MCP 服务器，自动发现并注册工具
+实现 MCP 网关能力：一个入口访问所有 MCP 服务
+"""
+
+import json
+import logging
+import re
+import urllib.request
+import urllib.error
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+
+logger = logging.getLogger("hermes-mcp")
+
+
+class MCPClientService:
+    """MCP 客户端：管理外部 MCP 服务器连接"""
+
+    def __init__(self):
+        self._servers: Dict[str, Dict[str, Any]] = {}  # name -> {url, tools, status, last_check}
+        self._tools_cache: List[Dict[str, Any]] = []  # 聚合的外部工具列表
+        self._config_path: Optional[Path] = None
+
+    def init(self, config_path: Path):
+        """初始化，加载已配置的外部服务器"""
+        self._config_path = config_path
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        if config_path.exists():
+            try:
+                data = json.loads(config_path.read_text(encoding="utf-8"))
+                for name, info in data.items():
+                    self._servers[name] = {
+                        "url": info.get("url", ""),
+                        "tools": info.get("tools", []),
+                        "status": "disconnected",
+                        "last_check": None,
+                        "prefix": info.get("prefix", f"mcp_{name}_"),
+                    }
+                logger.info(f"加载 {len(self._servers)} 个外部 MCP 服务器配置")
+            except Exception as e:
+                logger.warning(f"加载外部 MCP 配置失败: {e}")
+
+    def _save_config(self):
+        """保存配置到文件"""
+        if not self._config_path:
+            return
+        data = {}
+        for name, info in self._servers.items():
+            data[name] = {
+                "url": info["url"],
+                "tools": info.get("tools", []),
+                "prefix": info.get("prefix", f"mcp_{name}_"),
+            }
+        self._config_path.write_text(
+            json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+
+    def add_server(self, name: str, url: str, prefix: str = "") -> Dict[str, Any]:
+        """添加外部 MCP 服务器"""
+        if not name or not url:
+            return {"success": False, "message": "名称和 URL 不能为空"}
+        if name in self._servers:
+            return {"success": False, "message": f"服务器 '{name}' 已存在"}
+
+        prefix = prefix or f"mcp_{name}_"
+        self._servers[name] = {
+            "url": url,
+            "tools": [],
+            "status": "disconnected",
+            "last_check": None,
+            "prefix": prefix,
+        }
+        self._save_config()
+
+        # 自动发现工具
+        tools_count = self._discover_tools(name)
+        return {
+            "success": True,
+            "message": f"服务器 '{name}' 已添加，发现 {tools_count} 个工具",
+            "server": name,
+            "tools_count": tools_count,
+        }
+
+    def remove_server(self, name: str) -> Dict[str, Any]:
+        """移除外部 MCP 服务器"""
+        if name not in self._servers:
+            return {"success": False, "message": f"服务器 '{name}' 不存在"}
+
+        del self._servers[name]
+        self._save_config()
+        self._rebuild_tools_cache()
+        return {"success": True, "message": f"服务器 '{name}' 已移除"}
+
+    def list_servers(self) -> List[Dict[str, Any]]:
+        """列出所有外部 MCP 服务器"""
+        result = []
+        for name, info in self._servers.items():
+            result.append({
+                "name": name,
+                "url": info["url"],
+                "tools_count": len(info.get("tools", [])),
+                "status": info.get("status", "unknown"),
+                "prefix": info.get("prefix", ""),
+                "last_check": info.get("last_check", ""),
+            })
+        return result
+
+    def refresh_server(self, name: str) -> Dict[str, Any]:
+        """刷新单个服务器的工具列表"""
+        if name not in self._servers:
+            return {"success": False, "message": f"服务器 '{name}' 不存在"}
+        count = self._discover_tools(name)
+        return {"success": True, "message": f"刷新完成，{count} 个工具", "tools_count": count}
+
+    def refresh_all(self) -> Dict[str, Any]:
+        """刷新所有服务器"""
+        total = 0
+        for name in list(self._servers.keys()):
+            total += self._discover_tools(name)
+        return {"success": True, "message": f"已刷新 {len(self._servers)} 个服务器，共 {total} 个工具"}
+
+    def get_external_tools(self) -> List[Dict[str, Any]]:
+        """获取所有外部工具（带前缀）"""
+        if not self._tools_cache:
+            self._rebuild_tools_cache()
+        return self._tools_cache
+
+    def call_external_tool(self, tool_name: str, arguments: dict) -> Any:
+        """调用外部 MCP 服务器的工具"""
+        # 找到工具所属的服务器
+        for name, info in self._servers.items():
+            prefix = info.get("prefix", f"mcp_{name}_")
+            if tool_name.startswith(prefix):
+                original_name = tool_name[len(prefix):]
+                return self._call_tool(info["url"], original_name, arguments)
+
+        return {"error": f"未找到工具 '{tool_name}' 对应的外部服务器"}
+
+    def is_external_tool(self, tool_name: str) -> bool:
+        """判断工具是否是外部工具"""
+        for name, info in self._servers.items():
+            prefix = info.get("prefix", f"mcp_{name}_")
+            if tool_name.startswith(prefix):
+                return True
+        return False
+
+    def _discover_tools(self, server_name: str) -> int:
+        """发现外部服务器的工具列表"""
+        info = self._servers.get(server_name)
+        if not info:
+            return 0
+
+        url = info["url"]
+        try:
+            tools = self._fetch_tools(url)
+            info["tools"] = tools
+            info["status"] = "connected"
+            info["last_check"] = datetime.now().isoformat()
+            self._rebuild_tools_cache()
+            logger.info(f"MCP 服务器 '{server_name}' 发现 {len(tools)} 个工具")
+            return len(tools)
+        except Exception as e:
+            info["status"] = "error"
+            info["last_check"] = datetime.now().isoformat()
+            info["error"] = str(e)
+            logger.warning(f"MCP 服务器 '{server_name}' 连接失败: {e}")
+            return 0
+
+    def _mcp_request(self, url: str, payload: dict, session_id: str = "", timeout: int = 15) -> dict:
+        """发送 MCP JSON-RPC 请求，自动处理 SSE 响应格式"""
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+        }
+        if session_id:
+            headers["Mcp-Session-Id"] = session_id
+
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+            # MCP Streamable HTTP 可能返回 SSE 格式: "event: message\ndata: {...}\n\n"
+            # 也可能直接返回 JSON
+            if raw.startswith("event:"):
+                for line in raw.split("\n"):
+                    if line.startswith("data:"):
+                        return json.loads(line[len("data:"):].strip())
+            return json.loads(raw)
+
+    def _initialize_and_get_session(self, url: str) -> str:
+        """低层: 发送 initialize 并从响应头提取 mcp-session-id"""
+        payload = json.dumps({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": {"name": "hermes-mcp-space", "version": "5.1.0"},
+            },
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/event-stream",
+            },
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()  # consume body
+            session_id = resp.headers.get("mcp-session-id", "")
+            if not session_id:
+                raise RuntimeError("MCP 服务器未返回 mcp-session-id")
+
+        # Step 2: 发送 initialized 通知（不需要响应）
+        try:
+            notif_payload = json.dumps({
+                "jsonrpc": "2.0", "method": "notifications/initialized",
+            }).encode("utf-8")
+            notif_req = urllib.request.Request(
+                url, data=notif_payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Accept": "application/json, text/event-stream",
+                    "Mcp-Session-Id": session_id,
+                },
+                method="POST",
+            )
+            urllib.request.urlopen(notif_req, timeout=5)
+        except Exception:
+            pass  # 通知失败不影响后续操作
+
+        logger.info(f"MCP session 已建立: {session_id[:12]}...")
+        return session_id
+
+    def _fetch_tools(self, url: str) -> List[Dict[str, Any]]:
+        """通过 MCP 协议获取工具列表（含 session 管理）"""
+        # Step 1: 初始化 session
+        session_id = self._initialize_and_get_session(url)
+
+        # Step 2: 带 session ID 请求 tools/list
+        result = self._mcp_request(url, {
+            "jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {},
+        }, session_id=session_id)
+
+        return result.get("result", {}).get("tools", [])
+
+    def _call_tool(self, url: str, tool_name: str, arguments: dict) -> Any:
+        """通过 MCP 协议调用工具（含 session 管理）"""
+        # 每次调用都重新建立 session（无状态，简单可靠）
+        session_id = self._initialize_and_get_session(url)
+
+        result = self._mcp_request(url, {
+            "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+            "params": {"name": tool_name, "arguments": arguments},
+        }, session_id=session_id, timeout=60)
+
+        return result
+
+    def _rebuild_tools_cache(self):
+        """重建外部工具缓存（带前缀）"""
+        self._tools_cache = []
+        for name, info in self._servers.items():
+            prefix = info.get("prefix", f"mcp_{name}_")
+            for tool in info.get("tools", []):
+                external_tool = {
+                    "name": f"{prefix}{tool['name']}",
+                    "description": f"[{name}] {tool.get('description', '')}",
+                    "inputSchema": tool.get("inputSchema", {"type": "object", "properties": {}}),
+                    "_server": name,
+                    "_original_name": tool["name"],
+                }
+                self._tools_cache.append(external_tool)
+
+
+# 全局单例
+mcp_client_service = MCPClientService()
