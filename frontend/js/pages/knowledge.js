@@ -1,5 +1,6 @@
 /**
- * 知识库页面 — 会话/经验/记忆/技能/自动分析 卡片式管理
+ * 知识库页面 — 会话/经验/记忆/技能/自动分析/Obsidian 卡片式管理
+ * v5.8.0: 移除所有 inline onclick，改为 data-action 事件委托
  */
 
 const KnowledgePage = (() => {
@@ -11,6 +12,9 @@ const KnowledgePage = (() => {
     let _analysis = null;
     let _activeTab = 'sessions';
     let _pollTimer = null;
+    let _searchTerm = '';
+    let _searchResults = null;
+    let _obsidianConfig = null;
 
     async function render() {
         const container = document.getElementById('contentBody');
@@ -18,7 +22,15 @@ const KnowledgePage = (() => {
 
         await _loadData();
 
+        // 加载 Obsidian 配置
+        try {
+            _obsidianConfig = await API.get('/api/knowledge/obsidian/config');
+        } catch (_err) {
+            _obsidianConfig = null;
+        }
+
         container.innerHTML = buildPage();
+        bindEvents();
         startPolling();
     }
 
@@ -78,27 +90,26 @@ const KnowledgePage = (() => {
 
     function onSSEEvent(type, _data) {
         if (type === 'mcp.tool_complete') {
-            // 工具调用完成后刷新概览数据
             API.get('/api/knowledge/overview')
                 .then((o) => {
                     _overview = o || {};
                     updateOverview();
                 })
-                .catch(() => {
-                    /* ignore */
-                });
+                .catch(() => {});
         }
     }
 
     function switchTab(tab) {
         _activeTab = tab;
+        _searchTerm = '';
+        _searchResults = null;
         document.getElementById('kbContent').innerHTML = buildTabContent();
+        bindTabEvents();
     }
 
     function buildPage() {
         const o = _overview;
 
-        // 概览统计卡片
         const overviewHtml = `<div id="kbOverview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
             ${buildOverviewCard(Components.icon('messageCircle', 20), '会话', o.sessions || 0, `${o.total_messages || 0} 条消息`, 'var(--blue)')}
             ${buildOverviewCard(Components.icon('lightbulb', 20), '经验', o.learning_count || 0, '从对话中提炼', 'var(--orange)')}
@@ -107,32 +118,31 @@ const KnowledgePage = (() => {
             ${buildOverviewCard(Components.icon('ghost', 20), '人格', `${o.soul_chars || 0} 字`, 'Agent 人格定义', 'var(--purple)')}
         </div>`;
 
+        // 搜索栏
+        const searchHtml = `<div style="margin-bottom:16px;display:flex;gap:8px;align-items:center">
+            <div style="position:relative;flex:1">
+                ${Components.icon('search', 14, 'var(--text-tertiary)', 'position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none')}
+                <input type="text" id="kbSearchInput" placeholder="全文搜索知识库..." value="${Components.escapeHtml(_searchTerm)}" style="width:100%;padding:8px 10px 8px 30px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:13px;outline:none;color:var(--text)">
+            </div>
+            ${_searchTerm ? `<button type="button" class="btn btn-sm btn-ghost" data-action="clearSearch">清除</button>` : ''}
+        </div>`;
+
         // Tab 栏
         const tabs = [
             { key: 'sessions', label: '会话记录', icon: Components.icon('messageCircle', 14), count: _sessions.length },
-            {
-                key: 'experiences',
-                label: '经验提炼',
-                icon: Components.icon('lightbulb', 14),
-                count: _experiences.length,
-            },
+            { key: 'experiences', label: '经验提炼', icon: Components.icon('lightbulb', 14), count: _experiences.length },
             { key: 'memory', label: '记忆内容', icon: Components.icon('brain', 14), count: _memory.chars || 0 },
             { key: 'skills', label: '技能库', icon: Components.icon('zap', 14), count: _skills.length },
-            {
-                key: 'analysis',
-                label: '自动分析',
-                icon: Components.icon('microscope', 14),
-                count: (_analysis.errors || []).length + (_analysis.patterns || []).length,
-            },
+            { key: 'analysis', label: '自动分析', icon: Components.icon('microscope', 14), count: (_analysis.errors || []).length + (_analysis.patterns || []).length },
+            { key: 'obsidian', label: 'Obsidian', icon: Components.icon('globe', 14), count: _obsidianConfig?.vault_path ? '✓' : '' },
         ];
 
-        let tabsHtml =
-            '<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px">';
+        let tabsHtml = '<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap">';
         tabs.forEach((t) => {
             const active = _activeTab === t.key;
             const bg = active ? 'var(--accent)' : 'transparent';
             const color = active ? '#fff' : 'var(--text-secondary)';
-            tabsHtml += `<button onclick="KnowledgePage.switchTab('${t.key}')" style="padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:${bg};color:${color};transition:all 0.2s;display:flex;align-items:center;gap:6px">
+            tabsHtml += `<button type="button" class="kb-tab" data-action="switchTab" data-tab="${t.key}" style="padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;background:${bg};color:${color};transition:all 0.2s;display:flex;align-items:center;gap:6px">
                 <span>${t.icon}</span>
                 <span>${t.label}</span>
                 <span style="font-size:10px;opacity:0.7">${t.count}</span>
@@ -140,11 +150,11 @@ const KnowledgePage = (() => {
         });
         tabsHtml += '</div>';
 
-        return `${overviewHtml}${tabsHtml}<div id="kbContent">${buildTabContent()}</div>`;
+        return `${overviewHtml}${searchHtml}${tabsHtml}<div id="kbContent">${buildTabContent()}</div>`;
     }
 
     function buildOverviewCard(icon, label, value, desc, color) {
-        return `<div style="background:var(--bg-secondary);border-radius:12px;padding:16px;border-left:3px solid ${color};cursor:default;transition:transform 0.15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+        return `<div class="kb-overview-card" style="background:var(--bg-secondary);border-radius:12px;padding:16px;border-left:3px solid ${color};cursor:default;transition:transform 0.15s">
             <div style="font-size:20px;margin-bottom:4px">${icon}</div>
             <div style="font-size:20px;font-weight:700;color:var(--text-primary)">${value}</div>
             <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${label}</div>
@@ -153,21 +163,97 @@ const KnowledgePage = (() => {
     }
 
     function buildTabContent() {
+        // 如果有搜索结果，优先显示
+        if (_searchResults) {
+            return buildSearchResults();
+        }
         switch (_activeTab) {
-            case 'sessions':
-                return buildSessionsTab();
-            case 'experiences':
-                return buildExperiencesTab();
-            case 'memory':
-                return buildMemoryTab();
-            case 'skills':
-                return buildSkillsTab();
-            case 'analysis':
-                return buildAnalysisTab();
-            default:
-                return buildSessionsTab();
+            case 'sessions': return buildSessionsTab();
+            case 'experiences': return buildExperiencesTab();
+            case 'memory': return buildMemoryTab();
+            case 'skills': return buildSkillsTab();
+            case 'analysis': return buildAnalysisTab();
+            case 'obsidian': return buildObsidianTab();
+            default: return buildSessionsTab();
         }
     }
+
+    // ==========================================
+    // 搜索结果
+    // ==========================================
+
+    function buildSearchResults() {
+        if (!_searchResults || _searchResults.total === 0) {
+            return `<div style="text-align:center;color:var(--text-tertiary);padding:40px">
+                <div style="font-size:32px;margin-bottom:12px">${Components.icon('search', 32)}</div>
+                <div>未找到匹配结果</div>
+                <div style="font-size:12px;margin-top:4px">尝试其他关键词</div>
+            </div>`;
+        }
+
+        const typeLabels = { memory: '记忆', user: '用户', experience: '经验' };
+        const typeColors = { memory: 'var(--green)', user: 'var(--blue)', experience: 'var(--orange)' };
+
+        return `<div style="margin-bottom:12px;font-size:12px;color:var(--text-tertiary)">
+            找到 ${_searchResults.total} 条匹配结果（显示前 ${_searchResults.results.length} 条）
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            ${_searchResults.results
+                .map(
+                    (r) => `<div style="padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm);border-left:3px solid ${typeColors[r.type] || 'var(--border)'}">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                        <span style="font-size:10px;background:${typeColors[r.type] || 'var(--border)'}20;padding:1px 6px;border-radius:var(--radius-tag);color:${typeColors[r.type] || 'var(--text-tertiary)'}">${typeLabels[r.type] || r.type}</span>
+                        <span style="font-size:11px;color:var(--text-tertiary)">${Components.escapeHtml(r.file)}:${r.line}</span>
+                    </div>
+                    <div style="font-size:13px;color:var(--text-primary)">${Components.escapeHtml(r.content)}</div>
+                </div>`,
+                )
+                .join('')}
+        </div>`;
+    }
+
+    // ==========================================
+    // Obsidian Tab
+    // ==========================================
+
+    function buildObsidianTab() {
+        const config = _obsidianConfig || {};
+        const vaultPath = config.vault_path || '';
+        const lastSync = config.last_sync ? Components.formatDateTime(config.last_sync) : '从未同步';
+
+        return `<div style="max-width:600px">
+            <div class="mp-card" style="margin-bottom:16px">
+                <h3 style="margin-bottom:12px">${Components.icon('globe', 16)} Obsidian Vault 配置</h3>
+                <p style="font-size:12px;color:var(--text-tertiary);margin-bottom:16px">配置本地 Obsidian Vault 路径，知识库内容将同步到 Vault 中的 Hermes/ 目录。</p>
+                ${Components.formGroup('Vault 路径', `<input class="form-input" id="obsidianVaultPath" placeholder="/path/to/your/vault" value="${Components.escapeHtml(vaultPath)}">`, 'Obsidian Vault 的绝对路径')}
+                <div style="display:flex;gap:8px;margin-top:12px">
+                    <button type="button" class="btn btn-primary" data-action="saveObsidianConfig">保存配置</button>
+                    <button type="button" class="btn btn-secondary" data-action="syncObsidian" ${!vaultPath ? 'disabled' : ''}>执行同步</button>
+                </div>
+            </div>
+            <div class="mp-card">
+                <h3 style="margin-bottom:12px">同步状态</h3>
+                <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+                    <div style="display:flex;justify-content:space-between">
+                        <span style="color:var(--text-secondary)">配置状态</span>
+                        <span>${vaultPath ? '<span style="color:var(--green)">已配置</span>' : '<span style="color:var(--text-tertiary)">未配置</span>'}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between">
+                        <span style="color:var(--text-secondary)">Vault 路径</span>
+                        <span style="font-family:monospace;font-size:12px">${Components.escapeHtml(vaultPath || '-')}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between">
+                        <span style="color:var(--text-secondary)">上次同步</span>
+                        <span>${lastSync}</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // ==========================================
+    // 各 Tab 内容（移除 inline 事件）
+    // ==========================================
 
     function buildSessionsTab() {
         if (_sessions.length === 0)
@@ -176,28 +262,18 @@ const KnowledgePage = (() => {
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">';
         _sessions.forEach((s) => {
             const time = Components.formatTime(s.created_at);
-            const statusDot =
-                s.status === 'active' ? Components.icon('checkCircle', 10) : Components.icon('circle', 10);
-            const sourceTag = s.source
-                ? `<span style="font-size:10px;background:var(--bg-secondary);padding:1px 6px;border-radius:var(--radius-tag);color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>`
-                : '';
-            const modelTag =
-                s.model && s.model !== 'unknown'
-                    ? `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(s.model)}</span>`
-                    : '';
-            const lastMsg = s.last_message
-                ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.last_message)}">${Components.escapeHtml(s.last_message)}</div>`
-                : '';
+            const statusDot = s.status === 'active' ? Components.icon('checkCircle', 10) : Components.icon('circle', 10);
+            const sourceTag = s.source ? `<span style="font-size:10px;background:var(--bg-secondary);padding:1px 6px;border-radius:var(--radius-tag);color:var(--text-tertiary)">${Components.escapeHtml(s.source)}</span>` : '';
+            const modelTag = s.model && s.model !== 'unknown' ? `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(s.model)}</span>` : '';
+            const lastMsg = s.last_message ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.last_message)}">${Components.escapeHtml(s.last_message)}</div>` : '';
 
-            html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;cursor:default;transition:transform 0.15s,box-shadow 0.15s;border:1px solid var(--border)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            html += `<div class="kb-card" style="background:var(--bg-secondary);border-radius:12px;padding:14px;border:1px solid var(--border)">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
                     <div style="font-size:13px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" title="${Components.escapeHtml(s.title)}">${Components.escapeHtml(s.title || '未命名会话')}</div>
                     <span style="font-size:10px;color:var(--text-tertiary);flex-shrink:0;margin-left:8px">${time}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-                    ${statusDot}
-                    ${sourceTag}
-                    ${modelTag}
+                    ${statusDot}${sourceTag}${modelTag}
                     <span style="font-size:10px;color:var(--text-tertiary);margin-left:auto">${s.message_count} 条消息</span>
                 </div>
                 ${lastMsg}
@@ -215,12 +291,11 @@ const KnowledgePage = (() => {
         _experiences.forEach((exp, i) => {
             const content = exp.content || '';
             const lines = content.split('\n').filter((l) => l.trim());
-            // 提取关键信息
             const title = exp.title || `经验 #${i + 1}`;
             const preview = lines.slice(0, 4).join(' ').slice(0, 150);
             const fullContent = content.slice(0, 500);
 
-            html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--orange);cursor:default;transition:transform 0.15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+            html += `<div class="kb-card" style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--orange)">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     ${Components.icon('lightbulb', 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(title)}</span>
@@ -237,15 +312,13 @@ const KnowledgePage = (() => {
         if (!content.trim())
             return '<div style="text-align:center;color:var(--text-tertiary);padding:40px">暂无记忆内容</div>';
 
-        // 将 Markdown 内容分段展示为卡片
         const sections = content.split('\n## ').filter((s) => s.trim());
         let html = '<div style="display:flex;flex-direction:column;gap:12px">';
 
-        // 第一段（标题前）
         if (sections[0] && !sections[0].startsWith('## ')) {
             const first = sections.shift();
             const lines = first.split('\n').filter((l) => l.trim());
-            html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green)">
+            html += `<div class="kb-card" style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green)">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     ${Components.icon('brain', 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">Agent 长期记忆</span>
@@ -257,12 +330,8 @@ const KnowledgePage = (() => {
         sections.forEach((sec) => {
             const lines = sec.split('\n');
             const title = '## ' + (lines[0] || '').trim();
-            const body = lines
-                .slice(1)
-                .filter((l) => l.trim())
-                .join('\n')
-                .slice(0, 300);
-            html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green);cursor:default;transition:transform 0.15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+            const body = lines.slice(1).filter((l) => l.trim()).join('\n').slice(0, 300);
+            html += `<div class="kb-card" style="background:var(--bg-secondary);border-radius:12px;padding:14px;border-left:3px solid var(--green)">
                 <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">${Components.escapeHtml(title)}</div>
                 <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${Components.escapeHtml(body)}${body.length >= 300 ? '\n...' : ''}</div>
             </div>`;
@@ -278,15 +347,10 @@ const KnowledgePage = (() => {
 
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">';
         _skills.forEach((s) => {
-            const tags = (s.tags || [])
-                .map(
-                    (t) =>
-                        `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(t)}</span>`,
-                )
-                .join('');
+            const tags = (s.tags || []).map((t) => `<span style="font-size:10px;background:var(--purple-bg);padding:1px 6px;border-radius:var(--radius-tag);color:var(--accent)">${Components.escapeHtml(t)}</span>`).join('');
             const preview = (s.preview || s.description || '无描述').slice(0, 120);
 
-            html += `<div style="background:var(--bg-secondary);border-radius:12px;padding:14px;border:1px solid var(--border);cursor:default;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            html += `<div class="kb-card" style="background:var(--bg-secondary);border-radius:12px;padding:14px;border:1px solid var(--border)">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                     ${Components.icon('zap', 14)}
                     <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(s.name)}</span>
@@ -308,9 +372,8 @@ const KnowledgePage = (() => {
 
         let html = '';
 
-        // 操作按钮
         html += `<div style="margin-bottom:16px;display:flex;gap:8px">
-            <button onclick="KnowledgePage.runAutoLearn()" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:500;background:var(--accent);color:var(--surface);transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">${Components.icon('brain', 14)} 执行全量学习（写入文件）</button>
+            <button type="button" class="btn btn-primary" data-action="runAutoLearn">${Components.icon('brain', 14)} 执行全量学习（写入文件）</button>
             <span style="font-size:11px;color:var(--text-tertiary);display:flex;align-items:center">自动分析当前数据，将结果写入 learnings.md 和 MEMORY.md</span>
         </div>`;
 
@@ -318,22 +381,12 @@ const KnowledgePage = (() => {
         html += `<div style="margin-bottom:20px">
             <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px">${Components.icon('alertCircle', 14)} 错误模式 (${errors.length})</div>`;
         if (errors.length === 0) {
-            html +=
-                '<div style="font-size:12px;color:var(--green);padding:8px">' +
-                Components.icon('check', 12) +
-                ' 没有检测到错误模式</div>';
+            html += `<div style="font-size:12px;color:var(--green);padding:8px">${Components.icon('check', 12)} 没有检测到错误模式</div>`;
         } else {
             errors.slice(0, 8).forEach((e) => {
                 const statusColor = e.is_fixed ? 'var(--green)' : 'var(--red)';
-                const statusText = e.is_fixed
-                    ? Components.icon('check', 10) + ' 已修复'
-                    : Components.icon('alertTriangle', 10) + ' 未修复';
-                const severityColor =
-                    e.severity === 'high'
-                        ? 'var(--red)'
-                        : e.severity === 'medium'
-                          ? 'var(--orange)'
-                          : 'var(--text-tertiary)';
+                const statusText = e.is_fixed ? Components.icon('check', 10) + ' 已修复' : Components.icon('alertTriangle', 10) + ' 未修复';
+                const severityColor = e.severity === 'high' ? 'var(--red)' : e.severity === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor}">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
                         <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(e.tool)}</span>
@@ -375,12 +428,7 @@ const KnowledgePage = (() => {
             html += '<div style="font-size:12px;color:var(--text-tertiary);padding:8px">暂无足够数据</div>';
         } else {
             prefs.forEach((p) => {
-                const confColor =
-                    p.confidence === 'high'
-                        ? 'var(--green)'
-                        : p.confidence === 'medium'
-                          ? 'var(--orange)'
-                          : 'var(--text-tertiary)';
+                const confColor = p.confidence === 'high' ? 'var(--green)' : p.confidence === 'medium' ? 'var(--orange)' : 'var(--text-tertiary)';
                 html += `<div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;border-left:3px solid var(--blue)">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                         <span style="font-size:12px;font-weight:600;color:var(--text-primary)">${Components.escapeHtml(p.category)}</span>
@@ -415,15 +463,149 @@ const KnowledgePage = (() => {
         return html;
     }
 
+    // ==========================================
+    // 操作函数
+    // ==========================================
+
     async function runAutoLearn() {
         try {
             const result = await API.get('/api/knowledge/auto-learn');
             const msg = `学习完成！错误:${result.errors_found} 模式:${result.patterns_found} 偏好:${result.preferences_found} 建议:${result.skills_suggested}`;
-            Components.Toast.show(msg, 'success');
-            render(); // 刷新页面
+            Components.Toast.success(msg);
+            await render();
         } catch (err) {
-            Components.Toast.show('学习失败: ' + (err.message || '未知错误'), 'error');
+            Components.Toast.error('学习失败: ' + (err.message || '未知错误'));
         }
+    }
+
+    async function saveObsidianConfig() {
+        const vaultPath = document.getElementById('obsidianVaultPath')?.value.trim() || '';
+        try {
+            await API.request('/api/knowledge/obsidian/config', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vault_path: vaultPath, auto_sync: false }),
+            });
+            _obsidianConfig = { vault_path: vaultPath, auto_sync: false, last_sync: null };
+            Components.Toast.success('Obsidian 配置已保存');
+            document.getElementById('kbContent').innerHTML = buildTabContent();
+            bindTabEvents();
+        } catch (err) {
+            Components.Toast.error('保存失败: ' + err.message);
+        }
+    }
+
+    async function syncObsidian() {
+        Components.Toast.info('正在同步...');
+        try {
+            const result = await API.post('/api/knowledge/obsidian/sync');
+            if (result.success) {
+                Components.Toast.success(result.message);
+                _obsidianConfig = await API.get('/api/knowledge/obsidian/config');
+                document.getElementById('kbContent').innerHTML = buildTabContent();
+                bindTabEvents();
+            } else {
+                Components.Toast.error(result.message);
+            }
+        } catch (err) {
+            Components.Toast.error('同步失败: ' + err.message);
+        }
+    }
+
+    async function performSearch(term) {
+        if (!term.trim()) {
+            _searchResults = null;
+            document.getElementById('kbContent').innerHTML = buildTabContent();
+            bindTabEvents();
+            return;
+        }
+        try {
+            _searchResults = await API.get('/api/knowledge/search', { q: term, type: 'all' });
+            document.getElementById('kbContent').innerHTML = buildTabContent();
+            bindTabEvents();
+        } catch (err) {
+            Components.Toast.error('搜索失败: ' + err.message);
+        }
+    }
+
+    // ==========================================
+    // 事件绑定
+    // ==========================================
+
+    function bindEvents() {
+        const container = document.getElementById('contentBody');
+        if (!container) return;
+
+        // 全局事件委托
+        container.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            switch (action) {
+                case 'switchTab':
+                    switchTab(btn.dataset.tab);
+                    break;
+                case 'runAutoLearn':
+                    runAutoLearn();
+                    break;
+                case 'saveObsidianConfig':
+                    saveObsidianConfig();
+                    break;
+                case 'syncObsidian':
+                    syncObsidian();
+                    break;
+                case 'clearSearch':
+                    _searchTerm = '';
+                    _searchResults = null;
+                    const searchInput = document.getElementById('kbSearchInput');
+                    if (searchInput) searchInput.value = '';
+                    document.getElementById('kbContent').innerHTML = buildTabContent();
+                    bindTabEvents();
+                    break;
+            }
+        });
+
+        // 搜索输入
+        const searchInput = document.getElementById('kbSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    _searchTerm = searchInput.value;
+                    performSearch(_searchTerm);
+                }
+            });
+        }
+
+        // 卡片 hover 效果（CSS 替代方案）
+        container.querySelectorAll('.kb-card, .kb-overview-card').forEach((card) => {
+            card.addEventListener('mouseenter', () => { card.style.transform = 'translateY(-2px)'; });
+            card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+        });
+
+        bindTabEvents();
+    }
+
+    function bindTabEvents() {
+        // Tab 内容区域的事件委托
+        const kbContent = document.getElementById('kbContent');
+        if (!kbContent) return;
+
+        kbContent.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            switch (action) {
+                case 'runAutoLearn':
+                    runAutoLearn();
+                    break;
+                case 'saveObsidianConfig':
+                    saveObsidianConfig();
+                    break;
+                case 'syncObsidian':
+                    syncObsidian();
+                    break;
+            }
+        });
     }
 
     return { render, switchTab, runAutoLearn, onSSEEvent };

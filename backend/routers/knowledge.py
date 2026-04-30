@@ -10,6 +10,8 @@ import os
 
 router = APIRouter(prefix="/api", tags=["knowledge"])
 
+HERMES_HOME = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes")))
+
 
 @router.get("/knowledge/overview")
 async def knowledge_overview():
@@ -168,3 +170,149 @@ async def knowledge_analysis():
         "preferences": analyze_preferences(),
         "skill_suggestions": suggest_skills(),
     }
+
+
+# ---- Obsidian 集成 API ----
+
+@router.get("/obsidian/config", summary="获取 Obsidian 配置")
+async def get_obsidian_config():
+    """获取 Obsidian Vault 配置"""
+    config_file = HERMES_HOME / "data" / "obsidian_config.json"
+    if config_file.exists():
+        import json
+        return json.loads(config_file.read_text(encoding="utf-8"))
+    return {"vault_path": "", "auto_sync": False, "last_sync": None}
+
+
+@router.put("/obsidian/config", summary="设置 Obsidian Vault 路径")
+async def set_obsidian_config(body: dict):
+    """设置 Obsidian Vault 路径"""
+    import json
+    config_file = HERMES_HOME / "data" / "obsidian_config.json"
+    config_file.parent.mkdir(parents=True, exist_ok=True)
+    config = {
+        "vault_path": body.get("vault_path", ""),
+        "auto_sync": body.get("auto_sync", False),
+        "last_sync": None,
+    }
+    config_file.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"success": True, "message": "配置已保存"}
+
+
+@router.post("/obsidian/sync", summary="执行 Obsidian 双向同步")
+async def sync_obsidian():
+    """执行 Obsidian Vault 与知识库的双向同步"""
+    import json
+    config_file = HERMES_HOME / "data" / "obsidian_config.json"
+    if not config_file.exists():
+        return {"success": False, "message": "未配置 Obsidian Vault 路径"}
+
+    config = json.loads(config_file.read_text(encoding="utf-8"))
+    vault_path = config.get("vault_path", "")
+    if not vault_path:
+        return {"success": False, "message": "Vault 路径为空"}
+
+    from pathlib import Path as P
+    vault = P(vault_path)
+    if not vault.exists():
+        return {"success": False, "message": f"Vault 路径不存在: {vault_path}"}
+
+    synced_files = []
+    # 同步 MEMORY.md
+    memory_file = HERMES_HOME / "data" / "MEMORY.md"
+    vault_memory = vault / "Hermes" / "MEMORY.md"
+    if memory_file.exists():
+        vault_memory.parent.mkdir(parents=True, exist_ok=True)
+        vault_memory.write_text(memory_file.read_text(encoding="utf-8"), encoding="utf-8")
+        synced_files.append("MEMORY.md")
+
+    # 同步 USER.md
+    user_file = HERMES_HOME / "data" / "USER.md"
+    vault_user = vault / "Hermes" / "USER.md"
+    if user_file.exists():
+        vault_user.parent.mkdir(parents=True, exist_ok=True)
+        vault_user.write_text(user_file.read_text(encoding="utf-8"), encoding="utf-8")
+        synced_files.append("USER.md")
+
+    # 更新同步时间
+    from datetime import datetime
+    config["last_sync"] = datetime.now().isoformat()
+    config_file.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return {"success": True, "message": f"已同步 {len(synced_files)} 个文件", "files": synced_files}
+
+
+@router.get("/obsidian/status", summary="获取同步状态")
+async def get_obsidian_status():
+    """获取 Obsidian 同步状态"""
+    import json
+    config_file = HERMES_HOME / "data" / "obsidian_config.json"
+    if not config_file.exists():
+        return {"configured": False, "last_sync": None, "vault_path": ""}
+    config = json.loads(config_file.read_text(encoding="utf-8"))
+    return {
+        "configured": bool(config.get("vault_path")),
+        "vault_path": config.get("vault_path", ""),
+        "auto_sync": config.get("auto_sync", False),
+        "last_sync": config.get("last_sync"),
+    }
+
+
+@router.get("/search", summary="全文搜索知识库")
+async def search_knowledge(q: str = "", type: str = "all"):
+    """全文搜索知识库内容"""
+    if not q:
+        return {"results": [], "total": 0}
+
+    results = []
+    from pathlib import Path as P
+
+    # 搜索记忆文件
+    if type in ("all", "memory"):
+        memory_file = HERMES_HOME / "data" / "MEMORY.md"
+        if memory_file.exists():
+            content = memory_file.read_text(encoding="utf-8")
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if q.lower() in line.lower():
+                    results.append({
+                        "type": "memory",
+                        "file": "MEMORY.md",
+                        "line": i + 1,
+                        "content": line.strip(),
+                        "context": lines[max(0, i-1):i+2],
+                    })
+
+    # 搜索用户文件
+    if type in ("all", "user"):
+        user_file = HERMES_HOME / "data" / "USER.md"
+        if user_file.exists():
+            content = user_file.read_text(encoding="utf-8")
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if q.lower() in line.lower():
+                    results.append({
+                        "type": "user",
+                        "file": "USER.md",
+                        "line": i + 1,
+                        "content": line.strip(),
+                        "context": lines[max(0, i-1):i+2],
+                    })
+
+    # 搜索学习记录
+    if type in ("all", "experiences"):
+        learnings_file = HERMES_HOME / "data" / "learnings.md"
+        if learnings_file.exists():
+            content = learnings_file.read_text(encoding="utf-8")
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if q.lower() in line.lower():
+                    results.append({
+                        "type": "experience",
+                        "file": "learnings.md",
+                        "line": i + 1,
+                        "content": line.strip(),
+                        "context": lines[max(0, i-1):i+2],
+                    })
+
+    return {"results": results[:50], "total": len(results)}

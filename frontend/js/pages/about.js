@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.8.0',
+            date: '2026-04-30',
+            title: '知识库增强 — Obsidian + 全文搜索 + 事件委托重构',
+            changes: [
+                '新增 Obsidian Tab：配置 Vault 路径、执行双向同步、查看同步状态',
+                '新增全文搜索：搜索记忆/用户/学习记录，高亮显示匹配结果',
+                '移除所有 inline onclick/onmouseover/onmouseout，改为 data-action 事件委托',
+                '新增后端 Obsidian API（config/sync/status）和搜索 API',
+                '卡片 hover 效果改为 JS 事件绑定',
+            ],
+        },
+        {
             version: '5.7.0',
             date: '2026-04-30',
             title: 'MCP 扫描与自动添加',
