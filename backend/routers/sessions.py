@@ -180,6 +180,24 @@ async def toggle_archive(session_id: str, body: Dict[str, bool] = None) -> Dict[
     return result
 
 
+@router.get("/export", summary="导出所有会话")
+async def export_all_sessions(
+    format: str = Query("json", description="导出格式：json"),
+) -> StreamingResponse:
+    """导出所有会话数据"""
+    if format == "json":
+        sessions = hermes_service.list_sessions()
+        data = hermes_service._load_sessions_data()
+        content = json.dumps(data, ensure_ascii=False, indent=2)
+        return StreamingResponse(
+            iter([content]),
+            media_type="application/json; charset=utf-8",
+            headers={"Content-Disposition": "attachment; filename=sessions_export.json"},
+        )
+    else:
+        raise HTTPException(status_code=400, detail=f"不支持的导出格式: {format}，当前仅支持 json")
+
+
 @router.post("", summary="创建会话")
 async def create_session(body: Dict[str, str] = None) -> Dict[str, Any]:
     """创建新会话"""
@@ -273,24 +291,6 @@ async def export_session(
         )
     else:
         raise HTTPException(status_code=400, detail=f"不支持的导出格式: {format}，支持 markdown/json/csv")
-
-
-@router.get("/export", summary="导出所有会话")
-async def export_all_sessions(
-    format: str = Query("json", description="导出格式：json"),
-) -> StreamingResponse:
-    """导出所有会话数据"""
-    if format == "json":
-        sessions = hermes_service.list_sessions()
-        data = hermes_service._load_sessions_data()
-        content = json.dumps(data, ensure_ascii=False, indent=2)
-        return StreamingResponse(
-            iter([content]),
-            media_type="application/json; charset=utf-8",
-            headers={"Content-Disposition": "attachment; filename=sessions_export.json"},
-        )
-    else:
-        raise HTTPException(status_code=400, detail=f"不支持的导出格式: {format}，当前仅支持 json")
 
 
 # --- Session Timeline ---
