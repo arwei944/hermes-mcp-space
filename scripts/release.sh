@@ -40,9 +40,28 @@ echo "  📅 日期: $DATE"
 echo "  📝 标题: $TITLE"
 echo "========================================="
 
+# ---- Step 0: 更新 version.py 中的版本号 ----
+echo ""
+echo "📌 Step 0/6: 更新 version.py 版本号..."
+
+python3 -c "
+import re
+version_file = 'backend/version.py'
+with open(version_file, 'r', encoding='utf-8') as f:
+    content = f.read()
+content = re.sub(
+    r'__version__ = os.environ.get\\("APP_VERSION\\", "[^"]+"\\)',
+    f'__version__ = os.environ.get(\\"APP_VERSION\\", "$VERSION\\")',
+    content
+)
+with open(version_file, 'w', encoding='utf-8') as f:
+    f.write(content)
+print(f'  ✅ version.py updated to $VERSION')
+"
+
 # ---- Step 1: 更新关于页面 CHANGELOG ----
 echo ""
-echo "📌 Step 1/5: 更新关于页面 CHANGELOG..."
+echo "📌 Step 1/6: 更新关于页面 CHANGELOG..."
 
 # 构建变更列表 JSON 数组
 CHANGES_JSON=""
@@ -92,7 +111,7 @@ print(f'  ✅ 已添加 {version} 到 CHANGELOG')
 
 # ---- Step 2: Git commit + tag ----
 echo ""
-echo "📌 Step 2/5: Git commit + tag..."
+echo "📌 Step 2/6: Git commit + tag..."
 
 git add -A
 git commit -m "release: $VERSION - $TITLE" --allow-empty
@@ -107,7 +126,7 @@ fi
 
 # ---- Step 3: Push 到 GitHub + HF Spaces ----
 echo ""
-echo "📌 Step 3/5: Push 到 GitHub + HF Spaces..."
+echo "📌 Step 3/6: Push 到 GitHub + HF Spaces..."
 
 git push origin main 2>&1
 git push origin "$VERSION" 2>&1
@@ -115,7 +134,7 @@ echo "  ✅ 代码和 Tag 已推送"
 
 # ---- Step 4: 创建 GitHub Release ----
 echo ""
-echo "📌 Step 4/5: 创建 GitHub Release..."
+echo "📌 Step 4/6: 创建 GitHub Release..."
 
 # 获取 token
 TOKEN=$(git remote get-url origin 2>/dev/null | grep -o 'ghp_[A-Za-z0-9_]*' | head -1)
@@ -152,7 +171,7 @@ fi
 
 # ---- Step 5: 验证 ----
 echo ""
-echo "📌 Step 5/5: 验证..."
+echo "📌 Step 5/6: 验证..."
 
 echo "  Git tags: $(git tag -l --sort=-v:refname | head -3 | tr '\n' ', ')"
 echo "  About CHANGELOG: $(grep -c \"version: '$VERSION'\" $ABOUT_FILE) 处引用"
