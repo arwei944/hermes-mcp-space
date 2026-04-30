@@ -5,6 +5,20 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.5.0',
+            date: '2026-04-30',
+            title: '记忆完善 — 4 Tab + Bug 修复',
+            changes: [
+                '扩展为 4 Tab：长期记忆/用户画像/学习记录/会话摘要',
+                '修复错误消息多余 .* 前缀（改为 err.message）',
+                '修复 exportContent/resetContent 函数定义在 return 之后',
+                '新增未保存提示：切换 Tab 时检测编辑器内容变化',
+                '新增填充模板按钮：一键填入预设模板内容',
+                '新增搜索功能：学习记录和会话摘要支持关键词过滤',
+                '移除所有 inline onclick，改为 data-action 事件委托',
+            ],
+        },
+        {
             version: '5.4.0',
             date: '2026-04-30',
             title: '会话重构 — 消除重复代码 + 统计数据',
