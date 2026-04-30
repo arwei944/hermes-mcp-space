@@ -5,6 +5,17 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.3.1',
+            date: '2026-04-30',
+            title: '紧急修复与基础完善',
+            changes: [
+                '修复 version.py 正则表达式双反斜杠导致 changelog API 无法解析',
+                '修复 sync.js API.post 第三参数无效（timeout 被静默忽略）',
+                '补注册 5 个缺失图标（messageCircle/refreshCw/alertTriangle/checkCircle/xCircle）',
+                '后端统一设置 TZ=Asia/Shanghai 时区',
+            ],
+        },
+        {
             version: '5.3.0',
             date: '2026-04-30',
             title: '前端去重合并 + 数据同步与热更新',

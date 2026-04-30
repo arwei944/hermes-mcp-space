@@ -10,6 +10,7 @@ Hermes Agent MCP Space - 部署入口
 # and bypasses our custom routes on port 7860
 import os
 os.environ["GRADIO_SSR_MODE"] = "false"
+os.environ["TZ"] = "Asia/Shanghai"
 
 import json
 import logging
