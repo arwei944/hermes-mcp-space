@@ -300,6 +300,82 @@ class HermesService:
         except Exception as e:
             return {"success": False, "message": f"压缩失败: {str(e)}"}
 
+    def search_sessions(self, keyword: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """搜索会话（按标题模糊匹配）"""
+        sessions = self.list_sessions()
+        keyword = keyword.lower()
+        return [s for s in sessions if keyword in (s.get("title") or "").lower()
+                or keyword in (s.get("model") or "").lower()
+                or keyword in (s.get("id") or "").lower()][:limit]
+
+    def get_all_tags(self) -> List[Dict[str, Any]]:
+        """获取所有标签及统计"""
+        data = self._load_sessions_data()
+        tag_counts: Dict[str, int] = {}
+        for s in data.get("sessions", []):
+            for tag in s.get("tags", []):
+                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+        # 按使用次数降序排列
+        return [{"name": name, "count": count} for name, count in sorted(tag_counts.items(), key=lambda x: -x[1])]
+
+    def update_session_field(self, session_id: str, **fields: Any) -> Dict[str, Any]:
+        """更新会话字段（通用方法）"""
+        data = self._load_sessions_data()
+        for s in data.get("sessions", []):
+            if s["id"] == session_id:
+                for key, value in fields.items():
+                    s[key] = value
+                s["updated_at"] = datetime.now().isoformat()
+                self._save_sessions_data(data)
+                # 触发 SSE 事件
+                try:
+                    from backend.routers.events import emit_event
+                    emit_event("session.updated", {"session_id": session_id, "fields": list(fields.keys())}, source="session")
+                except Exception:
+                    pass
+                return {"success": True, "session": s}
+        return {"success": False, "message": f"会话 {session_id} 不存在"}
+
+    def export_session_markdown(self, session_id: str) -> str:
+        """导出会话为 Markdown 格式"""
+        session = self.get_session(session_id)
+        messages = self.get_session_messages(session_id)
+        if not session:
+            return ""
+        lines = [f"# {session.get('title', session_id)}", ""]
+        lines.append(f"- **模型**: {session.get('model', 'N/A')}")
+        lines.append(f"- **来源**: {session.get('source', 'N/A')}")
+        lines.append(f"- **创建时间**: {session.get('created_at', 'N/A')}")
+        lines.append(f"- **消息数**: {len(messages)}")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+        for m in messages:
+            role_map = {"user": "👤 用户", "assistant": "🤖 助手", "system": "⚙️ 系统"}
+            role = role_map.get(m.get("role", ""), m.get("role", ""))
+            ts = m.get("timestamp", m.get("created_at", ""))
+            lines.append(f"### {role}")
+            if ts:
+                lines.append(f"*{ts}*")
+            lines.append("")
+            lines.append(m.get("content", ""))
+            lines.append("")
+            lines.append("---")
+            lines.append("")
+        return "\n".join(lines)
+
+    def export_session_csv(self, session_id: str) -> str:
+        """导出会话为 CSV 格式"""
+        import csv
+        import io
+        messages = self.get_session_messages(session_id)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["role", "content", "timestamp"])
+        for m in messages:
+            writer.writerow([m.get("role", ""), m.get("content", ""), m.get("timestamp", m.get("created_at", ""))])
+        return output.getvalue()
+
     # ==================== 工具管理 ====================
 
     def list_tools(self) -> List[Dict[str, Any]]:
