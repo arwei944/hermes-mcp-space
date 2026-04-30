@@ -198,6 +198,86 @@ async def export_all_sessions(
         raise HTTPException(status_code=400, detail=f"不支持的导出格式: {format}，当前仅支持 json")
 
 
+# --- Batch Operations ---
+
+@router.post("/batch/delete", summary="批量删除会话")
+async def batch_delete_sessions(body: Dict[str, Any]) -> Dict[str, Any]:
+    """批量删除多个会话"""
+    session_ids = body.get("session_ids", [])
+    if not session_ids:
+        raise HTTPException(status_code=400, detail="session_ids 不能为空")
+    results = []
+    for sid in session_ids:
+        result = hermes_service.delete_session(sid)
+        results.append({"session_id": sid, **result})
+    success_count = sum(1 for r in results if r.get("success"))
+    return {"success": True, "total": len(session_ids), "deleted": success_count, "results": results}
+
+@router.post("/batch/archive", summary="批量归档会话")
+async def batch_archive_sessions(body: Dict[str, Any]) -> Dict[str, Any]:
+    """批量归档/取消归档会话"""
+    session_ids = body.get("session_ids", [])
+    archived = body.get("archived", True)
+    if not session_ids:
+        raise HTTPException(status_code=400, detail="session_ids 不能为空")
+    results = []
+    for sid in session_ids:
+        result = hermes_service.update_session_field(sid, archived=archived)
+        results.append({"session_id": sid, **result})
+    success_count = sum(1 for r in results if r.get("success"))
+    return {"success": True, "total": len(session_ids), "updated": success_count, "results": results}
+
+@router.post("/batch/tags", summary="批量设置标签")
+async def batch_set_tags(body: Dict[str, Any]) -> Dict[str, Any]:
+    """批量设置会话标签"""
+    session_ids = body.get("session_ids", [])
+    tags = body.get("tags", [])
+    if not session_ids:
+        raise HTTPException(status_code=400, detail="session_ids 不能为空")
+    results = []
+    for sid in session_ids:
+        result = hermes_service.update_session_field(sid, tags=tags)
+        results.append({"session_id": sid, **result})
+    success_count = sum(1 for r in results if r.get("success"))
+    return {"success": True, "total": len(session_ids), "updated": success_count, "results": results}
+
+@router.post("/batch/export", summary="批量导出会话")
+async def batch_export_sessions(body: Dict[str, Any]) -> StreamingResponse:
+    """批量导出多个会话为 Markdown"""
+    session_ids = body.get("session_ids", [])
+    format = body.get("format", "markdown")
+    if not session_ids:
+        raise HTTPException(status_code=400, detail="session_ids 不能为空")
+
+    if format == "markdown":
+        parts = []
+        for sid in session_ids:
+            content = hermes_service.export_session_markdown(sid)
+            if content:
+                parts.append(content)
+        combined = "\n\n---\n\n".join(parts)
+        return StreamingResponse(
+            iter([combined]),
+            media_type="text/markdown; charset=utf-8",
+            headers={"Content-Disposition": "attachment; filename=sessions_batch_export.md"},
+        )
+    elif format == "json":
+        export_data = []
+        for sid in session_ids:
+            session = hermes_service.get_session(sid)
+            if session:
+                messages = hermes_service.get_session_messages(sid)
+                export_data.append({"session": session, "messages": messages})
+        content = json.dumps(export_data, ensure_ascii=False, indent=2)
+        return StreamingResponse(
+            iter([content]),
+            media_type="application/json; charset=utf-8",
+            headers={"Content-Disposition": "attachment; filename=sessions_batch_export.json"},
+        )
+    else:
+        raise HTTPException(status_code=400, detail="不支持的格式，支持 markdown/json")
+
+
 @router.post("", summary="创建会话")
 async def create_session(body: Dict[str, str] = None) -> Dict[str, Any]:
     """创建新会话"""
@@ -319,3 +399,88 @@ async def get_session_timeline(session_id: str) -> Dict[str, Any]:
     timeline.sort(key=lambda x: x.get("timestamp", ""))
 
     return {"session_id": session_id, "timeline": timeline, "total": len(timeline)}
+
+
+# --- Knowledge Extraction ---
+
+@router.post("/{session_id}/summarize", summary="生成会话摘要")
+async def summarize_session(session_id: str) -> Dict[str, Any]:
+    """自动生成会话摘要（基于消息内容提取关键信息）"""
+    session = hermes_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"会话 {session_id} 不存在")
+    messages = hermes_service.get_session_messages(session_id)
+    if not messages:
+        raise HTTPException(status_code=400, detail="会话没有消息，无法生成摘要")
+
+    summary = hermes_service.generate_session_summary(session, messages)
+    result = hermes_service.update_session_field(session_id, summary=summary)
+    return {"success": True, "session_id": session_id, "summary": summary}
+
+@router.get("/{session_id}/extract", summary="提取会话关键信息")
+async def extract_session_info(session_id: str) -> Dict[str, Any]:
+    """从会话中提取关键信息（代码片段、URL、文件路径、TODO等）"""
+    session = hermes_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"会话 {session_id} 不存在")
+    messages = hermes_service.get_session_messages(session_id)
+
+    extracted = hermes_service.extract_key_info(messages)
+    return {"success": True, "session_id": session_id, "extracted": extracted}
+
+@router.post("/{session_id}/to-skill", summary="将对话转为技能")
+async def convert_to_skill(session_id: str, body: Dict[str, str] = None) -> Dict[str, Any]:
+    """将会话中的关键操作提取为技能"""
+    body = body or {}
+    session = hermes_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"会话 {session_id} 不存在")
+    messages = hermes_service.get_session_messages(session_id)
+
+    skill_name = body.get("name", f"skill_from_{session_id[:12]}")
+    description = body.get("description", f"从会话 '{session.get('title', '')}' 自动提取的技能")
+
+    # Generate skill content from messages
+    content = hermes_service.generate_skill_from_messages(session, messages)
+    result = hermes_service.create_skill(skill_name, content=content, description=description)
+    return result
+
+@router.post("/{session_id}/to-memory", summary="将对话转为记忆")
+async def convert_to_memory(session_id: str) -> Dict[str, Any]:
+    """将会话中的关键知识提取并追加到记忆"""
+    session = hermes_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"会话 {session_id} 不存在")
+    messages = hermes_service.get_session_messages(session_id)
+
+    knowledge = hermes_service.generate_knowledge_from_messages(session, messages)
+    if not knowledge:
+        raise HTTPException(status_code=400, detail="未能从会话中提取有效知识")
+
+    # Append to MEMORY.md
+    current = hermes_service.read_memory()
+    existing_memory = current.get("memory", "")
+    new_memory = existing_memory.rstrip() + "\n\n" + knowledge if existing_memory else knowledge
+    result = hermes_service.update_memory(memory=new_memory)
+    return {"success": True, "session_id": session_id, "knowledge": knowledge, **result}
+
+@router.post("/{session_id}/to-learning", summary="将对话转为学习记录")
+async def convert_to_learning(session_id: str) -> Dict[str, Any]:
+    """将会话中的经验教训提取为学习记录"""
+    session = hermes_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"会话 {session_id} 不存在")
+    messages = hermes_service.get_session_messages(session_id)
+
+    learning = hermes_service.generate_learning_from_messages(session, messages)
+    if not learning:
+        raise HTTPException(status_code=400, detail="未能从会话中提取有效学习记录")
+
+    # Append to learnings.md
+    from backend.config import get_hermes_home
+    learnings_path = get_hermes_home() / "learnings.md"
+    existing = learnings_path.read_text(encoding="utf-8") if learnings_path.exists() else ""
+    new_content = existing.rstrip() + "\n\n" + learning if existing else learning
+    learnings_path.write_text(new_content, encoding="utf-8")
+
+    return {"success": True, "session_id": session_id, "learning": learning}

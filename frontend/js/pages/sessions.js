@@ -18,6 +18,8 @@ const SessionsPage = (() => {
     var _searchResults = null;
     var _isSearching = false;
     var _toolCards = {};
+    var _batchMode = false;
+    var _selectedIds = {};
 
     // ==========================================
     // 工具函数
@@ -114,6 +116,17 @@ const SessionsPage = (() => {
         var tags = s.tags || [];
         var pinned = s.pinned;
         var hasNew = s._newMessages;
+        var isSelected = !!_selectedIds[id];
+
+        var checkboxHtml = '';
+        if (_batchMode) {
+            var checkIcon = isSelected ? 'check' : 'minus';
+            var checkBg = isSelected ? 'var(--accent)' : 'transparent';
+            var checkBorder = isSelected ? 'none' : '2px solid var(--text-tertiary)';
+            var checkColor = isSelected ? '#fff' : 'transparent';
+            checkboxHtml = '<div data-action="toggleSelect" data-id="' + id + '" style="flex-shrink:0;width:18px;height:18px;border-radius:4px;background:' + checkBg + ';border:' + checkBorder + ';display:flex;align-items:center;justify-content:center;cursor:pointer;margin-right:8px;transition:all .15s">' +
+                '<span style="font-size:12px;color:' + checkColor + '">' + Components.icon(checkIcon, 12) + '</span></div>';
+        }
 
         var tagsHtml = '';
         if (tags.length > 0) {
@@ -123,19 +136,22 @@ const SessionsPage = (() => {
                 }).join('') + '</div>';
         }
 
-        return '<div class="session-item ' + (isActive ? 'active' : '') + (hasNew ? ' pulse' : '') + '" data-action="select" data-id="' + id + '">' +
+        return '<div class="session-item ' + (isActive ? 'active' : '') + (hasNew ? ' pulse' : '') + '" data-action="select" data-id="' + id + '" style="display:flex;align-items:flex-start">' +
+            checkboxHtml +
+            '<div style="flex:1;min-width:0">' +
             '<div style="display:flex;justify-content:space-between;align-items:center">' +
                 '<span style="font-weight:500;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + Components.escapeHtml(s.title || s.source || id) + '</span>' +
                 '<div style="display:flex;gap:2px;align-items:center;flex-shrink:0">' +
                     (pinned ? '<span style="color:var(--orange)">' + Components.icon('star', 12) + '</span>' : '') +
                     (s.model ? Components.renderBadge(s.model, 'blue') : '') +
-                    '<button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--text-tertiary)" data-action="sessionMenu" data-id="' + id + '" title="更多操作">' + Components.icon('chevronDown', 12) + '</button>' +
+                    (!_batchMode ? '<button type="button" class="btn btn-sm btn-ghost" style="padding:2px 4px;font-size:11px;color:var(--text-tertiary)" data-action="sessionMenu" data-id="' + id + '" title="更多操作">' + Components.icon('chevronDown', 12) + '</button>' : '') +
                 '</div>' +
             '</div>' +
             '<div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;display:flex;gap:8px">' +
                 '<span>' + msgCount + ' 条消息</span>' +
             '</div>' +
             tagsHtml +
+            '</div>' +
         '</div>';
     }
 
@@ -244,6 +260,20 @@ const SessionsPage = (() => {
                 '<div>等待消息...</div></div>';
         }
 
+        var summaryHtml = '';
+        var cs = currentSession();
+        if (cs && cs.summary) {
+            summaryHtml = '<div class="session-summary-card" style="margin:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);overflow:hidden">' +
+                '<div class="summary-header" data-action="toggleSummary" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none">' +
+                    '<span style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px">' + Components.icon('clipboard', 13) + ' 会话摘要</span>' +
+                    '<span class="summary-chevron" style="font-size:10px;color:var(--text-tertiary);transition:transform .2s">' + Components.icon('chevronDown', 12) + '</span>' +
+                '</div>' +
+                '<div class="summary-content" style="padding:0 12px 10px;font-size:12px;color:var(--text-secondary);line-height:1.6;display:none">' +
+                    Components.renderMarkdown(cs.summary) +
+                '</div>' +
+            '</div>';
+        }
+
         var toolCardsHtml = '';
         var keys = Object.keys(_toolCards);
         if (keys.length > 0) {
@@ -251,6 +281,7 @@ const SessionsPage = (() => {
         }
 
         return '<div class="chat-messages" id="chatMessages">' +
+            summaryHtml +
             toolCardsHtml +
             messages.map(buildMessageItem).join('') +
             buildTypingIndicator() +
@@ -271,6 +302,17 @@ const SessionsPage = (() => {
             '</div>' +
             '<div style="display:flex;gap:6px;align-items:center">' +
                 '<span style="font-size:12px;color:var(--text-tertiary)">' + _messages.length + ' 条消息</span>' +
+                '<div style="position:relative" class="knowledge-dropdown-wrap">' +
+                    '<button type="button" class="btn btn-sm btn-ghost" data-action="toggleKnowledge" style="color:var(--text-secondary)" title="知识提取">' + Components.icon('lightbulb', 14) + '</button>' +
+                    '<div class="knowledge-dropdown" style="display:none;position:absolute;right:0;top:100%;z-index:50;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:4px;min-width:150px">' +
+                        '<div data-action="knowledgeAction" data-kaction="summarize" style="padding:6px 10px;font-size:12px;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;gap:6px">' + Components.icon('clipboard', 13) + ' 生成摘要</div>' +
+                        '<div data-action="knowledgeAction" data-kaction="extract" style="padding:6px 10px;font-size:12px;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;gap:6px">' + Components.icon('brain', 13) + ' 提取信息</div>' +
+                        '<div style="height:1px;background:var(--border);margin:3px 0"></div>' +
+                        '<div data-action="knowledgeAction" data-kaction="toSkill" style="padding:6px 10px;font-size:12px;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;gap:6px">' + Components.icon('book', 13) + ' 转为技能</div>' +
+                        '<div data-action="knowledgeAction" data-kaction="toMemory" style="padding:6px 10px;font-size:12px;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;gap:6px">' + Components.icon('brain', 13) + ' 转为记忆</div>' +
+                        '<div data-action="knowledgeAction" data-kaction="toLearning" style="padding:6px 10px;font-size:12px;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;gap:6px">' + Components.icon('book', 13) + ' 转为学习记录</div>' +
+                    '</div>' +
+                '</div>' +
                 '<div style="position:relative" class="export-dropdown-wrap">' +
                     '<button type="button" class="btn btn-sm btn-ghost" data-action="toggleExport" style="color:var(--text-secondary)">' + Components.icon('download', 14) + '</button>' +
                     '<div class="export-dropdown" style="display:none;position:absolute;right:0;top:100%;z-index:50;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:4px;min-width:120px">' +
@@ -312,13 +354,23 @@ const SessionsPage = (() => {
             '.session-item.pulse.active { animation: none; }' +
             '.tool-call-card:hover { border-color: var(--accent); }' +
             '.export-dropdown div:hover { background: var(--bg-secondary); }' +
+            '.knowledge-dropdown div:hover { background: var(--bg-secondary); }' +
             '.tag-chip:hover { opacity: 0.85; }' +
+            '.batch-action-bar { position:sticky;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);padding:10px 12px;display:flex;align-items:center;gap:8px;z-index:40;box-shadow:0 -2px 8px rgba(0,0,0,0.1); }' +
+            '.batch-action-bar .btn { font-size: 12px; padding: 4px 10px; }' +
         '</style>' +
         '<div class="chat-layout">' +
             '<div class="chat-sidebar">' +
                 '<div class="chat-sidebar-header">' +
                     '<h3>对话记录</h3>' +
-                    '<span style="font-size:11px;color:var(--text-tertiary)">实时同步</span>' +
+                    '<div style="display:flex;gap:4px;align-items:center">' +
+                        (_batchMode
+                            ? '<button type="button" class="btn btn-sm btn-ghost" data-action="selectAll" style="font-size:11px;padding:2px 6px;color:var(--text-secondary)">全选</button>' +
+                              '<button type="button" class="btn btn-sm btn-ghost" data-action="toggleBatchMode" style="font-size:11px;padding:2px 6px;color:var(--red)">退出批量</button>'
+                            : '<button type="button" class="btn btn-sm btn-ghost" data-action="toggleBatchMode" style="font-size:11px;padding:2px 6px;color:var(--text-tertiary)" title="批量操作">' + Components.icon('checkSquare', 14) + '</button>'
+                        ) +
+                        '<span style="font-size:11px;color:var(--text-tertiary)">实时同步</span>' +
+                    '</div>' +
                 '</div>' +
                 '<div class="chat-sidebar-search" style="position:relative">' +
                     '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)">' + Components.icon('search', 14) + '</span>' +
@@ -331,6 +383,7 @@ const SessionsPage = (() => {
                 '</div>' +
                 buildTagFilter() +
                 '<div class="chat-sidebar-list">' + buildSessionList(filtered) + '</div>' +
+                (_batchMode ? buildBatchActionBar() : '') +
             '</div>' +
             '<div class="chat-main">' +
                 buildStatusBar() +
@@ -712,6 +765,50 @@ const SessionsPage = (() => {
                     e.stopPropagation();
                     showContextMenu(btn, id);
                     break;
+                case 'toggleBatchMode':
+                    toggleBatchMode();
+                    break;
+                case 'toggleSelect':
+                    e.stopPropagation();
+                    toggleSelect(id);
+                    break;
+                case 'selectAll':
+                    selectAll();
+                    break;
+                case 'batchDelete':
+                    batchDeleteSessions();
+                    break;
+                case 'batchArchive':
+                    batchArchiveSessions();
+                    break;
+                case 'batchAddTags':
+                    batchAddTags();
+                    break;
+                case 'toggleBatchExport':
+                    e.stopPropagation();
+                    var bdd = btn.parentElement.querySelector('.batch-export-dropdown');
+                    if (bdd) bdd.style.display = bdd.style.display === 'none' ? 'block' : 'none';
+                    break;
+                case 'batchExport':
+                    var bformat = btn.dataset.format;
+                    batchExportSessions(bformat);
+                    var bdropdown = btn.closest('.batch-export-dropdown');
+                    if (bdropdown) bdropdown.style.display = 'none';
+                    break;
+                case 'toggleKnowledge':
+                    e.stopPropagation();
+                    var kd = btn.parentElement.querySelector('.knowledge-dropdown');
+                    if (kd) kd.style.display = kd.style.display === 'none' ? 'block' : 'none';
+                    break;
+                case 'knowledgeAction':
+                    var kaction = btn.dataset.kaction;
+                    handleKnowledgeAction(kaction, _currentId);
+                    var kdropdown = btn.closest('.knowledge-dropdown');
+                    if (kdropdown) kdropdown.style.display = 'none';
+                    break;
+                case 'toggleSummary':
+                    toggleSummary();
+                    break;
             }
         });
 
@@ -726,6 +823,14 @@ const SessionsPage = (() => {
             if (!e.target.closest('.export-dropdown-wrap')) {
                 var dd = document.querySelector('.export-dropdown');
                 if (dd) dd.style.display = 'none';
+            }
+            if (!e.target.closest('.knowledge-dropdown-wrap')) {
+                var kd = document.querySelector('.knowledge-dropdown');
+                if (kd) kd.style.display = 'none';
+            }
+            if (!e.target.closest('.batch-export-wrap')) {
+                var bdd = document.querySelector('.batch-export-dropdown');
+                if (bdd) bdd.style.display = 'none';
             }
             if (!e.target.closest('.context-menu')) {
                 var cm = document.querySelector('.context-menu');
@@ -803,6 +908,301 @@ const SessionsPage = (() => {
                 case 'deleteCtx': deleteSession(id); break;
             }
         });
+    }
+
+    // ==========================================
+    // 批量操作
+    // ==========================================
+
+    function getSelectedCount() {
+        return Object.keys(_selectedIds).length;
+    }
+
+    function toggleBatchMode() {
+        _batchMode = !_batchMode;
+        _selectedIds = {};
+        refreshSidebar();
+        refreshMain();
+    }
+
+    function toggleSelect(id) {
+        if (_selectedIds[id]) {
+            delete _selectedIds[id];
+        } else {
+            _selectedIds[id] = true;
+        }
+        refreshSidebar();
+    }
+
+    function selectAll() {
+        var filtered = getFilteredSessions();
+        var allSelected = filtered.every(function (s) {
+            return _selectedIds[s.id || s.session_id];
+        });
+        if (allSelected) {
+            // 取消全选
+            _selectedIds = {};
+        } else {
+            filtered.forEach(function (s) {
+                _selectedIds[s.id || s.session_id] = true;
+            });
+        }
+        refreshSidebar();
+    }
+
+    function buildBatchActionBar() {
+        var count = getSelectedCount();
+        return '<div class="batch-action-bar">' +
+            '<span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">已选择 ' + count + ' 个会话</span>' +
+            '<div style="flex:1"></div>' +
+            '<button type="button" class="btn btn-sm btn-ghost" data-action="batchArchive" style="color:var(--text-secondary)" ' + (count === 0 ? 'disabled' : '') + '>' + Components.icon('archive', 13) + ' 归档</button>' +
+            '<button type="button" class="btn btn-sm btn-ghost" data-action="batchAddTags" style="color:var(--text-secondary)" ' + (count === 0 ? 'disabled' : '') + '>' + Components.icon('tag', 13) + ' 添加标签</button>' +
+            '<div style="position:relative" class="batch-export-wrap">' +
+                '<button type="button" class="btn btn-sm btn-ghost" data-action="toggleBatchExport" style="color:var(--text-secondary)" ' + (count === 0 ? 'disabled' : '') + '>' + Components.icon('download', 13) + ' 导出</button>' +
+                '<div class="batch-export-dropdown" style="display:none;position:absolute;bottom:100%;right:0;margin-bottom:4px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow);padding:4px;min-width:120px">' +
+                    '<div data-action="batchExport" data-format="markdown" style="padding:6px 10px;font-size:12px;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;gap:6px">' + Components.icon('file', 13) + ' Markdown</div>' +
+                    '<div data-action="batchExport" data-format="json" style="padding:6px 10px;font-size:12px;cursor:pointer;border-radius:var(--radius-xs);display:flex;align-items:center;gap:6px">' + Components.icon('code', 13) + ' JSON</div>' +
+                '</div>' +
+            '</div>' +
+            '<button type="button" class="btn btn-sm" data-action="batchDelete" style="color:var(--red);background:var(--red);color:#fff" ' + (count === 0 ? 'disabled' : '') + '>' + Components.icon('trash', 13) + ' 删除</button>' +
+            '<button type="button" class="btn btn-sm btn-ghost" data-action="toggleBatchMode" style="color:var(--text-tertiary)">取消</button>' +
+        '</div>';
+    }
+
+    async function batchDeleteSessions() {
+        var ids = Object.keys(_selectedIds);
+        if (ids.length === 0) return;
+        var ok = await Components.Modal.confirm({
+            title: '批量删除会话',
+            message: '确定要删除选中的 ' + ids.length + ' 个会话吗？此操作不可撤销。',
+            confirmText: '删除',
+            type: 'danger',
+        });
+        if (!ok) return;
+        try {
+            await API.sessions.batchDelete(ids);
+            _sessions = _sessions.filter(function (s) { return !_selectedIds[s.id || s.session_id]; });
+            if (_selectedIds[_currentId]) {
+                _currentId = null;
+                _messages = [];
+                _toolCards = {};
+                if (_sessions.length > 0) {
+                    var nextId = _sessions[0].id || _sessions[0].session_id;
+                    await loadMessages(nextId);
+                }
+            }
+            _selectedIds = {};
+            _batchMode = false;
+            refreshSidebar();
+            refreshMain();
+            Components.Toast.success('已删除 ' + ids.length + ' 个会话');
+        } catch (err) {
+            Components.Toast.error('批量删除失败: ' + err.message);
+        }
+    }
+
+    async function batchArchiveSessions() {
+        var ids = Object.keys(_selectedIds);
+        if (ids.length === 0) return;
+        try {
+            await API.sessions.batchArchive(ids, true);
+            _sessions = _sessions.filter(function (s) { return !_selectedIds[s.id || s.session_id]; });
+            if (_selectedIds[_currentId]) {
+                _currentId = null;
+                _messages = [];
+                _toolCards = {};
+                if (_sessions.length > 0) {
+                    var nextId = _sessions[0].id || _sessions[0].session_id;
+                    await loadMessages(nextId);
+                }
+            }
+            _selectedIds = {};
+            _batchMode = false;
+            refreshSidebar();
+            refreshMain();
+            Components.Toast.success('已归档 ' + ids.length + ' 个会话');
+        } catch (err) {
+            Components.Toast.error('批量归档失败: ' + err.message);
+        }
+    }
+
+    async function batchAddTags() {
+        var ids = Object.keys(_selectedIds);
+        if (ids.length === 0) return;
+
+        var tag = prompt('请输入要添加的标签:');
+        if (!tag || !tag.trim()) return;
+        tag = tag.trim();
+
+        try {
+            await API.sessions.batchTags(ids, [tag]);
+            ids.forEach(function (id) {
+                var s = _sessions.find(function (s) { return (s.id || s.session_id) === id; });
+                if (s) {
+                    if (!s.tags) s.tags = [];
+                    if (s.tags.indexOf(tag) === -1) s.tags.push(tag);
+                }
+            });
+            if (_allTags.indexOf(tag) === -1) _allTags.push(tag);
+            _selectedIds = {};
+            _batchMode = false;
+            refreshSidebar();
+            refreshMain();
+            Components.Toast.success('已为 ' + ids.length + ' 个会话添加标签「' + tag + '」');
+        } catch (err) {
+            Components.Toast.error('批量添加标签失败: ' + err.message);
+        }
+    }
+
+    async function batchExportSessions(format) {
+        var ids = Object.keys(_selectedIds);
+        if (ids.length === 0) return;
+        try {
+            var data = await API.sessions.batchExport(ids, format);
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'sessions_export_' + format + '.' + (format === 'markdown' ? 'md' : 'json');
+            a.click();
+            URL.revokeObjectURL(url);
+            Components.Toast.success('导出成功');
+        } catch (err) {
+            Components.Toast.error('批量导出失败: ' + err.message);
+        }
+    }
+
+    // ==========================================
+    // 知识提取
+    // ==========================================
+
+    async function handleKnowledgeAction(action, id) {
+        switch (action) {
+            case 'summarize':
+                Components.Toast.info('正在生成摘要...');
+                try {
+                    var data = await API.sessions.summarize(id);
+                    var summary = data.summary || data.result || data;
+                    // 更新本地会话的 summary 字段
+                    var s = _sessions.find(function (s) { return (s.id || s.session_id) === id; });
+                    if (s) s.summary = summary;
+                    showSummaryModal(summary);
+                    refreshMain();
+                } catch (err) {
+                    Components.Toast.error('生成摘要失败: ' + err.message);
+                }
+                break;
+            case 'extract':
+                Components.Toast.info('正在提取信息...');
+                try {
+                    var data = await API.sessions.extract(id);
+                    showExtractedInfoModal(data);
+                } catch (err) {
+                    Components.Toast.error('提取信息失败: ' + err.message);
+                }
+                break;
+            case 'toSkill':
+                try {
+                    var cs = currentSession();
+                    var name = cs ? (cs.title || '未命名技能') : '未命名技能';
+                    await API.sessions.toSkill(id, name, '从会话自动生成的技能');
+                    Components.Toast.success('已转为技能');
+                } catch (err) {
+                    Components.Toast.error('转为技能失败: ' + err.message);
+                }
+                break;
+            case 'toMemory':
+                try {
+                    await API.sessions.toMemory(id);
+                    Components.Toast.success('已转为记忆');
+                } catch (err) {
+                    Components.Toast.error('转为记忆失败: ' + err.message);
+                }
+                break;
+            case 'toLearning':
+                try {
+                    await API.sessions.toLearning(id);
+                    Components.Toast.success('已转为学习记录');
+                } catch (err) {
+                    Components.Toast.error('转为学习记录失败: ' + err.message);
+                }
+                break;
+        }
+    }
+
+    function showSummaryModal(summary) {
+        var text = typeof summary === 'string' ? summary : JSON.stringify(summary, null, 2);
+        var html = '<div style="max-height:60vh;overflow:auto;padding:16px;font-size:13px;line-height:1.7">' +
+            Components.renderMarkdown(text) +
+        '</div>';
+        Components.Modal.confirm({
+            title: '会话摘要',
+            message: html,
+            confirmText: '关闭',
+            showCancel: false,
+        });
+    }
+
+    function showExtractedInfoModal(data) {
+        var sections = [];
+
+        if (data.urls && data.urls.length > 0) {
+            sections.push('<div style="margin-bottom:12px"><div style="font-weight:500;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:4px">' + Components.icon('link', 13) + ' 链接</div>' +
+                '<div style="font-size:12px;color:var(--text-secondary)">' +
+                data.urls.map(function (u) { return '<div style="padding:2px 0;word-break:break-all">' + Components.escapeHtml(u) + '</div>'; }).join('') +
+                '</div></div>');
+        }
+
+        if (data.files && data.files.length > 0) {
+            sections.push('<div style="margin-bottom:12px"><div style="font-weight:500;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:4px">' + Components.icon('file', 13) + ' 文件</div>' +
+                '<div style="font-size:12px;color:var(--text-secondary)">' +
+                data.files.map(function (f) { return '<div style="padding:2px 0">' + Components.escapeHtml(f) + '</div>'; }).join('') +
+                '</div></div>');
+        }
+
+        if (data.code_blocks && data.code_blocks.length > 0) {
+            sections.push('<div style="margin-bottom:12px"><div style="font-weight:500;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:4px">' + Components.icon('code', 13) + ' 代码块</div>' +
+                '<div style="font-size:12px;color:var(--text-secondary)">' +
+                data.code_blocks.map(function (c) { return '<pre style="padding:8px;background:var(--bg-secondary);border-radius:var(--radius-xs);margin:4px 0;overflow:auto;white-space:pre-wrap">' + Components.escapeHtml(c) + '</pre>'; }).join('') +
+                '</div></div>');
+        }
+
+        if (data.todos && data.todos.length > 0) {
+            sections.push('<div style="margin-bottom:12px"><div style="font-weight:500;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:4px">' + Components.icon('clipboard', 13) + ' 待办事项</div>' +
+                '<div style="font-size:12px;color:var(--text-secondary)">' +
+                data.todos.map(function (t) { return '<div style="padding:2px 0">' + Components.escapeHtml(t) + '</div>'; }).join('') +
+                '</div></div>');
+        }
+
+        if (data.keywords && data.keywords.length > 0) {
+            sections.push('<div style="margin-bottom:12px"><div style="font-weight:500;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:4px">' + Components.icon('tag', 13) + ' 关键词</div>' +
+                '<div style="display:flex;gap:4px;flex-wrap:wrap">' +
+                data.keywords.map(function (k) { return '<span style="font-size:11px;padding:2px 8px;border-radius:8px;background:var(--accent);color:#fff">' + Components.escapeHtml(k) + '</span>'; }).join('') +
+                '</div></div>');
+        }
+
+        if (sections.length === 0) {
+            sections.push('<div style="font-size:12px;color:var(--text-tertiary);text-align:center;padding:20px">未提取到结构化信息</div>');
+        }
+
+        var html = '<div style="max-height:60vh;overflow:auto;padding:16px">' + sections.join('') + '</div>';
+        Components.Modal.confirm({
+            title: '提取的信息',
+            message: html,
+            confirmText: '关闭',
+            showCancel: false,
+        });
+    }
+
+    function toggleSummary() {
+        var content = document.querySelector('.summary-content');
+        var chevron = document.querySelector('.summary-chevron');
+        if (!content) return;
+        var isHidden = content.style.display === 'none';
+        content.style.display = isHidden ? 'block' : 'none';
+        if (chevron) {
+            chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
     }
 
     // ==========================================
