@@ -9,6 +9,9 @@ const SyncPage = (() => {
     let _config = null;
     let _updateInfo = null;
     let _changelog = [];
+    let _syncLogs = [];
+    let _autoSyncInterval = null;
+    let _isSyncing = false;
 
     // ==========================================
     // 生命周期
@@ -77,11 +80,15 @@ const SyncPage = (() => {
     // ==========================================
 
     function buildPage() {
-        return `<div style="max-width:860px">
+        const progressHtml = _isSyncing ? `<div id="syncProgress" style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--accent);z-index:9999;animation:pulse 1.5s ease-in-out infinite"></div>` : '';
+
+        return `${progressHtml}<div style="max-width:860px">
             ${buildSyncStatusSection()}
+            ${buildAutoSyncSection()}
             ${buildManualControlsSection()}
             ${buildBackendConfigSection()}
             ${buildHotUpdateSection()}
+            ${buildSyncLogsSection()}
             ${buildChangelogSection()}
         </div>`;
     }
@@ -107,6 +114,58 @@ const SyncPage = (() => {
             ${Components.sectionTitle('同步状态')}
             <div class="stats">${stats.join('')}</div>
         `;
+    }
+
+    // --- Section 1.5: 自动同步策略 ---
+
+    function buildAutoSyncSection() {
+        const autoSync = _config?.auto_sync || false;
+        const interval = _config?.sync_interval || 30;
+
+        return Components.renderSection(
+            '自动同步策略',
+            `<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+                    <input type="checkbox" id="autoSyncToggle" ${autoSync ? 'checked' : ''} style="width:16px;height:16px;accent-color:var(--accent)">
+                    启用自动同步
+                </label>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:12px;color:var(--text-tertiary)">同步间隔:</span>
+                    <select id="syncInterval" style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
+                        <option value="10" ${interval === 10 ? 'selected' : ''}>10 分钟</option>
+                        <option value="30" ${interval === 30 ? 'selected' : ''}>30 分钟</option>
+                        <option value="60" ${interval === 60 ? 'selected' : ''}>1 小时</option>
+                        <option value="120" ${interval === 120 ? 'selected' : ''}>2 小时</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-sm btn-ghost" data-action="saveAutoSyncConfig">保存设置</button>
+            </div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">
+                ${autoSync ? `<span style="color:var(--green)">● 自动同步已启用</span>，每 ${interval} 分钟自动备份一次` : '自动同步未启用，数据仅在手动操作时同步'}
+            </div>`,
+        );
+    }
+
+    // --- Section 5.5: 同步日志 ---
+
+    function buildSyncLogsSection() {
+        if (_syncLogs.length === 0) {
+            return Components.renderSection('同步日志', '<div style="color:var(--text-tertiary);font-size:13px">暂无同步日志</div>');
+        }
+
+        const logsHtml = _syncLogs
+            .slice(0, 20)
+            .map(
+                (log) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+                    <span style="color:${log.success ? 'var(--green)' : 'var(--red)'}">${log.success ? '✓' : '✗'}</span>
+                    <span style="color:var(--text-tertiary);font-family:monospace;min-width:130px">${log.time || '-'}</span>
+                    <span style="color:var(--text-secondary)">${Components.escapeHtml(log.action || '')}</span>
+                    <span style="color:var(--text-tertiary);margin-left:auto">${Components.escapeHtml(log.detail || '')}</span>
+                </div>`,
+            )
+            .join('');
+
+        return Components.renderSection('同步日志 (最近 20 条)', logsHtml);
     }
 
     // --- Section 2: 手动操作 ---
@@ -148,7 +207,7 @@ const SyncPage = (() => {
                     </div>
                     ${b.name === currentBackend
                         ? Components.renderBadge('当前', 'green')
-                        : `<button class="btn btn-sm btn-ghost" onclick="SyncPage.switchBackend('${b.name}')">切换</button>`}
+                        : `<button class="btn btn-sm btn-ghost" data-action="switchBackend" data-backend="${Components.escapeHtml(b.name)}">切换</button>`}
                 </div>
             `,
                   )
@@ -266,6 +325,23 @@ const SyncPage = (() => {
         document.getElementById('btnPreUpdate')?.addEventListener('click', doPreUpdateBackup);
         document.getElementById('btnCheckUpdate')?.addEventListener('click', checkUpdate);
         document.getElementById('btnHotUpdate')?.addEventListener('click', hotUpdate);
+
+        // 事件委托
+        const container = document.getElementById('contentBody');
+        if (container) {
+            container.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                switch (btn.dataset.action) {
+                    case 'switchBackend':
+                        switchBackend(btn.dataset.backend);
+                        break;
+                    case 'saveAutoSyncConfig':
+                        saveAutoSyncConfig();
+                        break;
+                }
+            });
+        }
     }
 
     // ==========================================
@@ -273,6 +349,7 @@ const SyncPage = (() => {
     // ==========================================
 
     async function doBackup() {
+        _isSyncing = true;
         const btn = document.getElementById('btnBackup');
         if (btn) {
             btn.disabled = true;
@@ -282,14 +359,19 @@ const SyncPage = (() => {
         try {
             const result = await API.post('/api/persistence/backup');
             if (result.success !== false) {
+                addSyncLog('手动备份', true, '备份完成');
                 Components.Toast.success('备份完成');
                 await loadSyncStatus();
                 render();
             } else {
+                addSyncLog('手动备份', false, result.error || '未知错误');
                 Components.Toast.error(`备份失败: ${result.error || '未知错误'}`);
             }
         } catch (err) {
+            addSyncLog('手动备份', false, err.message);
             Components.Toast.error(`备份失败: ${err.message}`);
+        } finally {
+            _isSyncing = false;
         }
     }
 
@@ -302,6 +384,7 @@ const SyncPage = (() => {
         });
         if (!ok) return;
 
+        _isSyncing = true;
         const btn = document.getElementById('btnRestore');
         if (btn) {
             btn.disabled = true;
@@ -311,14 +394,19 @@ const SyncPage = (() => {
         try {
             const result = await API.post('/api/persistence/restore');
             if (result.success !== false) {
+                addSyncLog('手动恢复', true, '恢复完成');
                 Components.Toast.success('恢复完成，建议刷新页面');
                 await loadSyncStatus();
                 render();
             } else {
+                addSyncLog('手动恢复', false, result.error || '未知错误');
                 Components.Toast.error(`恢复失败: ${result.error || '未知错误'}`);
             }
         } catch (err) {
+            addSyncLog('手动恢复', false, err.message);
             Components.Toast.error(`恢复失败: ${err.message}`);
+        } finally {
+            _isSyncing = false;
         }
     }
 
@@ -455,6 +543,32 @@ const SyncPage = (() => {
                 btn.disabled = false;
                 btn.innerHTML = `${Components.icon('zap', 14)} 执行热更新`;
             }
+        }
+    }
+
+    function addSyncLog(action, success, detail) {
+        const now = new Date();
+        const time = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+        _syncLogs.unshift({ time, action, success, detail });
+        if (_syncLogs.length > 50) _syncLogs = _syncLogs.slice(0, 50);
+    }
+
+    async function saveAutoSyncConfig() {
+        const enabled = document.getElementById('autoSyncToggle')?.checked || false;
+        const interval = parseInt(document.getElementById('syncInterval')?.value || '30', 10);
+        try {
+            await API.post('/api/persistence/config', { auto_sync: enabled, sync_interval: interval });
+            if (_config) {
+                _config.auto_sync = enabled;
+                _config.sync_interval = interval;
+            }
+            addSyncLog('保存自动同步配置', true, `${enabled ? '启用' : '禁用'}, 间隔 ${interval} 分钟`);
+            Components.Toast.success('自动同步配置已保存');
+            document.getElementById('contentBody').innerHTML = buildPage();
+            bindEvents();
+        } catch (err) {
+            addSyncLog('保存自动同步配置', false, err.message);
+            Components.Toast.error('保存失败: ' + err.message);
         }
     }
 

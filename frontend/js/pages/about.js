@@ -5,6 +5,18 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: '5.9.0',
+            date: '2026-04-30',
+            title: '数据同步完善 — 进度指示 + 自动同步 + 日志',
+            changes: [
+                '新增同步进度指示器：备份/恢复时顶部显示进度条',
+                '新增自动同步策略：启用/禁用开关 + 间隔选择（10分钟~2小时）',
+                '新增同步日志：记录所有同步操作，显示最近 20 条',
+                '修复 inline onclick（switchBackend 改为 data-action 事件委托）',
+                '备份/恢复操作增加 _isSyncing 状态追踪',
+            ],
+        },
+        {
             version: '5.8.0',
             date: '2026-04-30',
             title: '知识库增强 — Obsidian + 全文搜索 + 事件委托重构',
