@@ -198,11 +198,15 @@ const MarketplacePage = (() => {
         const scanConfigHtml = `<div style="margin-bottom:16px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)">
             <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text-secondary)">扫描配置</div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <input type="text" id="mcpCustomPorts" placeholder="自定义端口（逗号分隔，如 3000,5000,8080）" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
-                <input type="text" id="mcpCustomUrl" placeholder="自定义 URL（如 http://localhost:7860/mcp）" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
+                <input type="text" id="mcpCustomPorts" placeholder="本地端口（如 3000,5000,8080）" style="flex:1;min-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
+                <input type="text" id="mcpCustomUrl" placeholder="HF Space 链接或 MCP URL" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
+                <input type="text" id="mcpHFUser" placeholder="HF 用户名（扫描其所有 Space）" style="flex:1;min-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);background:var(--bg);font-size:12px;outline:none;color:var(--text)">
                 <button type="button" class="btn btn-secondary" data-action="discoverMCPServers" ${_isScanning ? 'disabled' : ''}>${_isScanning ? '扫描中...' : '扫描'}</button>
             </div>
-            <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">默认扫描端口：3000-3005, 4000, 5000, 8000, 8080 + 同用户 HF Space</div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">
+                支持: 本地端口 / HF Space 链接 (https://huggingface.co/spaces/owner/name) / MCP URL / 指定用户名扫描
+                <br>自动探测 /mcp、/sse、/api/mcp 三种端点路径 | HF Space 冷启动超时 15 秒
+            </div>
         </div>`;
 
         const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px">
@@ -536,9 +540,11 @@ const MarketplacePage = (() => {
         try {
             const ports = document.getElementById('mcpCustomPorts')?.value.trim() || '';
             const customUrl = document.getElementById('mcpCustomUrl')?.value.trim() || '';
+            const hfUser = document.getElementById('mcpHFUser')?.value.trim() || '';
             const params = new URLSearchParams();
             if (ports) params.set('ports', ports);
             if (customUrl) params.set('custom_url', customUrl);
+            if (hfUser) params.set('hf_user', hfUser);
             const query = params.toString() ? `?${params.toString()}` : '';
             const resp = await API.get(`/api/mcp/discover${query}`);
             _discoveredServers = resp.discovered || [];
