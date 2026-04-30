@@ -4,22 +4,25 @@
  */
 
 const App = (() => {
-    // 自动从全局变量收集所有页面（不再手动维护）
-    const pageNames = [
-        'dashboard', 'knowledge', 'sessions', 'marketplace',
-        'tools', 'skills', 'memory', 'plugins',
-        'cron', 'agents', 'config', 'mcp',
-        'logs', 'about', 'trash', 'screenshot',
-    ];
-    const pages = {};
-    pageNames.forEach(name => {
-        const PageClass = window[name.charAt(0).toUpperCase() + name.slice(1) + 'Page'];
-        if (PageClass) {
-            pages[name] = PageClass;
-        } else {
-            console.warn(`[App] Page "${name}" not found (expected ${name.charAt(0).toUpperCase() + name.slice(1)}Page)`);
-        }
-    });
+    // 直接引用全局 Page 变量（const 声明的全局变量不会挂到 window 上）
+    const pages = {
+        dashboard: DashboardPage,
+        knowledge: KnowledgePage,
+        sessions: SessionsPage,
+        marketplace: MarketplacePage,
+        tools: ToolsPage,
+        skills: SkillsPage,
+        memory: MemoryPage,
+        plugins: PluginsPage,
+        cron: CronPage,
+        agents: AgentsPage,
+        config: ConfigPage,
+        mcp: McpPage,
+        logs: LogsPage,
+        about: AboutPage,
+        trash: TrashPage,
+        screenshot: ScreenshotPage,
+    };
 
     const pageTitles = {
         dashboard: '仪表盘',
