@@ -56,6 +56,12 @@ async def search_sessions(
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
 ) -> Dict[str, Any]:
     """搜索会话和消息内容，支持标签过滤和分页"""
+    # URL 编码容错处理
+    if q:
+        import urllib.parse
+        q = urllib.parse.unquote(q)
+        q = q.strip()
+
     results = []
 
     # 搜索会话标题

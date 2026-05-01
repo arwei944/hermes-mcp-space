@@ -45,6 +45,7 @@ from backend.routers import (  # noqa: E402
     agents,
     config_api,
     mcp,
+    plugins,
 )
 
 app.include_router(sessions.router)
@@ -55,6 +56,7 @@ app.include_router(cron.router)
 app.include_router(agents.router)
 app.include_router(config_api.router)
 app.include_router(mcp.router)
+app.include_router(plugins.router)
 
 
 # ==================== 静态文件和前端 ====================
@@ -103,7 +105,7 @@ async def serve_index():
 @app.get("/api/health", tags=["system"])
 async def health_check() -> Dict[str, str]:
     """健康检查接口"""
-    return {"status": "ok", "service": "hermes-panel"}
+    return {"status": "healthy", "service": "hermes-mcp-space", "version": "6.5.2"}
 
 
 # ==================== 启动和关闭事件 ====================

@@ -655,7 +655,7 @@ class HermesService:
                 import json
                 meta = {"description": description, "tags": tags or []}
                 meta_file.write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
-            return {"success": True, "message": f"技能 '{name}' 创建成功", "name": name}
+            return {"success": True, "message": f"技能 '{name}' 创建成功", "name": name, "id": name, "skill": {"id": name, "name": name, "description": description, "tags": tags or []}}
         except Exception as e:
             return {"success": False, "message": f"创建失败: {str(e)}"}
 
