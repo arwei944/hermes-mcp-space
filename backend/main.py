@@ -46,6 +46,9 @@ from backend.routers import (  # noqa: E402
     config_api,
     mcp,
     plugins,
+    persistence,
+    knowledge,
+    trash,
 )
 
 app.include_router(sessions.router)
@@ -57,6 +60,9 @@ app.include_router(agents.router)
 app.include_router(config_api.router)
 app.include_router(mcp.router)
 app.include_router(plugins.router)
+app.include_router(persistence.router)
+app.include_router(knowledge.router)
+app.include_router(trash.router)
 
 
 # ==================== 静态文件和前端 ====================

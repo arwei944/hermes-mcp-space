@@ -926,6 +926,19 @@ class HermesService:
         }
         if warnings:
             result["warnings"] = warnings
+
+        # 返回更新后的内容，便于验证
+        if "MEMORY.md" in updated:
+            try:
+                result["memory"] = (memories_dir / "MEMORY.md").read_text(encoding="utf-8")
+            except Exception:
+                pass
+        if "USER.md" in updated:
+            try:
+                result["user"] = (memories_dir / "USER.md").read_text(encoding="utf-8")
+            except Exception:
+                pass
+
         return result
 
     # ==================== 定时任务管理 ====================

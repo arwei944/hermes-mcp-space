@@ -3,12 +3,15 @@
 
 import asyncio
 import json
+import logging
 import time
 from collections import deque
 from typing import Any, Dict, List, Set
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
+
+logger = logging.getLogger("hermes-mcp")
 
 router = APIRouter(tags=["events"])
 
@@ -17,6 +20,9 @@ _event_buffer: deque = deque(maxlen=200)
 
 # 活跃的 SSE 连接
 _subscribers: Set[asyncio.Queue] = set()
+
+# 心跳间隔（秒）- 远程环境下 15 秒保活
+_SSE_HEARTBEAT_INTERVAL = 15
 
 
 def emit_event(event_type: str, data: Any = None, source: str = "system"):
@@ -51,16 +57,20 @@ async def sse_stream():
             for event in list(_event_buffer)[-5:]:
                 yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
 
-            # 实时推送
+            # 实时推送 + 心跳保活
             while True:
                 try:
-                    event = await asyncio.wait_for(queue.get(), timeout=30)
+                    event = await asyncio.wait_for(
+                        queue.get(), timeout=_SSE_HEARTBEAT_INTERVAL
+                    )
                     yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
                 except asyncio.TimeoutError:
-                    # 心跳保活
-                    yield ": heartbeat\n\n"
+                    # SSE 标准心跳：以冒号开头的行作为注释，客户端会忽略
+                    yield ": keepalive\n\n"
         except asyncio.CancelledError:
-            pass
+            logger.debug("SSE 连接已取消")
+        except Exception as e:
+            logger.warning(f"SSE 连接异常断开: {e}")
         finally:
             _subscribers.discard(queue)
 
