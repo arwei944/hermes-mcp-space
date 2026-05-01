@@ -34,6 +34,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ==================== 可选中间件（默认关闭，通过环境变量控制） ====================
+
+from backend.middleware.auth import AuthMiddleware  # noqa: E402
+from backend.middleware.rate_limit import RateLimitMiddleware  # noqa: E402
+from backend.middleware.cache import CacheMiddleware  # noqa: E402
+
+app.add_middleware(AuthMiddleware)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(CacheMiddleware)
+
 # ==================== 注册路由 ====================
 
 from backend.routers import (  # noqa: E402
@@ -63,6 +73,24 @@ app.include_router(plugins.router)
 app.include_router(persistence.router)
 app.include_router(knowledge.router)
 app.include_router(trash.router)
+
+# ==================== v1 API 版本化路由（与原路由共享实例，向后兼容） ====================
+
+for _v1_prefix, _v1_router in [
+    ("/api/v1/sessions", sessions.router),
+    ("/api/v1/tools", tools.router),
+    ("/api/v1/skills", skills.router),
+    ("/api/v1/memory", memory.router),
+    ("/api/v1/cron", cron.router),
+    ("/api/v1/agents", agents.router),
+    ("/api/v1/config", config_api.router),
+    ("/api/v1/mcp", mcp.router),
+    ("/api/v1/plugins", plugins.router),
+    ("/api/v1/persistence", persistence.router),
+    ("/api/v1/knowledge", knowledge.router),
+    ("/api/v1/trash", trash.router),
+]:
+    app.include_router(_v1_router, prefix=_v1_prefix, tags=[f"v1-{_v1_prefix.split('/')[-1]}"])
 
 
 # ==================== 静态文件和前端 ====================

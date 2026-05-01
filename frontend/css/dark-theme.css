@@ -1,0 +1,220 @@
+/**
+ * Hermes Agent - 暗色主题扩展样式
+ * V7-22: 前端暗色主题支持（补充样式）
+ * 基础暗色变量已在 style.css 中定义，此文件提供额外的暗色模式覆盖
+ */
+
+/* 暗色模式下的额外组件样式 */
+
+[data-theme="dark"] .modal-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .modal {
+    background: var(--surface);
+    border-color: var(--border-strong);
+}
+
+[data-theme="dark"] .toast {
+    background: var(--surface);
+    border-color: var(--border-strong);
+}
+
+[data-theme="dark"] .export-dropdown,
+[data-theme="dark"] .batch-export-dropdown {
+    background: var(--surface);
+    border-color: var(--border-strong);
+}
+
+[data-theme="dark"] .export-dropdown div:hover,
+[data-theme="dark"] .batch-export-dropdown div:hover {
+    background: var(--surface-hover);
+}
+
+[data-theme="dark"] .message-thread {
+    background: var(--surface);
+}
+
+[data-theme="dark"] .message-content {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .connection-info {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .schema-display {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .markdown-body blockquote {
+    background: var(--accent-light);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .markdown-body code {
+    background: var(--bg);
+}
+
+[data-theme="dark"] .markdown-body pre {
+    background: var(--bg);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .markdown-body pre code {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .collapsible-header {
+    background: var(--surface-secondary);
+}
+
+[data-theme="dark"] .collapsible-body {
+    background: var(--surface);
+}
+
+[data-theme="dark"] .file-tree-header {
+    background: var(--surface-secondary);
+}
+
+[data-theme="dark"] .editor-pane-header {
+    background: var(--surface-secondary);
+}
+
+[data-theme="dark"] .editor-textarea {
+    background: var(--surface);
+}
+
+[data-theme="dark"] .table th {
+    background: var(--bg);
+}
+
+[data-theme="dark"] .table td {
+    border-top-color: var(--border);
+}
+
+[data-theme="dark"] .table tr:hover td {
+    background: var(--surface-hover);
+}
+
+[data-theme="dark"] .section {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .section-header {
+    border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .stat-card {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .tool-card {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+[data-theme="dark"] .tool-card:hover {
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .filter-tag {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .filter-tag:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .filter-tag.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-textarea {
+    background: var(--surface);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-input:focus,
+[data-theme="dark"] .form-select:focus,
+[data-theme="dark"] .form-textarea:focus {
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .sidebar-search input {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .sidebar-search input::placeholder {
+    color: var(--text-tertiary);
+}
+
+[data-theme="dark"] .progress-bar {
+    background: var(--bg);
+}
+
+[data-theme="dark"] .skeleton {
+    background: linear-gradient(90deg, var(--surface-secondary) 25%, var(--border) 50%, var(--surface-secondary) 75%);
+    background-size: 200% 100%;
+}
+
+/* 暗色模式下的导出进度条 */
+[data-theme="dark"] #export-progress-overlay > div {
+    background: var(--surface);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 暗色模式下的确认对话框 */
+[data-theme="dark"] #confirm-dialog-overlay > div {
+    background: var(--surface);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* 暗色模式下聊天消息 */
+[data-theme="dark"] .chat-message.user .chat-message-content {
+    background: var(--accent-light);
+}
+
+[data-theme="dark"] .chat-message.assistant .chat-message-content {
+    background: var(--surface-secondary);
+}
+
+/* 暗色模式下选中行 */
+[data-theme="dark"] .session-item.selected {
+    background: var(--accent-light);
+    border-left-color: var(--accent);
+}
+
+/* 暗色模式下搜索高亮 */
+[data-theme="dark"] mark,
+[data-theme="dark"] .highlight {
+    background: rgba(10, 132, 255, 0.3);
+    color: var(--text-primary);
+}
+
+/* 暗色模式下的滚动条 */
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}

@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  hermes:
+    build: .
+    ports:
+      - "7860:7860"
+    volumes:
+      - hermes-data:/root/.hermes
+    environment:
+      - APP_VERSION=7.0.0
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+volumes:
+  hermes-data:

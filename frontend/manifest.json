@@ -1,0 +1,16 @@
+{
+    "name": "Hermes Agent",
+    "short_name": "Hermes",
+    "description": "AI Agent 管理面板",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0071e3",
+    "icons": [
+        {
+            "src": "/static/favicon.ico",
+            "sizes": "any",
+            "type": "image/x-icon"
+        }
+    ]
+}
