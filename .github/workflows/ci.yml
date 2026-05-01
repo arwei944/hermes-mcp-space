@@ -1,8 +1,8 @@
-name: CI Quality Gate
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
     branches: [main]
 
@@ -44,10 +44,10 @@ jobs:
             fi
           done
           if [ $ERRORS -gt 0 ]; then
-            echo "❌ $ERRORS JS file(s) failed syntax check"
+            echo "ERROR: $ERRORS JS file(s) failed syntax check"
             exit 1
           fi
-          echo "✅ All JS files passed syntax check"
+          echo "All JS files passed syntax check"
 
       - name: Check Python syntax (all files)
         run: |
@@ -64,13 +64,35 @@ jobs:
             fi
           done
           if [ $ERRORS -gt 0 ]; then
-            echo "❌ $ERRORS Python file(s) failed syntax check"
+            echo "ERROR: $ERRORS Python file(s) failed syntax check"
             exit 1
           fi
-          echo "✅ All Python files passed syntax check"
+          echo "All Python files passed syntax check"
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --break-system-packages pytest pytest-asyncio httpx
+          pip install --break-system-packages -r requirements.txt 2>/dev/null || true
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v --tb=short --timeout=60 2>/dev/null || pytest tests/ -v --tb=short
+        env:
+          PYTEST_TIMEOUT: 60
 
   deploy:
-    needs: lint
+    needs: [lint, test]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:

@@ -39,6 +39,36 @@ class HermesService:
         self._remote_cache: Dict[str, Any] = {}
         self._cache_time: float = 0
 
+        # HuggingFace Space 持久化配置
+        self._hf_space_id = os.environ.get("SPACE_ID", "")
+        self._hf_data_dir = os.path.join(os.path.expanduser("~"), ".hermes")
+        os.makedirs(self._hf_data_dir, exist_ok=True)
+
+        # 如果在 HF Space 中，使用 /data 作为持久化目录
+        if self._hf_space_id:
+            self._hf_data_dir = "/data"
+            os.makedirs(self._hf_data_dir, exist_ok=True)
+
+        # 数据库优化
+        self._optimize_database()
+
+    def _optimize_database(self):
+        """优化 SQLite 数据库"""
+        try:
+            db_path = os.path.join(self._hf_data_dir, "data", "sessions.db")
+            if not os.path.exists(db_path):
+                db_path = get_hermes_home() / "data" / "sessions.db"
+                if not os.path.exists(str(db_path)):
+                    return
+            conn = sqlite3.connect(str(db_path))
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            conn.execute("PRAGMA cache_size=-64000")  # 64MB cache
+            conn.execute("PRAGMA temp_store=MEMORY")
+            conn.close()
+        except Exception:
+            pass  # 非关键功能，失败不影响启动
+
     @property
     def hermes_available(self) -> bool:
         """检测 Hermes Agent 是否可用（本地模块或远程 API）"""
@@ -305,13 +335,76 @@ class HermesService:
         except Exception as e:
             return {"success": False, "message": f"压缩失败: {str(e)}"}
 
+    def _highlight_matches(self, text: str, query: str) -> str:
+        """在文本中高亮匹配的关键词"""
+        import re
+        if not query or not text:
+            return text or ""
+
+        # 将增强查询按 OR 拆分为多个关键词
+        keywords = [k.strip() for k in query.split(" OR ") if k.strip()]
+        if not keywords:
+            return text
+
+        # 对每个关键词进行高亮
+        highlighted = text
+        for kw in keywords:
+            escaped = re.escape(kw)
+            highlighted = re.sub(
+                f'({escaped})',
+                r'<mark>\1</mark>',
+                highlighted,
+                flags=re.IGNORECASE
+            )
+        return highlighted
+
+    def _enhance_search_query(self, query: str) -> str:
+        """使用 jieba 分词增强搜索查询"""
+        try:
+            import jieba
+            # 分词并过滤停用词和单字
+            words = [w for w in jieba.cut_for_search(query) if len(w.strip()) > 1]
+            if words:
+                # 用 OR 连接分词结果，提高召回率
+                return " OR ".join(words)
+        except ImportError:
+            pass
+        return query
+
     def search_sessions(self, keyword: str, limit: int = 20) -> List[Dict[str, Any]]:
-        """搜索会话（按标题模糊匹配）"""
+        """搜索会话（按标题模糊匹配，支持 jieba 分词增强）"""
+        # 在搜索前增强查询
+        enhanced_q = self._enhance_search_query(keyword)
         sessions = self.list_sessions()
-        keyword = keyword.lower()
-        return [s for s in sessions if keyword in (s.get("title") or "").lower()
-                or keyword in (s.get("model") or "").lower()
-                or keyword in (s.get("id") or "").lower()][:limit]
+        # 将增强后的查询按 OR 拆分为多个关键词
+        keywords = [k.strip().lower() for k in enhanced_q.split(" OR ") if k.strip()]
+        if not keywords:
+            return []
+        return [s for s in sessions
+                if any(kw in (s.get("title") or "").lower()
+                       or kw in (s.get("model") or "").lower()
+                       or kw in (s.get("id") or "").lower()
+                       for kw in keywords)][:limit]
+
+    def get_search_suggestions(self, query: str, limit: int = 10) -> list:
+        """获取搜索建议（基于会话标题和标签）"""
+        suggestions = set()
+        query_lower = query.lower()
+
+        for session in self.list_sessions():
+            title = session.get("title", "")
+            tags = session.get("tags", [])
+
+            # 标题匹配
+            if query_lower in title.lower():
+                suggestions.add(title)
+
+            # 标签匹配
+            for tag in tags:
+                if query_lower in tag.lower():
+                    suggestions.add(tag)
+
+        return list(suggestions)[:limit]
 
     def get_all_tags(self) -> List[Dict[str, Any]]:
         """获取所有标签及统计"""
@@ -758,7 +851,7 @@ class HermesService:
         return meta
 
     def search_messages(self, query: str, session_id: str = None, limit: int = 20) -> List[Dict[str, Any]]:
-        """全文搜索消息内容"""
+        """全文搜索消息内容（支持 jieba 分词增强）"""
         db_path = self._get_session_db_path()
         if not db_path:
             return []
@@ -782,6 +875,9 @@ class HermesService:
                     cursor.execute("INSERT INTO messages_fts(rowid, session_id, role, content, created_at) SELECT id, session_id, role, content, created_at FROM messages")
                     conn.commit()
 
+            # 使用 jieba 分词增强搜索查询
+            enhanced_q = self._enhance_search_query(query)
+
             # 执行搜索
             if session_id:
                 cursor.execute("""
@@ -792,7 +888,7 @@ class HermesService:
                     WHERE messages_fts MATCH ? AND m.session_id = ?
                     ORDER BY rank
                     LIMIT ?
-                """, (query, session_id, limit))
+                """, (enhanced_q, session_id, limit))
             else:
                 cursor.execute("""
                     SELECT m.session_id, m.role, m.content, m.created_at,
@@ -802,7 +898,7 @@ class HermesService:
                     WHERE messages_fts MATCH ?
                     ORDER BY rank
                     LIMIT ?
-                """, (query, limit))
+                """, (enhanced_q, limit))
 
             results = []
             for row in cursor.fetchall():

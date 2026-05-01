@@ -144,3 +144,40 @@ async def pre_update_backup():
     from backend.services.persistence_manager import persistence_manager
     result = persistence_manager.pre_update_backup()
     return result
+
+
+# ==================== BackupService 数据恢复端点 ====================
+
+@router.post("/backup-snapshot", summary="创建数据快照备份")
+async def create_backup_snapshot(body: dict = None):
+    """基于 BackupService 创建数据快照备份"""
+    from backend.services.backup_service import backup_service
+    items = (body or {}).get("items")
+    result = backup_service.create_backup(items)
+    return result
+
+
+@router.get("/backup-snapshots", summary="列出所有快照备份")
+async def list_backup_snapshots():
+    """列出所有快照备份"""
+    from backend.services.backup_service import backup_service
+    return {"backups": backup_service.list_backups()}
+
+
+@router.post("/backup-snapshots/restore", summary="从快照恢复数据")
+async def restore_from_snapshot(body: dict):
+    """从指定的快照备份恢复数据"""
+    from backend.services.backup_service import backup_service
+    backup_name = body.get("backup_name", "")
+    items = body.get("items")
+    result = backup_service.restore_backup(backup_name, items)
+    return result
+
+
+@router.post("/backup-snapshots/cleanup", summary="清理旧快照备份")
+async def cleanup_backup_snapshots(body: dict = None):
+    """清理旧快照备份，保留最新的 N 个"""
+    from backend.services.backup_service import backup_service
+    keep = (body or {}).get("keep_count", 10)
+    removed = backup_service.cleanup_old_backups(keep)
+    return {"success": True, "removed": removed}

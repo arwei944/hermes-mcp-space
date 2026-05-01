@@ -14,6 +14,10 @@ from backend.services.hermes_service import hermes_service
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
+# 输入长度限制
+MAX_TITLE_LENGTH = 500
+MAX_CONTENT_LENGTH = 100000
+
 
 @router.get("", summary="列出所有会话")
 async def list_sessions() -> List[Dict[str, Any]]:
@@ -71,7 +75,7 @@ async def search_sessions(
             results.append({
                 "type": "session",
                 "session_id": s.get("id", ""),
-                "title": s.get("title", ""),
+                "title": hermes_service._highlight_matches(s.get("title", ""), q),
                 "model": s.get("model", ""),
                 "created_at": s.get("created_at", ""),
                 "updated_at": s.get("updated_at", ""),
@@ -86,7 +90,7 @@ async def search_sessions(
                 "type": "message",
                 "session_id": m.get("session_id", ""),
                 "role": m.get("role", ""),
-                "content": m.get("content", ""),
+                "content": hermes_service._highlight_matches(m.get("content", ""), q),
                 "timestamp": m.get("timestamp", ""),
                 "relevance": m.get("relevance", 0),
             })
@@ -117,6 +121,19 @@ async def search_sessions(
     paginated = results[start:end]
 
     return {"results": paginated, "total": total, "page": page, "page_size": page_size}
+
+
+@router.get("/search/suggestions", summary="搜索建议")
+async def search_suggestions(
+    q: str = Query("", min_length=1),
+    limit: int = Query(10, ge=1, le=50),
+) -> Dict[str, Any]:
+    """根据输入提供搜索建议"""
+    if not q.strip():
+        return {"suggestions": []}
+
+    suggestions = hermes_service.get_search_suggestions(q, limit)
+    return {"suggestions": suggestions}
 
 
 # --- Session Tags ---
@@ -190,6 +207,39 @@ async def toggle_archive(session_id: str, body: Dict[str, bool] = None) -> Dict[
     if not result.get("success"):
         raise HTTPException(status_code=404, detail=result.get("message", "更新失败"))
     return result
+
+
+@router.post("/import", summary="导入会话数据")
+async def import_sessions(body: Dict[str, Any]) -> Dict[str, Any]:
+    """导入 JSON 格式的会话数据"""
+    import_type = body.get("format", "json")
+    data = body.get("data")
+
+    if not data:
+        raise HTTPException(status_code=400, detail="缺少数据")
+
+    imported = 0
+    errors = []
+
+    if import_type == "json":
+        sessions = data if isinstance(data, list) else [data]
+        for session_data in sessions:
+            try:
+                title = session_data.get("title", "Imported")
+                model = session_data.get("model", "")
+                source = "import"
+                result = hermes_service.create_session(title, model, source)
+                sid = result.get("id") or result.get("session", {}).get("id")
+
+                # 导入消息
+                for msg in session_data.get("messages", []):
+                    hermes_service.add_session_message(sid, msg.get("role", "user"), msg.get("content", ""))
+
+                imported += 1
+            except Exception as e:
+                errors.append(f"{session_data.get('title', '?')}: {str(e)}")
+
+    return {"success": True, "imported": imported, "errors": errors, "total": len(data) if isinstance(data, list) else 1}
 
 
 @router.get("/export", summary="导出所有会话")
@@ -294,8 +344,17 @@ async def batch_export_sessions(body: Dict[str, Any]) -> StreamingResponse:
 async def create_session(body: Dict[str, str] = None) -> Dict[str, Any]:
     """创建新会话"""
     body = body or {}
+
+    # 输入验证
+    title = body.get("title", "")
+    if title and len(title) > MAX_TITLE_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"标题长度不能超过 {MAX_TITLE_LENGTH} 个字符",
+        )
+
     return hermes_service.create_session(
-        title=body.get("title", ""),
+        title=title,
         model=body.get("model", ""),
         source=body.get("source", "api"),
     )
@@ -358,6 +417,14 @@ async def add_session_message(session_id: str, body: Dict[str, str]) -> Dict[str
     """向指定会话添加一条消息"""
     role = body.get("role", "user")
     content = body.get("content", "")
+
+    # 输入验证 - 内容长度限制
+    if content and len(content) > MAX_CONTENT_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"内容长度不能超过 {MAX_CONTENT_LENGTH} 个字符",
+        )
+
     result = hermes_service.add_session_message(session_id, role, content)
     # 同时返回 session 信息以便前端更新
     session = hermes_service.get_session(session_id)

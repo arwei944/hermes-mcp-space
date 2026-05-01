@@ -40,9 +40,11 @@ const App = (() => {
     };
 
     let _currentPage = null;
-    let _sseConnection = null;
 
     function init() {
+        // 全局错误边界 - 增强版
+        initErrorBoundary();
+
         Components.Toast.init();
         Components.Modal.init();
         bindGlobalEvents();
@@ -59,8 +61,16 @@ const App = (() => {
         // 检测后端连接状态
         checkBackendStatus();
 
-        // 启动 SSE 实时事件监听
+        // 启动 SSE 实时事件监听（带轮询降级 V7-19）
         connectSSE();
+
+        // 监听 SSEManager 派发的事件
+        window.addEventListener('hermes:event', function (e) {
+            var event = e.detail;
+            if (event && event.data) {
+                handleSSEEvent(event.data);
+            }
+        });
 
         // 初始路由
         handleRoute();
@@ -98,33 +108,10 @@ const App = (() => {
         }
     }
 
-    // --- SSE 实时事件 ---
+    // --- SSE 实时事件（V7-19: 使用 SSEManager 带轮询降级） ---
 
     function connectSSE() {
-        if (_sseConnection) {
-            _sseConnection.close();
-        }
-
-        try {
-            _sseConnection = new EventSource('/api/events');
-
-            _sseConnection.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    handleSSEEvent(data);
-                } catch (_err) {
-                    // 忽略解析错误
-                }
-            };
-
-            _sseConnection.onerror = () => {
-                // 5 秒后自动重连
-                setTimeout(connectSSE, 5000);
-            };
-        } catch (_err) {
-            // SSE 不可用时静默降级
-            setTimeout(connectSSE, 10000);
-        }
+        SSEManager.connect('/api/events');
     }
 
     function handleSSEEvent(event) {
@@ -309,6 +296,33 @@ const App = (() => {
     function closeMobileSidebar() {
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarOverlay').classList.remove('active');
+    }
+
+    // --- 全局错误边界 ---
+
+    function initErrorBoundary() {
+        // 捕获同步 JS 错误，显示用户友好的 toast 提示
+        window.onerror = function (message, source, lineno, colno, error) {
+            console.error('[Hermes Error]', { message, source, lineno, colno, error });
+            // 显示用户友好的错误提示
+            const container = document.getElementById('app') || document.body;
+            const toast = document.createElement('div');
+            toast.className = 'error-toast';
+            toast.style.cssText =
+                'position:fixed;top:20px;right:20px;z-index:10000;padding:12px 20px;' +
+                'background:#fee2e2;color:#991b1b;border-radius:8px;' +
+                'box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:14px;max-width:400px;';
+            toast.textContent = '操作出错，请刷新页面重试';
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+            return true; // 阻止默认错误处理
+        };
+
+        // 捕获未处理的 Promise rejection
+        window.addEventListener('unhandledrejection', function (event) {
+            console.error('[Hermes Promise Error]', event.reason);
+            event.preventDefault();
+        });
     }
 
     document.addEventListener('DOMContentLoaded', init);

@@ -4,11 +4,12 @@
 import asyncio
 import json
 import logging
+import os
 import time
 from collections import deque
 from typing import Any, Dict, List, Set
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
 logger = logging.getLogger("hermes-mcp")
@@ -46,8 +47,16 @@ def emit_event(event_type: str, data: Any = None, source: str = "system"):
 
 
 @router.get("/api/events")
-async def sse_stream():
+async def sse_stream(
+    request: Request,
+    token: str = Query(None, description="可选的认证 token"),
+):
     """SSE 事件流端点"""
+    # Token 验证（如果配置了 AUTH_TOKEN）
+    auth_token = os.environ.get("AUTH_TOKEN", "")
+    if auth_token and token != auth_token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     queue = asyncio.Queue(maxsize=50)
     _subscribers.add(queue)
 

@@ -622,8 +622,9 @@ const SessionsPage = (() => {
         }
     }
 
-    // ---- 导出 ----
+    // ---- 导出（V7-20: 带进度条反馈） ----
     async function exportSession(id, format) {
+        var progress = showExportProgress('正在导出会话...');
         try {
             var blob = await API.sessions.exportSession(id, format);
             var url = URL.createObjectURL(blob);
@@ -633,8 +634,10 @@ const SessionsPage = (() => {
             a.download = 'session_' + id + '.' + ext;
             a.click();
             URL.revokeObjectURL(url);
+            progress.complete();
             Components.Toast.success('导出成功');
         } catch (err) {
+            progress.error();
             Components.Toast.error('导出失败: ' + err.message);
         }
     }
@@ -1065,26 +1068,34 @@ const SessionsPage = (() => {
     async function batchArchiveSessions() {
         var ids = Object.keys(_selectedIds);
         if (ids.length === 0) return;
-        try {
-            await API.sessions.batchArchive(ids, true);
-            _sessions = _sessions.filter(function (s) { return !_selectedIds[s.id || s.session_id]; });
-            if (_selectedIds[_currentId]) {
-                _currentId = null;
-                _messages = [];
-                _toolCards = {};
-                if (_sessions.length > 0) {
-                    var nextId = _sessions[0].id || _sessions[0].session_id;
-                    await loadMessages(nextId);
+
+        // V7-21: 使用 showConfirmDialog 二次确认
+        showConfirmDialog(
+            '批量归档会话',
+            '确定要归档选中的 ' + ids.length + ' 个会话吗？',
+            async function () {
+                try {
+                    await API.sessions.batchArchive(ids, true);
+                    _sessions = _sessions.filter(function (s) { return !_selectedIds[s.id || s.session_id]; });
+                    if (_selectedIds[_currentId]) {
+                        _currentId = null;
+                        _messages = [];
+                        _toolCards = {};
+                        if (_sessions.length > 0) {
+                            var nextId = _sessions[0].id || _sessions[0].session_id;
+                            await loadMessages(nextId);
+                        }
+                    }
+                    _selectedIds = {};
+                    _batchMode = false;
+                    refreshSidebar();
+                    refreshMain();
+                    Components.Toast.success('已归档 ' + ids.length + ' 个会话');
+                } catch (err) {
+                    Components.Toast.error('批量归档失败: ' + err.message);
                 }
             }
-            _selectedIds = {};
-            _batchMode = false;
-            refreshSidebar();
-            refreshMain();
-            Components.Toast.success('已归档 ' + ids.length + ' 个会话');
-        } catch (err) {
-            Components.Toast.error('批量归档失败: ' + err.message);
-        }
+        );
     }
 
     async function batchAddTags() {
@@ -1118,6 +1129,7 @@ const SessionsPage = (() => {
     async function batchExportSessions(format) {
         var ids = Object.keys(_selectedIds);
         if (ids.length === 0) return;
+        var progress = showExportProgress('正在批量导出 ' + ids.length + ' 个会话...');
         try {
             var data = await API.sessions.batchExport(ids, format);
             var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1127,8 +1139,10 @@ const SessionsPage = (() => {
             a.download = 'sessions_export_' + format + '.' + (format === 'markdown' ? 'md' : 'json');
             a.click();
             URL.revokeObjectURL(url);
+            progress.complete();
             Components.Toast.success('导出成功');
         } catch (err) {
+            progress.error();
             Components.Toast.error('批量导出失败: ' + err.message);
         }
     }

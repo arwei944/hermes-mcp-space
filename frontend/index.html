@@ -7,7 +7,15 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermes Agent</title>
+    <!-- 资源预加载 -->
+    <link rel="preload" href="/css/style.css" as="style">
+    <link rel="preload" href="/js/app.js" as="script">
+    <!-- CDN 预连接（可选） -->
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dark-theme.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0071e3">
 </head>
 <body>
 
@@ -155,23 +163,27 @@
 <button id="themeToggle" class="theme-toggle" title="切换深色模式" data-icon="moon"></button>
 
 <!-- Scripts -->
-<script src="/js/api.js"></script>
-<script src="/js/components.js"></script>
-<script src="/js/pages/dashboard.js"></script>
-<script src="/js/pages/knowledge.js"></script>
-<script src="/js/pages/sessions.js"></script>
-<script src="/js/pages/chat.js"></script>
-<script src="/js/pages/memory.js"></script>
-<script src="/js/pages/cron.js"></script>
-<script src="/js/pages/agents.js"></script>
-<script src="/js/pages/agents_behavior.js"></script>
-<script src="/js/pages/config.js"></script>
-<script src="/js/pages/about.js"></script>
-<script src="/js/pages/marketplace.js"></script>
-<script src="/js/pages/logs.js"></script>
-<script src="/js/pages/sync.js"></script>
-<script src="/js/pages/trash.js"></script>
-<script src="/js/app.js"></script>
+<script src="/js/i18n.js" defer></script>
+<script src="/js/utils/sse.js" defer></script>
+<script src="/js/utils/export-progress.js" defer></script>
+<script src="/js/utils/confirm-dialog.js" defer></script>
+<script src="/js/api.js" defer></script>
+<script src="/js/components.js" defer></script>
+<script src="/js/pages/dashboard.js" defer></script>
+<script src="/js/pages/knowledge.js" defer></script>
+<script src="/js/pages/sessions.js" defer></script>
+<script src="/js/pages/chat.js" defer></script>
+<script src="/js/pages/memory.js" defer></script>
+<script src="/js/pages/cron.js" defer></script>
+<script src="/js/pages/agents.js" defer></script>
+<script src="/js/pages/agents_behavior.js" defer></script>
+<script src="/js/pages/config.js" defer></script>
+<script src="/js/pages/about.js" defer></script>
+<script src="/js/pages/marketplace.js" defer></script>
+<script src="/js/pages/logs.js" defer></script>
+<script src="/js/pages/sync.js" defer></script>
+<script src="/js/pages/trash.js" defer></script>
+<script src="/js/app.js" defer></script>
 
 <!-- 全局错误边界：JS 报错时显示友好提示而不是白屏 -->
 <script>
@@ -191,6 +203,19 @@ window.onerror = function(msg, url, line, col, err) {
 window.addEventListener('unhandledrejection', function(e) {
     console.error('[Promise Error]', e.reason);
 });
+</script>
+
+<!-- V7-24: Service Worker 注册 -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+            console.log('[SW] Registered:', reg.scope);
+        }).catch(function (err) {
+            console.warn('[SW] Registration failed:', err);
+        });
+    });
+}
 </script>
 
 </body>
