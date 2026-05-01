@@ -143,6 +143,12 @@ async def set_session_tags(session_id: str, body: Dict[str, Any]) -> Dict[str, A
     return result
 
 
+@router.post("/{session_id}/tags", summary="设置会话标签 (POST)")
+async def set_session_tags_post(session_id: str, body: Dict[str, Any]) -> Dict[str, Any]:
+    """设置会话标签（POST 备用，兼容不支持 PUT 的客户端）"""
+    return await set_session_tags(session_id, body)
+
+
 @router.put("/{session_id}/title", summary="重命名会话")
 async def rename_session(session_id: str, body: Dict[str, str]) -> Dict[str, Any]:
     """重命名会话标题"""
@@ -352,7 +358,12 @@ async def add_session_message(session_id: str, body: Dict[str, str]) -> Dict[str
     """向指定会话添加一条消息"""
     role = body.get("role", "user")
     content = body.get("content", "")
-    return hermes_service.add_session_message(session_id, role, content)
+    result = hermes_service.add_session_message(session_id, role, content)
+    # 同时返回 session 信息以便前端更新
+    session = hermes_service.get_session(session_id)
+    if session:
+        result["session"] = session
+    return result
 
 
 @router.delete("/{session_id}", summary="删除会话")
