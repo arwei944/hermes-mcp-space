@@ -141,7 +141,7 @@ def _patched_create_app(blocks, **kwargs):
 
     @app.get("/api/health")
     async def health():
-        return {"status": "ok", "service": "hermes-mcp-space", "version": APP_VERSION}
+        return {"status": "healthy", "service": "hermes-mcp-space", "version": APP_VERSION}
 
     # Mount all backend API routers
     try:
