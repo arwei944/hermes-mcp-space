@@ -27,6 +27,7 @@ const KnowledgePage = (() => {
 
     // Review selection state
     let _selectedReviews = new Set();
+    let _refreshTimer = null;
 
     // Filter states per tab
     let _rulesFilter = 'all';
@@ -1791,19 +1792,15 @@ const KnowledgePage = (() => {
         ];
 
         if (refreshTypes.indexOf(type) !== -1) {
-            // Debounced refresh
-            if (KnowledgePage._refreshTimer) return;
-            KnowledgePage._refreshTimer = setTimeout(function () {
-                KnowledgePage._refreshTimer = null;
+            if (_refreshTimer) return;
+            _refreshTimer = setTimeout(function () {
+                _refreshTimer = null;
                 if (_activeTab === 'overview') {
                     _loadOverviewData().catch(function () {});
                 }
             }, 500);
         }
     }
-
-    // Debounce timer
-    KnowledgePage._refreshTimer = null;
 
     // ==========================================
     // Public API
