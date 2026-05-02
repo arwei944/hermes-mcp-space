@@ -1,15 +1,16 @@
 /**
- * 系统配置页面 (Mac 极简风格)
+ * 系统配置页面 - 配置表单 (Mac 极简风格)
  * 仅保留系统级设置，工具/记忆/MCP 设置归入各自模块
  */
 
-const ConfigPage = (() => {
+const ConfigForm = (() => {
     let _config = null;
     let _versions = [];
+    let _container = null;
 
-    async function render() {
-        const container = document.getElementById('contentBody');
-        container.innerHTML = Components.createLoading();
+    async function render(containerSelector) {
+        _container = document.querySelector(containerSelector);
+        _container.innerHTML = Components.createLoading();
 
         try {
             const [configData, versionData] = await Promise.all([API.config.get(), API.config.versions()]);
@@ -20,7 +21,7 @@ const ConfigPage = (() => {
             _versions = [];
         }
 
-        container.innerHTML = buildPage();
+        _container.innerHTML = buildPage();
         bindEvents();
     }
 
@@ -45,7 +46,7 @@ const ConfigPage = (() => {
                                 <td class="mono">v${v.version || i + 1}</td>
                                 <td style="font-size:12px;color:var(--text-tertiary)">${Components.formatDateTime(v.timestamp)}</td>
                                 <td style="font-size:12px">${Components.escapeHtml(v.summary || '无描述')}</td>
-                                <td><button class="btn btn-sm btn-ghost" onclick="ConfigPage.rollback(${i})">回滚</button></td>
+                                <td><button class="btn btn-sm btn-ghost" data-action="rollback" data-index="${i}">回滚</button></td>
                             </tr>`,
                                 )
                                 .join('')}
@@ -151,33 +152,32 @@ const ConfigPage = (() => {
             ${versionHtml}
 
             <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px">
-                <button class="btn btn-secondary" onclick="ConfigPage.resetConfig()">重置默认</button>
-                <button class="btn btn-primary" onclick="ConfigPage.saveConfig()">保存配置</button>
+                <button class="btn btn-secondary" data-action="resetConfig">重置默认</button>
+                <button class="btn btn-primary" data-action="saveConfig">保存配置</button>
             </div>
         </div>`;
     }
 
     function collectFormData() {
-        const form = document.querySelector('#contentBody');
-        if (!form) return {};
+        if (!_container) return {};
         return {
-            model: form.querySelector('[name="model"]')?.value,
-            temperature: parseFloat(form.querySelector('[name="temperature"]')?.value),
-            maxTokens: parseInt(form.querySelector('[name="maxTokens"]')?.value),
-            systemPrompt: form.querySelector('[name="systemPrompt"]')?.value,
-            autoSaveSessions: form.querySelector('[name="autoSaveSessions"]')?.checked,
-            sessionRetentionDays: parseInt(form.querySelector('[name="sessionRetentionDays"]')?.value),
-            maxLogEntries: parseInt(form.querySelector('[name="maxLogEntries"]')?.value),
-            exportFormat: form.querySelector('[name="exportFormat"]')?.value,
-            sseEnabled: form.querySelector('[name="sseEnabled"]')?.checked,
-            operationNotification: form.querySelector('[name="operationNotification"]')?.checked,
-            agentNotification: form.querySelector('[name="agentNotification"]')?.checked,
-            apiKey: form.querySelector('[name="apiKey"]')?.value,
-            allowExternal: form.querySelector('[name="allowExternal"]')?.checked,
-            logLevel: form.querySelector('[name="logLevel"]')?.value,
-            debugMode: form.querySelector('[name="debugMode"]')?.checked,
-            requestTimeout: parseInt(form.querySelector('[name="requestTimeout"]')?.value),
-            maxConcurrent: parseInt(form.querySelector('[name="maxConcurrent"]')?.value),
+            model: _container.querySelector('[name="model"]')?.value,
+            temperature: parseFloat(_container.querySelector('[name="temperature"]')?.value),
+            maxTokens: parseInt(_container.querySelector('[name="maxTokens"]')?.value),
+            systemPrompt: _container.querySelector('[name="systemPrompt"]')?.value,
+            autoSaveSessions: _container.querySelector('[name="autoSaveSessions"]')?.checked,
+            sessionRetentionDays: parseInt(_container.querySelector('[name="sessionRetentionDays"]')?.value),
+            maxLogEntries: parseInt(_container.querySelector('[name="maxLogEntries"]')?.value),
+            exportFormat: _container.querySelector('[name="exportFormat"]')?.value,
+            sseEnabled: _container.querySelector('[name="sseEnabled"]')?.checked,
+            operationNotification: _container.querySelector('[name="operationNotification"]')?.checked,
+            agentNotification: _container.querySelector('[name="agentNotification"]')?.checked,
+            apiKey: _container.querySelector('[name="apiKey"]')?.value,
+            allowExternal: _container.querySelector('[name="allowExternal"]')?.checked,
+            logLevel: _container.querySelector('[name="logLevel"]')?.value,
+            debugMode: _container.querySelector('[name="debugMode"]')?.checked,
+            requestTimeout: parseInt(_container.querySelector('[name="requestTimeout"]')?.value),
+            maxConcurrent: parseInt(_container.querySelector('[name="maxConcurrent"]')?.value),
         };
     }
 
@@ -198,7 +198,7 @@ const ConfigPage = (() => {
             await API.config.save(config, summary);
             _config = config;
             Components.Toast.success('配置已保存（版本已记录）');
-            render(); // 刷新版本历史
+            render('#config-form');
         } catch (err) {
             Components.Toast.error(`保存失败: ${err.message}`);
         }
@@ -216,7 +216,7 @@ const ConfigPage = (() => {
         try {
             await API.config.reset();
             Components.Toast.success('配置已重置');
-            render();
+            render('#config-form');
         } catch (err) {
             Components.Toast.error(`重置失败: ${err.message}`);
         }
@@ -237,13 +237,36 @@ const ConfigPage = (() => {
         try {
             await API.config.rollback(index);
             Components.Toast.success('已回滚');
-            render();
+            render('#config-form');
         } catch (err) {
-            Components.Toast.error(`.*${err.message}`);
+            Components.Toast.error(`回滚失败: ${err.message}`);
         }
     }
 
-    function bindEvents() {}
+    function bindEvents() {
+        if (!_container) return;
+        _container.addEventListener('click', _handleAction);
+    }
 
-    return { render, saveConfig, resetConfig, rollback };
+    function _handleAction(e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'saveConfig') saveConfig();
+        else if (action === 'resetConfig') resetConfig();
+        else if (action === 'rollback') rollback(parseInt(btn.dataset.index));
+    }
+
+    function destroy() {
+        if (_container) {
+            _container.removeEventListener('click', _handleAction);
+        }
+        _container = null;
+        _config = null;
+        _versions = [];
+    }
+
+    return { render, destroy };
 })();
+
+export default ConfigForm;
