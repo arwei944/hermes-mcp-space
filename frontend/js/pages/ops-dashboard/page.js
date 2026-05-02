@@ -1,17 +1,18 @@
 /**
- * 运维监控仪表盘页面 - 页面骨架 + 轮询逻辑
+ * 运维监控仪表盘页面 - 页面骨架 + Store 响应式订阅
+ *
+ * 数据由 OpsSyncService 统一轮询并写入 Store，
+ * 本页面仅通过 Store.watch() 响应式消费数据，不再直接调用 API。
  */
 
 const OpsDashboardLayout = (() => {
     // ========== 状态 ==========
-    let _pollTimer = null;
-    let _historyTimer = null;
-    let _serviceTimer = null;
     let _metrics = null;
     let _historyData = { cpu: [], memory: [], disk: [], network: [], timestamps: [] };
     let _mcpHealth = null;
     let _cronStatus = null;
     let _modules = null;
+    let _unwatchers = [];   // Store.watch 取消函数列表
 
     // ========== 公开方法 ==========
 
@@ -20,17 +21,32 @@ const OpsDashboardLayout = (() => {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
+        // ---- 初始数据加载：优先从 Store 读取，无数据时回退到 API ----
         try {
-            const [metrics, history, mcpHealth, cronStatus] = await Promise.all([
-                API.get('/api/ops/metrics'),
-                API.get('/api/ops/metrics/history'),
-                API.get('/api/ops/mcp-health'),
-                API.get('/api/ops/cron'),
-            ]);
-            _metrics = metrics || {};
-            _historyData = history || { cpu: [], memory: [], disk: [], network: [], timestamps: [] };
-            _mcpHealth = mcpHealth || {};
-            _cronStatus = cronStatus || {};
+            const metrics = Store.get('ops.metrics');
+            const history = Store.get('ops.metricsHistory');
+            const mcpHealth = Store.get('ops.mcpHealth');
+            const cronStatus = Store.get('ops.cronMonitor');
+
+            if (metrics && mcpHealth && cronStatus) {
+                // Store 已有数据（OpsSyncService 已运行过），直接使用
+                _metrics = metrics;
+                _historyData = _normalizeHistory(history);
+                _mcpHealth = mcpHealth;
+                _cronStatus = cronStatus;
+            } else {
+                // Store 无数据，回退到直接 API 调用（首次渲染）
+                const [apiMetrics, apiHistory, apiMcpHealth, apiCronStatus] = await Promise.all([
+                    API.get('/api/ops/metrics'),
+                    API.get('/api/ops/metrics/history'),
+                    API.get('/api/ops/mcp-health'),
+                    API.get('/api/ops/cron'),
+                ]);
+                _metrics = apiMetrics || {};
+                _historyData = apiHistory || { cpu: [], memory: [], disk: [], network: [], timestamps: [] };
+                _mcpHealth = apiMcpHealth || {};
+                _cronStatus = apiCronStatus || {};
+            }
         } catch (_err) {
             _metrics = {};
             _historyData = { cpu: [], memory: [], disk: [], network: [], timestamps: [] };
@@ -38,54 +54,81 @@ const OpsDashboardLayout = (() => {
             _cronStatus = {};
         }
 
+        // ---- 渲染页面骨架 ----
         container.innerHTML = _buildPage();
-        _startPolling();
+
+        // ---- 订阅 Store 变化，实现响应式更新 ----
+        _subscribeStore();
     }
 
     function destroy() {
-        _stopPolling();
+        _unsubscribeStore();
     }
 
-    // ========== 轮询 ==========
+    // ========== Store 订阅 ==========
 
-    function _startPolling() {
-        _stopPolling();
+    function _subscribeStore() {
+        _unsubscribeStore();
 
-        // 每 5 秒更新实时指标
-        _pollTimer = setInterval(async () => {
-            try {
-                _metrics = await API.get('/api/ops/metrics') || {};
+        // 监听实时指标（5s 由 OpsSyncService 更新）
+        _unwatchers.push(
+            Store.watch('ops.metrics', function(metrics) {
+                if (!metrics) return;
+                _metrics = metrics;
                 _updateResourceCards();
-            } catch (_e) { /* 静默 */ }
-        }, 5000);
+            })
+        );
 
-        // 每 30 秒更新趋势图
-        _historyTimer = setInterval(async () => {
-            try {
-                _historyData = await API.get('/api/ops/metrics/history') || { cpu: [], memory: [], disk: [], network: [], timestamps: [] };
+        // 监听趋势历史数据
+        _unwatchers.push(
+            Store.watch('ops.metricsHistory', function(history) {
+                if (!history) return;
+                _historyData = _normalizeHistory(history);
                 _updateTrendChart();
-            } catch (_e) { /* 静默 */ }
-        }, 30000);
+            })
+        );
 
-        // 每 30 秒更新 MCP 健康和定时任务
-        _serviceTimer = setInterval(async () => {
-            try {
-                const [mcpHealth, cronStatus] = await Promise.all([
-                    API.get('/api/ops/mcp-health'),
-                    API.get('/api/ops/cron'),
-                ]);
-                _mcpHealth = mcpHealth || {};
-                _cronStatus = cronStatus || {};
+        // 监听 MCP 健康状态（30s 由 OpsSyncService 更新）
+        _unwatchers.push(
+            Store.watch('ops.mcpHealth', function(health) {
+                if (!health) return;
+                _mcpHealth = health;
                 _updateMcpHealth();
+            })
+        );
+
+        // 监听定时任务状态（30s 由 OpsSyncService 更新）
+        _unwatchers.push(
+            Store.watch('ops.cronMonitor', function(cron) {
+                if (!cron) return;
+                _cronStatus = cron;
                 _updateCronStatus();
-            } catch (_e) { /* 静默 */ }
-        }, 30000);
+            })
+        );
     }
 
-    function _stopPolling() {
-        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
-        if (_historyTimer) { clearInterval(_historyTimer); _historyTimer = null; }
-        if (_serviceTimer) { clearInterval(_serviceTimer); _serviceTimer = null; }
+    function _unsubscribeStore() {
+        _unwatchers.forEach(function(unwatch) { unwatch(); });
+        _unwatchers = [];
+    }
+
+    // ========== 工具函数 ==========
+
+    /**
+     * 将 Store 中的 metricsHistory 数组转换为 TrendChart 所需格式
+     * Store 中每条记录包含 { cpu, memory, disk, network, timestamp }
+     */
+    function _normalizeHistory(history) {
+        if (!Array.isArray(history) || history.length === 0) {
+            return { cpu: [], memory: [], disk: [], network: [], timestamps: [] };
+        }
+        return {
+            cpu: history.map(function(h) { return h.cpu; }),
+            memory: history.map(function(h) { return h.memory; }),
+            disk: history.map(function(h) { return h.disk; }),
+            network: history.map(function(h) { return h.network; }),
+            timestamps: history.map(function(h) { return h.timestamp; }),
+        };
     }
 
     // ========== 增量更新 ==========

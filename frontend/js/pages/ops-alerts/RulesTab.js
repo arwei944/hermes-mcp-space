@@ -8,30 +8,63 @@ import { ALERT_TYPES } from './constants.js';
 const RulesTab = (() => {
     let _rules = [];
     let _destroyed = false;
+    let _unwatch = null;
+    let _containerSelector = null;
+
+    function _loadFromStore() {
+        if (!window.Store) return;
+        var data = Store.get('ops.alertRules');
+        _rules = data ? (data.rules || data || []) : [];
+    }
+
+    function _onRulesUpdate(rules) {
+        if (_destroyed) return;
+        _rules = rules ? (rules.rules || rules || []) : [];
+        _rerender();
+    }
+
+    function _rerender() {
+        if (_destroyed || !_containerSelector) return;
+        var container = document.querySelector(_containerSelector);
+        if (!container) return;
+        container.innerHTML = buildRulesTab();
+        bindEvents(container);
+    }
+
+    function startWatching() {
+        if (!window.Store) return;
+        if (_unwatch) return;
+        _unwatch = Store.watch('ops.alertRules', _onRulesUpdate);
+    }
+
+    function stopWatching() {
+        if (_unwatch) {
+            _unwatch();
+            _unwatch = null;
+        }
+    }
 
     async function loadData() {
-        try {
-            const data = await API.get('/api/ops/alerts/rules');
-            _rules = data.rules || data || [];
-        } catch (_err) {
-            _rules = [];
-        }
+        _loadFromStore();
     }
 
     async function render(containerSelector) {
         _destroyed = false;
+        _containerSelector = containerSelector;
         const container = document.querySelector(containerSelector);
         if (!container) return;
 
         container.innerHTML = Components.createLoading();
 
-        try {
-            await loadData();
-        } catch (_err) {}
+        // 从 Store 读取初始数据
+        _loadFromStore();
 
         if (_destroyed) return;
         container.innerHTML = buildRulesTab();
         bindEvents(container);
+
+        // 启动响应式监听
+        startWatching();
     }
 
     function buildRulesTab() {
@@ -175,7 +208,7 @@ const RulesTab = (() => {
                 Components.Toast.success('规则已创建');
             }
             Components.Modal.close();
-            await render('#ops-alerts-rules');
+            // OpsSyncService 会重新同步并更新 Store，watch 回调会自动刷新
         } catch (err) {
             Components.Toast.error(`操作失败: ${err.message}`);
         }
@@ -193,7 +226,7 @@ const RulesTab = (() => {
         try {
             await API.del(`/api/ops/alerts/rules/${id}`);
             Components.Toast.success('规则已删除');
-            await render('#ops-alerts-rules');
+            // OpsSyncService 会重新同步并更新 Store，watch 回调会自动刷新
         } catch (err) {
             Components.Toast.error(`删除失败: ${err.message}`);
         }
@@ -213,9 +246,11 @@ const RulesTab = (() => {
 
     function destroy() {
         _destroyed = true;
+        stopWatching();
+        _containerSelector = null;
     }
 
-    return { loadData, render, destroy };
+    return { loadData, render, destroy, startWatching, stopWatching };
 })();
 
 export default RulesTab;
