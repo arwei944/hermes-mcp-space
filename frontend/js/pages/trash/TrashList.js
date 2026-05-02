@@ -1,14 +1,17 @@
 /**
- * 回收站页面
- * 查看已删除项目、恢复、永久删除
+ * 回收站页面 - 列表模块
+ * 包含所有业务逻辑：加载、过滤、恢复、永久删除、清空
  */
 
-const TrashPage = (() => {
+const TrashList = (() => {
     let _items = [];
     let _filterType = '';
+    let _bound = false;
 
-    async function render() {
-        const container = document.getElementById('contentBody');
+    async function render(containerSelector) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+
         container.innerHTML = Components.createLoading();
         try {
             const data = await API.request('GET', '/api/trash');
@@ -16,19 +19,19 @@ const TrashPage = (() => {
         } catch (_err) {
             _items = [];
         }
-        container.innerHTML = buildPage();
+        container.innerHTML = buildList();
         bindEvents();
     }
 
     function getFiltered() {
         if (!_filterType) return _items;
-        return _items.filter((i) => i.type === _filterType);
+        return _items.filter(i => i.type === _filterType);
     }
 
-    function buildPage() {
+    function buildList() {
         const filtered = getFiltered();
         const typeCounts = {};
-        _items.forEach((i) => {
+        _items.forEach(i => {
             typeCounts[i.type] = (typeCounts[i.type] || 0) + 1;
         });
         const typeLabels = { session: '会话', skill: '技能', memory: '记忆', plugin: '插件', config: '配置' };
@@ -51,7 +54,7 @@ const TrashPage = (() => {
                 ? Components.createEmptyState(Components.icon('trash', 16), '回收站为空', '删除的项目会出现在这里', '')
                 : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">
                 ${filtered
-                    .map((item) => {
+                    .map(item => {
                         const typeLabel = typeLabels[item.type] || item.type;
                         const typeColor =
                             { session: 'blue', skill: 'purple', memory: 'green', plugin: 'orange', config: 'gray' }[
@@ -77,14 +80,23 @@ const TrashPage = (() => {
                     .join('')}
             </div>`;
 
-        return Components.renderSection('回收站', filterHtml + listHtml);
+        return filterHtml + listHtml;
+    }
+
+    async function loadItems() {
+        try {
+            const data = await API.request('GET', '/api/trash');
+            _items = data.items || [];
+        } catch (_err) {
+            _items = [];
+        }
     }
 
     async function restoreItem(id) {
         try {
             await API.request('POST', `/api/trash/restore/${id}`);
             Components.Toast.success('已恢复');
-            await render();
+            await render('#trash-list');
         } catch (err) {
             Components.Toast.error(`恢复失败: ${err.message}`);
         }
@@ -102,7 +114,7 @@ const TrashPage = (() => {
         try {
             await API.request('DELETE', `/api/trash/${id}`);
             Components.Toast.success('已永久删除');
-            await render();
+            await render('#trash-list');
         } catch (err) {
             Components.Toast.error(`删除失败: ${err.message}`);
         }
@@ -120,43 +132,57 @@ const TrashPage = (() => {
         try {
             await API.request('DELETE', '/api/trash');
             Components.Toast.success('回收站已清空');
-            await render();
+            await render('#trash-list');
         } catch (err) {
-            Components.Toast.error(`.*${err.message}`);
+            Components.Toast.error(`清空失败: ${err.message}`);
         }
     }
 
     function bindEvents() {
-        const container = document.getElementById('contentBody');
+        const container = document.querySelector('#trash-list');
         if (!container) return;
 
-        container.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn) return;
-            const action = btn.dataset.action;
-            const id = btn.dataset.id;
-            switch (action) {
-                case 'restore':
-                    restoreItem(id);
-                    break;
-                case 'permDelete':
-                    permanentDelete(id);
-                    break;
-                case 'emptyTrash':
-                    emptyTrash();
-                    break;
-            }
-        });
+        if (!_bound) {
+            container.addEventListener('click', e => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                const action = btn.dataset.action;
+                const id = btn.dataset.id;
+                switch (action) {
+                    case 'restore':
+                        restoreItem(id);
+                        break;
+                    case 'permDelete':
+                        permanentDelete(id);
+                        break;
+                    case 'emptyTrash':
+                        emptyTrash();
+                        break;
+                }
+            });
+            _bound = true;
+        }
 
         const filter = document.getElementById('trashFilter');
         if (filter) {
-            filter.addEventListener('change', (e) => {
+            filter.addEventListener('change', e => {
                 _filterType = e.target.value;
-                document.getElementById('contentBody').innerHTML = buildPage();
-                bindEvents();
+                const container = document.querySelector('#trash-list');
+                if (container) {
+                    container.innerHTML = buildList();
+                    bindEvents();
+                }
             });
         }
     }
 
-    return { render };
+    function destroy() {
+        _items = [];
+        _filterType = '';
+        _bound = false;
+    }
+
+    return { render, destroy, loadItems, buildList, restoreItem, permanentDelete, emptyTrash, bindEvents, getFiltered };
 })();
+
+export default TrashList;

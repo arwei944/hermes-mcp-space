@@ -1,25 +1,19 @@
-/**
- * 截图工具页面 — 输入 URL 截取网页截图
- */
-const ScreenshotPage = (() => {
+const ScreenshotGrid = (() => {
     let _screenshots = [];
     let _loading = false;
+    let _container = null;
 
-    async function render() {
-        const container = document.getElementById('contentBody');
-        container.innerHTML = Components.createLoading();
+    async function render(containerSelector) {
+        _container = document.querySelector(containerSelector);
+        if (!_container) return;
+        _container.innerHTML = Components.createLoading();
         await loadScreenshots();
-        container.innerHTML = buildPage();
+        _container.innerHTML = buildPage();
         bindEvents();
     }
 
     function buildPage() {
         return `
-        <div class="page-header">
-            <h2>截图工具</h2>
-            <span style="color:var(--text-tertiary);font-size:13px">输入 URL，自动截取网页截图</span>
-        </div>
-
         <!-- 输入区域 -->
         <div style="background:var(--surface);border-radius:var(--radius-sm);padding:20px;margin-bottom:20px">
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -38,7 +32,7 @@ const ScreenshotPage = (() => {
                     <input type="checkbox" id="screenshotFullPage" style="accent-color:var(--accent)" />
                     长截图
                 </label>
-                <button id="captureBtn" onclick="ScreenshotPage.capture()"
+                <button id="captureBtn" data-action="capture"
                     style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-xs);cursor:pointer;font-size:14px;display:flex;align-items:center;gap:6px">
                     ${Components.icon('camera', 16)} 截图
                 </button>
@@ -71,7 +65,7 @@ const ScreenshotPage = (() => {
                     <div style="font-size:14px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${Components.escapeHtml(s.url)}">${Components.escapeHtml(s.url)}</div>
                     <div style="font-size:12px;color:var(--text-tertiary);margin-top:3px">${time} · ${s.width || '-'}×${s.height || '-'} · ${size}${s.note ? ' · ' + Components.escapeHtml(s.note) : ''}</div>
                 </div>
-                <button onclick="ScreenshotPage.deleteScreenshot('${Components.escapeHtml(s.filename)}', ${idx})"
+                <button data-action="delete" data-filename="${Components.escapeHtml(s.filename)}" data-index="${idx}"
                     style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;color:var(--text-tertiary);font-size:12px;transition:all 0.15s"
                     onmouseenter="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--text-tertiary)'">
                     ${Components.icon('trash', 12)}
@@ -83,12 +77,25 @@ const ScreenshotPage = (() => {
     }
 
     function bindEvents() {
+        if (!_container) return;
         const input = document.getElementById('screenshotUrl');
         if (input) {
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') capture();
             });
         }
+        _container.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
+            const action = target.dataset.action;
+            if (action === 'capture') {
+                capture();
+            } else if (action === 'delete') {
+                const filename = target.dataset.filename;
+                const idx = parseInt(target.dataset.index, 10);
+                deleteScreenshot(filename, idx);
+            }
+        });
     }
 
     async function loadScreenshots() {
@@ -156,5 +163,13 @@ const ScreenshotPage = (() => {
         }
     }
 
-    return { render, capture, deleteScreenshot };
+    function destroy() {
+        _screenshots = [];
+        _loading = false;
+        _container = null;
+    }
+
+    return { render, destroy };
 })();
+
+export default ScreenshotGrid;
