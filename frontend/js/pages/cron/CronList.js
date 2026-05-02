@@ -1,15 +1,19 @@
 /**
- * 定时任务页面 (Mac 极简风格)
+ * 定时任务页面 - 任务列表组件
  * 创建/编辑/删除/触发，真实可用
  */
 
-const CronPage = (() => {
+const CronList = (() => {
     let _jobs = [];
     let _showForm = false;
     let _editingJob = null;
+    let _destroyed = false;
 
-    async function render() {
-        const container = document.getElementById('contentBody');
+    async function render(containerSelector) {
+        _destroyed = false;
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+
         container.innerHTML = Components.createLoading();
 
         try {
@@ -19,8 +23,9 @@ const CronPage = (() => {
             _jobs = [];
         }
 
+        if (_destroyed) return;
         container.innerHTML = buildPage();
-        bindEvents();
+        bindEvents(container);
     }
 
     function buildPage() {
@@ -29,22 +34,18 @@ const CronPage = (() => {
 
         const activeCount = _jobs.filter((j) => j.status === 'active').length;
 
-        // 统计
         const statsHtml = `<div class="stats">
             ${Components.renderStatCard('总任务', _jobs.length, '', 'clock', 'blue')}
             ${Components.renderStatCard('运行中', activeCount, '', 'check', 'green')}
             ${Components.renderStatCard('暂停', _jobs.length - activeCount, '', 'pause', 'orange')}
         </div>`;
 
-        // 操作按钮
         const actionsHtml = `<div style="display:flex;justify-content:flex-end;margin-bottom:16px">
-            <button class="btn btn-primary" onclick="CronPage.showCreateForm()">创建任务</button>
+            <button class="btn btn-primary" data-action="showCreateForm">创建任务</button>
         </div>`;
 
-        // 创建/编辑表单
         const formHtml = _showForm ? buildForm() : '';
 
-        // 任务列表
         const jobsHtml =
             _jobs.length === 0
                 ? Components.createEmptyState(
@@ -66,9 +67,9 @@ const CronPage = (() => {
                         <td style="font-size:12px;color:var(--text-tertiary)">${j.last_run ? Components.formatDateTime(j.last_run) : '-'}</td>
                         <td>
                             <div style="display:flex;gap:4px">
-                                <button class="btn btn-sm btn-ghost" onclick="CronPage.triggerJob('${j.id}')" title="立即执行">▶️</button>
-                                <button class="btn btn-sm btn-ghost" onclick="CronPage.editJob('${j.id}')" title="编辑">${Components.icon('edit', 14)}</button>
-                                <button class="btn btn-sm btn-ghost" style="color:var(--red)" onclick="CronPage.deleteJob('${j.id}')" title="删除">${Components.icon('trash', 16)}</button>
+                                <button class="btn btn-sm btn-ghost" data-action="triggerJob" data-id="${j.id}" title="立即执行">&#9654;</button>
+                                <button class="btn btn-sm btn-ghost" data-action="editJob" data-id="${j.id}" title="编辑">${Components.icon('edit', 14)}</button>
+                                <button class="btn btn-sm btn-ghost" style="color:var(--red)" data-action="deleteJob" data-id="${j.id}" title="删除">${Components.icon('trash', 16)}</button>
                             </div>
                         </td>
                     </tr>`,
@@ -83,11 +84,11 @@ const CronPage = (() => {
     function buildForm() {
         const isEdit = _editingJob !== null;
         const job = isEdit ? _jobs.find((j) => j.id === _editingJob) : {};
-        return `<div class="modal-overlay" onclick="CronPage.hideForm()">
+        return `<div class="modal-overlay" data-action="hideForm">
             <div class="modal" onclick="event.stopPropagation()">
                 <div class="modal-header">
                     <h3>${isEdit ? '编辑定时任务' : '创建定时任务'}</h3>
-                    <button class="modal-close" onclick="CronPage.hideForm()">${Components.icon('x', 14)}</button>
+                    <button class="modal-close" data-action="hideForm">${Components.icon('x', 14)}</button>
                 </div>
                 <div class="modal-body">
                     ${Components.formGroup('任务名称', `<input class="form-input" id="cronName" placeholder="例如: 每日备份" value="${Components.escapeHtml(job.name || '')}">`)}
@@ -102,35 +103,35 @@ const CronPage = (() => {
                     )}
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-ghost" onclick="CronPage.hideForm()">取消</button>
-                    <button class="btn btn-primary" onclick="CronPage.saveJob()">${isEdit ? '保存' : '创建'}</button>
+                    <button class="btn btn-ghost" data-action="hideForm">取消</button>
+                    <button class="btn btn-primary" data-action="saveJob">${isEdit ? '保存' : '创建'}</button>
                 </div>
             </div>
         </div>`;
     }
 
-    function showCreateForm() {
+    function showCreateForm(container) {
         _showForm = true;
         _editingJob = null;
-        document.getElementById('contentBody').innerHTML = buildPage();
-        bindEvents();
+        container.innerHTML = buildPage();
+        bindEvents(container);
     }
 
-    function editJob(id) {
+    function editJob(id, container) {
         _showForm = true;
         _editingJob = id;
-        document.getElementById('contentBody').innerHTML = buildPage();
-        bindEvents();
+        container.innerHTML = buildPage();
+        bindEvents(container);
     }
 
-    function hideForm() {
+    function hideForm(container) {
         _showForm = false;
         _editingJob = null;
-        document.getElementById('contentBody').innerHTML = buildPage();
-        bindEvents();
+        container.innerHTML = buildPage();
+        bindEvents(container);
     }
 
-    async function saveJob() {
+    async function saveJob(container) {
         const name = document.getElementById('cronName').value.trim();
         const schedule = document.getElementById('cronSchedule').value.trim();
         const command = document.getElementById('cronCommand').value.trim();
@@ -151,7 +152,7 @@ const CronPage = (() => {
             }
             _showForm = false;
             _editingJob = null;
-            await render();
+            await render('#cron-list');
         } catch (err) {
             Components.Toast.error(`操作失败: ${err.message}`);
         }
@@ -169,7 +170,7 @@ const CronPage = (() => {
         try {
             await API.cron.delete(id);
             Components.Toast.success('任务已删除');
-            await render();
+            await render('#cron-list');
         } catch (err) {
             Components.Toast.error(`删除失败: ${err.message}`);
         }
@@ -192,7 +193,42 @@ const CronPage = (() => {
         }
     }
 
-    function bindEvents() {}
+    function bindEvents(container) {
+        container.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-action]');
+            if (!target) return;
 
-    return { render, showCreateForm, editJob, hideForm, saveJob, deleteJob, triggerJob };
+            const action = target.dataset.action;
+            const id = target.dataset.id;
+
+            switch (action) {
+                case 'showCreateForm':
+                    showCreateForm(container);
+                    break;
+                case 'editJob':
+                    editJob(id, container);
+                    break;
+                case 'hideForm':
+                    hideForm(container);
+                    break;
+                case 'saveJob':
+                    saveJob(container);
+                    break;
+                case 'deleteJob':
+                    deleteJob(id);
+                    break;
+                case 'triggerJob':
+                    triggerJob(id);
+                    break;
+            }
+        });
+    }
+
+    function destroy() {
+        _destroyed = true;
+    }
+
+    return { render, destroy };
 })();
+
+export default CronList;
