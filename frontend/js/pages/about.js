@@ -5,6 +5,25 @@
 const AboutPage = (() => {
     const CHANGELOG = [
         {
+            version: 'v8.0.0',
+            date: '2026-05-02 02:22',
+            title: '知识库增强大版本',
+            changes: [
+                '新增知识库模块：规则/知识/经验/记忆/审核五大类管理',
+                '新增33个MCP工具：AI可直接操作知识库',
+                '新增审核队列：AI写入→人工审核→生效',
+                '新增jieba+FTS5全文检索+跨类型统一搜索',
+                '新增上下文预算机制：动态Token分配替代硬限制',
+                '新增前端知识库页面：6Tab+搜索+CRUD+审核',
+                '新增AI自动提取：从对话自动提取知识/经验/记忆',
+                '新增向后兼容层：MEMORY.md/USER.md/learnings.md双向同步',
+                '新增Obsidian同步适配',
+                '修复会话双写不完整：create/delete/update同步SQLite',
+                '修复Skills格式不一致：统一为目录格式',
+                '修复MEMORY.md硬限制：改为动态ContextBudget',
+            ],
+        },
+        {
             version: '6.1.0',
             date: '2026-04-30',
             title: '后续优化 — 数据填充/SSE驱动/双向同步/MCP增强',
