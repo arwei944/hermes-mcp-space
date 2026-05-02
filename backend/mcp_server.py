@@ -1133,6 +1133,35 @@ def _get_tools():
                 "query": {"type": "string", "description": "查询文本"}
             }
         }
+    },
+    # ---- Knowledge Base Compat Tools ----
+    {
+        "name": "knowledge_extract_session",
+        "description": "从指定会话中自动提取知识、经验、记忆（提交审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "会话 ID"},
+                "auto_submit": {"type": "boolean", "default": true, "description": "是否自动提交审核"}
+            },
+            "required": ["session_id"]
+        }
+    },
+    {
+        "name": "compat_sync_md_to_db",
+        "description": "从 MD 文件导入到知识库（MEMORY.md + USER.md + learnings.md）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "name": "compat_sync_db_to_md",
+        "description": "从知识库导出到 MD 文件",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
     })
 
     return tools
@@ -2509,7 +2538,8 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                    "knowledge_list", "knowledge_get", "knowledge_create", "knowledge_update", "knowledge_delete", "knowledge_search", "knowledge_extract",
                    "experience_list", "experience_get", "experience_create", "experience_update", "experience_resolve", "experience_search",
                    "memory_list", "memory_get", "memory_create", "memory_update", "memory_forget", "memory_search",
-                   "review_list", "review_stats", "unified_search", "knowledge_overview", "context_budget_preview"):
+                   "review_list", "review_stats", "unified_search", "knowledge_overview", "context_budget_preview",
+                   "knowledge_extract_session", "compat_sync_md_to_db", "compat_sync_db_to_md"):
         try:
             from backend.services.knowledge_service import KnowledgeService
             from backend.services.review_service import ReviewService
@@ -2699,6 +2729,25 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
                 budget_svc = ContextBudgetService()
                 context = budget_svc.build_context(session_id=arguments.get("session_id", ""), query=arguments.get("query", ""))
                 return json.dumps({"success": True, "data": {"content": context, "char_count": len(context)}}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_extract_session":
+                from backend.services.knowledge_extractor import KnowledgeExtractor
+                extractor = KnowledgeExtractor()
+                result = extractor.extract_from_session(arguments["session_id"], auto_submit=arguments.get("auto_submit", True))
+                return json.dumps({"success": True, "data": result}, ensure_ascii=False, indent=2)
+
+            elif name == "compat_sync_md_to_db":
+                from backend.services.compat_service import CompatService
+                svc = CompatService()
+                results = {"memory_imported": svc.import_memory_md(), "user_imported": svc.import_user_md(), "learnings_imported": svc.import_learnings_md()}
+                svc.save_memory_md(); svc.save_user_md(); svc.save_learnings_md()
+                return json.dumps({"success": True, "data": results, "message": f"导入 {sum(results.values())} 条记录"}, ensure_ascii=False, indent=2)
+
+            elif name == "compat_sync_db_to_md":
+                from backend.services.compat_service import CompatService
+                svc = CompatService()
+                svc.save_memory_md(); svc.save_user_md(); svc.save_learnings_md()
+                return json.dumps({"success": True, "message": "已同步到 MD 文件"}, ensure_ascii=False, indent=2)
 
         except Exception as e:
             raise ValueError(f"❌ 知识库工具 '{name}' 执行失败: {e}")

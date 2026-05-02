@@ -88,3 +88,12 @@ async def batch_reject(req: BatchActionRequest):
     from backend.services.review_service import ReviewService
     svc = ReviewService()
     return {"success": True, "data": svc.batch_reject(req.ids, "admin")}
+
+
+@router.post("/cleanup")
+async def cleanup_expired_reviews():
+    """清理过期的审核记录（7天未处理）"""
+    from backend.services.review_service import ReviewService
+    svc = ReviewService()
+    svc.expire_old_reviews()
+    return {"success": True, "message": "过期审核已清理"}

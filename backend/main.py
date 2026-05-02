@@ -70,6 +70,7 @@ from backend.routers import (  # noqa: E402
     reviews,
     search,
     context_budget,
+    compat,
 )
 
 app.include_router(sessions.router)
@@ -93,6 +94,7 @@ app.include_router(memories_router.router)
 app.include_router(reviews.router)
 app.include_router(search.router)
 app.include_router(context_budget.router)
+app.include_router(compat.router)
 
 # ==================== v1 API 版本化路由（与原路由共享实例，向后兼容） ====================
 
