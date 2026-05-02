@@ -55,7 +55,27 @@ def build_full_html():
     # 自动扫描 JS 文件（支持子目录结构：优先 register.js，否则 *.js）
     core_js = ["js/core/Logger.js", "js/core/Store.js", "js/core/Bus.js",
                "js/core/ErrorHandler.js", "js/core/APIClient.js", "js/core/constants.js",
-               "js/core/init.js", "js/api.js", "js/components.js"]
+               "js/core/init.js", "js/api.js"]
+    # Components V2 目录结构：按依赖顺序加载子模块
+    components_dir = frontend_dir / "js" / "components"
+    components_register = components_dir / "register.js"
+    if components_register.exists():
+        # register.js 存在时，按 register.js 中的顺序加载（register.js 本身只是注释说明）
+        # 实际加载顺序：icons → utils → feedback → layout → form → data-display → index
+        component_files = [
+            "js/components/icons.js",
+            "js/components/utils.js",
+            "js/components/feedback.js",
+            "js/components/layout.js",
+            "js/components/form.js",
+            "js/components/data-display.js",
+            "js/components/index.js",
+        ]
+        core_js.extend(component_files)
+    else:
+        # 回退：扫描 components 目录下所有 .js 文件
+        for jsf in sorted(components_dir.glob("*.js")):
+            core_js.append(f"js/components/{jsf.name}")
     pages_dir = frontend_dir / "js" / "pages"
     page_files = []
     for item in sorted(pages_dir.iterdir()):
