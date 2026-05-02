@@ -52,12 +52,25 @@ def build_full_html():
 
     css = load_file(frontend_dir / "css" / "style.css")
 
-    # 自动扫描 JS 文件（不再手动维护列表）
-    core_js = ["js/api.js", "js/components.js"]
+    # 自动扫描 JS 文件（支持子目录结构：优先 register.js，否则 *.js）
+    core_js = ["js/core/Logger.js", "js/core/Store.js", "js/core/Bus.js",
+               "js/core/ErrorHandler.js", "js/core/APIClient.js", "js/core/constants.js",
+               "js/core/init.js", "js/api.js", "js/components.js"]
     pages_dir = frontend_dir / "js" / "pages"
-    page_files = sorted(
-        f"js/pages/{f.name}" for f in pages_dir.glob("*.js")
-    )
+    page_files = []
+    for item in sorted(pages_dir.iterdir()):
+        if item.is_file() and item.suffix == '.js':
+            # 旧式单文件页面
+            page_files.append(f"js/pages/{item.name}")
+        elif item.is_dir():
+            # V2 目录结构：优先 register.js
+            register = item / "register.js"
+            if register.exists():
+                page_files.append(f"js/pages/{item.name}/register.js")
+            else:
+                # 回退：扫描目录下所有 .js 文件
+                for jsf in sorted(item.glob("*.js")):
+                    page_files.append(f"js/pages/{item.name}/{jsf.name}")
     app_js = ["js/app.js"]
     js_files = core_js + page_files + app_js
 
