@@ -50,7 +50,13 @@ def build_full_html():
     """Build a completely self-contained HTML page with all CSS and JS inlined."""
     frontend_dir = Path(__file__).resolve().parent / "frontend"
 
-    css = load_file(frontend_dir / "css" / "style.css")
+    # Load ALL CSS files and inline them
+    css_files = ["css/style.css", "css/dark-theme.css", "css/knowledge.css"]
+    all_css = ""
+    for css_path in css_files:
+        css_content = load_file(frontend_dir / css_path)
+        if css_content:
+            all_css += f"/* === {css_path} === */\n{css_content}\n\n"
 
     # 自动扫描 JS 文件（支持子目录结构：优先 register.js，否则 *.js）
     core_js = ["js/core/Logger.js", "js/core/Store.js", "js/core/Bus.js",
@@ -203,11 +209,9 @@ def build_full_html():
 
     index_html = load_file(frontend_dir / "index.html")
 
-    # Replace CSS link with inline style
-    html = index_html.replace(
-        '<link rel="stylesheet" href="/css/style.css">',
-        f'<style>\n{css}\n</style>'
-    )
+    # Replace CSS link with inline style (all CSS files combined)
+    html = re.sub(r'<link\s+rel="stylesheet"\s+href="[^"]*\.css"[^>]*>', '', html)
+    html = html.replace('</head>', f'<style>\n{all_css}\n</style>\n</head>')
 
     # Remove all <script src=...> tags (with optional attributes like defer, type, etc.)
     html = re.sub(r'<script\s+[^>]*src="[^"]*"[^>]*></script>', '', html)
