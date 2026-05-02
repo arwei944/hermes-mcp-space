@@ -55,6 +55,9 @@ const App = (() => {
         initTheme();
         replaceNavIcons();
 
+        // 初始化 Router 并注册所有路由
+        initRouter();
+
         // 预加载版本元数据
         API.meta();
 
@@ -78,6 +81,58 @@ const App = (() => {
 
         // 初始路由
         handleRoute();
+    }
+
+    // --- Router 集成 ---
+
+    function initRouter() {
+        if (typeof Router === 'undefined') return;
+
+        // 注册所有路由
+        const routesMap = {};
+        Object.keys(pages).forEach(function(key) {
+            routesMap[key] = {
+                title: pageTitles[key] || key,
+                component: pages[key]
+            };
+        });
+        Router.registerAll(routesMap);
+
+        // 路由守卫：切换页面时更新导航状态
+        Router.guard(function(to, from) {
+            updateNavActive(to);
+            document.getElementById('pageTitle').textContent = pageTitles[to] || to;
+        });
+
+        // 初始化 hash 监听
+        Router.init();
+
+        // 监听 Router 事件进行页面切换
+        if (typeof Bus !== 'undefined' && typeof Events !== 'undefined') {
+            Bus.on(Events.PAGE_CHANGED, function(data) {
+                var path = data.path;
+                if (pages[path]) {
+                    // 销毁旧页面
+                    if (_currentPage && pages[_currentPage] && pages[_currentPage].destroy) {
+                        pages[_currentPage].destroy();
+                    }
+                    _currentPage = path;
+                    // 渲染新页面
+                    pages[path].render().catch(function(err) {
+                        if (typeof Logger !== 'undefined') Logger.error('[App]', '页面 ' + path + ' 渲染失败:', err);
+                        document.getElementById('contentBody').innerHTML = Components.createEmptyState(
+                            Components.icon('alertTriangle', 14),
+                            '页面加载失败',
+                            err.message || '未知错误',
+                            '<button class="btn btn-primary" onclick="App.refresh()">重试</button>'
+                        );
+                    });
+                    closeMobileSidebar();
+                }
+            });
+        }
+
+        if (typeof Logger !== 'undefined') Logger.info('[App]', 'Router initialized with ' + Object.keys(routesMap).length + ' routes');
     }
 
     function initTheme() {
