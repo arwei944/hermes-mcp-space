@@ -8,9 +8,9 @@ const OpsAlertsPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.rulesTab = await import('./RulesTab.js');
-        _modules.historyTab = await import('./HistoryTab.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.rulesTab = (await import('./RulesTab.js')).default;
+        _modules.historyTab = (await import('./HistoryTab.js')).default;
     }
 
     async function render() {

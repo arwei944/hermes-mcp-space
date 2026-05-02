@@ -9,8 +9,8 @@ const KnowledgeBatch = (() => {
 
     async function _ensureModules() {
         if (_modules.sessionList) return;
-        _modules.sessionList = await import('./SessionList.js');
-        _modules.chatView = await import('./ChatView.js');
+        _modules.sessionList = (await import('./SessionList.js')).default;
+        _modules.chatView = (await import('./ChatView.js')).default;
     }
 
     // ==========================================

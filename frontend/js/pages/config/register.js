@@ -8,8 +8,8 @@ const ConfigPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.configForm = await import('./ConfigForm.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.configForm = (await import('./ConfigForm.js')).default;
     }
 
     async function render() {

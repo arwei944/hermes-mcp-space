@@ -8,9 +8,9 @@ const ChatPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.chatSidebar = await import('./ChatSidebar.js');
-        _modules.chatMessages = await import('./ChatMessages.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.chatSidebar = (await import('./ChatSidebar.js')).default;
+        _modules.chatMessages = (await import('./ChatMessages.js')).default;
     }
 
     function _buildCallbacks() {

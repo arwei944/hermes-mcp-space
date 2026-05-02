@@ -8,10 +8,10 @@ const MemoryPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.editorTab = await import('./EditorTab.js');
-        _modules.learningsTab = await import('./LearningsTab.js');
-        _modules.summariesTab = await import('./SummariesTab.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.editorTab = (await import('./EditorTab.js')).default;
+        _modules.learningsTab = (await import('./LearningsTab.js')).default;
+        _modules.summariesTab = (await import('./SummariesTab.js')).default;
     }
 
     async function render() {

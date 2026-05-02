@@ -8,11 +8,11 @@ const SessionsPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.sessionList = await import('./SessionList.js');
-        _modules.chatView = await import('./ChatView.js');
-        _modules.analyticsView = await import('./AnalyticsView.js');
-        _modules.sessionDetail = await import('./SessionDetail.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.sessionList = (await import('./SessionList.js')).default;
+        _modules.chatView = (await import('./ChatView.js')).default;
+        _modules.analyticsView = (await import('./AnalyticsView.js')).default;
+        _modules.sessionDetail = (await import('./SessionDetail.js')).default;
     }
 
     async function render(sessionId) {

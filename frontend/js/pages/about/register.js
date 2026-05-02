@@ -8,10 +8,10 @@ const AboutPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.versionTab = await import('./VersionTab.js');
-        _modules.changelogTab = await import('./ChangelogTab.js');
-        _modules.techStackTab = await import('./TechStackTab.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.versionTab = (await import('./VersionTab.js')).default;
+        _modules.changelogTab = (await import('./ChangelogTab.js')).default;
+        _modules.techStackTab = (await import('./TechStackTab.js')).default;
     }
 
     async function render() {

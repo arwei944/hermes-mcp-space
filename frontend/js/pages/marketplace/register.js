@@ -11,15 +11,15 @@ const MarketplacePage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.mcpConfig = await import('./MCPConfig.js');
-        _modules.mcpOperations = await import('./MCPOperations.js');
-        _modules.mcpTab = await import('./MCPTab.js');
-        _modules.skillTemplates = await import('./SkillTemplates.js');
-        _modules.skillEditor = await import('./SkillEditor.js');
-        _modules.skillsTab = await import('./SkillsTab.js');
-        _modules.toolsTab = await import('./ToolsTab.js');
-        _modules.pluginsTab = await import('./PluginsTab.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.mcpConfig = (await import('./MCPConfig.js')).default;
+        _modules.mcpOperations = (await import('./MCPOperations.js')).default;
+        _modules.mcpTab = (await import('./MCPTab.js')).default;
+        _modules.skillTemplates = (await import('./SkillTemplates.js')).default;
+        _modules.skillEditor = (await import('./SkillEditor.js')).default;
+        _modules.skillsTab = (await import('./SkillsTab.js')).default;
+        _modules.toolsTab = (await import('./ToolsTab.js')).default;
+        _modules.pluginsTab = (await import('./PluginsTab.js')).default;
     }
 
     async function render(tab) {

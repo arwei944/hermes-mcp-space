@@ -3,8 +3,8 @@ const ScreenshotPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.screenshotGrid = await import('./ScreenshotGrid.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.screenshotGrid = (await import('./ScreenshotGrid.js')).default;
     }
 
     async function render() {
