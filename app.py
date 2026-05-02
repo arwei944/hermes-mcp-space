@@ -167,10 +167,10 @@ def build_full_html():
         preceding = all_js[:pos]
         last_marker = preceding.rfind("// === ")
         if last_marker >= 0:
-            # Skip "// === " (6 chars) to find the closing " ==="
-            end_marker = preceding.find(" ===", last_marker + 6)
+            # Skip "// === " (7 chars: // + space + === + space) to find the closing " ==="
+            end_marker = preceding.find(" ===", last_marker + 7)
             if end_marker >= 0:
-                dir_path = preceding[last_marker+6:end_marker]
+                dir_path = preceding[last_marker+7:end_marker]
                 parts = dir_path.rsplit('/', 1)
                 if len(parts) > 1:
                     return f"Promise.resolve(window.__m && window.__m['{parts[0]}/{mod_file}'])"
