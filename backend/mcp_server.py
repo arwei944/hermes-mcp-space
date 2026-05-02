@@ -743,6 +743,427 @@ def _get_tools():
         }
     })
 
+    # ---- Knowledge Base Tools ----
+    # Rules (6)
+    tools.append({
+        "name": "rule_list",
+        "description": "列出知识库规则",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string", "description": "分类筛选"},
+                "tags": {"type": "string", "description": "标签筛选（逗号分隔）"},
+                "priority_min": {"type": "integer", "default": 0, "description": "最低优先级"},
+                "limit": {"type": "integer", "default": 50, "description": "返回数量上限"}
+            }
+        }
+    })
+    tools.append({
+        "name": "rule_get",
+        "description": "获取规则详情",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "rule_id": {"type": "string", "description": "规则 ID"}
+            },
+            "required": ["rule_id"]
+        }
+    })
+    tools.append({
+        "name": "rule_create",
+        "description": "创建规则（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "规则标题"},
+                "content": {"type": "string", "description": "规则内容"},
+                "category": {"type": "string", "default": "general", "description": "分类"},
+                "priority": {"type": "integer", "default": 5, "description": "优先级"},
+                "scope": {"type": "string", "default": "global", "description": "作用范围"},
+                "tags": {"type": "string", "description": "标签（逗号分隔）"},
+                "reason": {"type": "string", "description": "创建原因"}
+            },
+            "required": ["title", "content"]
+        }
+    })
+    tools.append({
+        "name": "rule_update",
+        "description": "更新规则（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "rule_id": {"type": "string", "description": "规则 ID"},
+                "title": {"type": "string", "description": "新标题"},
+                "content": {"type": "string", "description": "新内容"},
+                "category": {"type": "string", "description": "新分类"},
+                "priority": {"type": "integer", "description": "新优先级"},
+                "tags": {"type": "string", "description": "新标签（逗号分隔）"},
+                "reason": {"type": "string", "description": "更新原因"}
+            },
+            "required": ["rule_id"]
+        }
+    })
+    tools.append({
+        "name": "rule_delete",
+        "description": "删除规则（需审核，高风险）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "rule_id": {"type": "string", "description": "规则 ID"},
+                "reason": {"type": "string", "description": "删除原因"}
+            },
+            "required": ["rule_id"]
+        }
+    })
+    tools.append({
+        "name": "rule_search",
+        "description": "搜索规则（全文检索）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "搜索关键词"},
+                "limit": {"type": "integer", "default": 20, "description": "返回数量上限"}
+            },
+            "required": ["query"]
+        }
+    })
+    # Knowledge (7)
+    tools.append({
+        "name": "knowledge_list",
+        "description": "列出知识条目",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string", "description": "分类筛选"},
+                "tags": {"type": "string", "description": "标签筛选（逗号分隔）"},
+                "confidence_min": {"type": "number", "default": 0, "description": "最低置信度"},
+                "limit": {"type": "integer", "default": 50, "description": "返回数量上限"}
+            }
+        }
+    })
+    tools.append({
+        "name": "knowledge_get",
+        "description": "获取知识详情",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "knowledge_id": {"type": "string", "description": "知识 ID"}
+            },
+            "required": ["knowledge_id"]
+        }
+    })
+    tools.append({
+        "name": "knowledge_create",
+        "description": "创建知识条目（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "标题"},
+                "content": {"type": "string", "description": "内容"},
+                "summary": {"type": "string", "description": "摘要"},
+                "category": {"type": "string", "default": "general", "description": "分类"},
+                "tags": {"type": "string", "description": "标签（逗号分隔）"},
+                "source": {"type": "string", "default": "ai_extracted", "description": "来源"},
+                "source_ref": {"type": "string", "description": "来源引用"},
+                "confidence": {"type": "number", "default": 0.8, "description": "置信度"},
+                "reason": {"type": "string", "description": "创建原因"}
+            },
+            "required": ["title", "content"]
+        }
+    })
+    tools.append({
+        "name": "knowledge_update",
+        "description": "更新知识条目（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "knowledge_id": {"type": "string", "description": "知识 ID"},
+                "title": {"type": "string", "description": "新标题"},
+                "content": {"type": "string", "description": "新内容"},
+                "summary": {"type": "string", "description": "新摘要"},
+                "category": {"type": "string", "description": "新分类"},
+                "tags": {"type": "string", "description": "新标签（逗号分隔）"},
+                "reason": {"type": "string", "description": "更新原因"}
+            },
+            "required": ["knowledge_id"]
+        }
+    })
+    tools.append({
+        "name": "knowledge_delete",
+        "description": "删除知识条目（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "knowledge_id": {"type": "string", "description": "知识 ID"},
+                "reason": {"type": "string", "description": "删除原因"}
+            },
+            "required": ["knowledge_id"]
+        }
+    })
+    tools.append({
+        "name": "knowledge_search",
+        "description": "搜索知识（全文检索）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "搜索关键词"},
+                "limit": {"type": "integer", "default": 20, "description": "返回数量上限"}
+            },
+            "required": ["query"]
+        }
+    })
+    tools.append({
+        "name": "knowledge_extract",
+        "description": "从对话中提取知识（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "会话 ID"},
+                "reason": {"type": "string", "description": "提取原因"}
+            },
+            "required": ["session_id"]
+        }
+    })
+    # Experiences (6)
+    tools.append({
+        "name": "experience_list",
+        "description": "列出经验条目",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string", "description": "分类筛选"},
+                "severity": {"type": "string", "description": "严重程度筛选"},
+                "is_resolved": {"type": "boolean", "description": "是否已解决"},
+                "tool_name": {"type": "string", "description": "工具名称筛选"},
+                "limit": {"type": "integer", "default": 50, "description": "返回数量上限"}
+            }
+        }
+    })
+    tools.append({
+        "name": "experience_get",
+        "description": "获取经验详情",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "exp_id": {"type": "string", "description": "经验 ID"}
+            },
+            "required": ["exp_id"]
+        }
+    })
+    tools.append({
+        "name": "experience_create",
+        "description": "记录新经验（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "标题"},
+                "content": {"type": "string", "description": "内容"},
+                "category": {"type": "string", "default": "best_practice", "description": "分类"},
+                "context": {"type": "string", "description": "上下文"},
+                "tool_name": {"type": "string", "description": "相关工具"},
+                "error_type": {"type": "string", "description": "错误类型"},
+                "severity": {"type": "string", "default": "medium", "description": "严重程度"},
+                "tags": {"type": "string", "description": "标签（逗号分隔）"},
+                "reason": {"type": "string", "description": "创建原因"}
+            },
+            "required": ["title", "content"]
+        }
+    })
+    tools.append({
+        "name": "experience_update",
+        "description": "更新经验（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "exp_id": {"type": "string", "description": "经验 ID"},
+                "title": {"type": "string", "description": "新标题"},
+                "content": {"type": "string", "description": "新内容"},
+                "category": {"type": "string", "description": "新分类"},
+                "tags": {"type": "string", "description": "新标签（逗号分隔）"},
+                "reason": {"type": "string", "description": "更新原因"}
+            },
+            "required": ["exp_id"]
+        }
+    })
+    tools.append({
+        "name": "experience_resolve",
+        "description": "标记经验为已解决（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "exp_id": {"type": "string", "description": "经验 ID"},
+                "reason": {"type": "string", "description": "解决原因"}
+            },
+            "required": ["exp_id"]
+        }
+    })
+    tools.append({
+        "name": "experience_search",
+        "description": "搜索经验（全文检索）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "搜索关键词"},
+                "limit": {"type": "integer", "default": 20, "description": "返回数量上限"}
+            },
+            "required": ["query"]
+        }
+    })
+    # Memories (6)
+    tools.append({
+        "name": "memory_list",
+        "description": "列出记忆条目",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string", "description": "分类筛选"},
+                "importance_min": {"type": "integer", "default": 0, "description": "最低重要度"},
+                "limit": {"type": "integer", "default": 50, "description": "返回数量上限"}
+            }
+        }
+    })
+    tools.append({
+        "name": "memory_get",
+        "description": "获取记忆详情",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "mem_id": {"type": "string", "description": "记忆 ID"}
+            },
+            "required": ["mem_id"]
+        }
+    })
+    tools.append({
+        "name": "memory_create",
+        "description": "创建新记忆（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "content": {"type": "string", "description": "记忆内容"},
+                "category": {"type": "string", "default": "agent_memory", "description": "分类"},
+                "title": {"type": "string", "description": "标题"},
+                "importance": {"type": "integer", "default": 5, "description": "重要度"},
+                "tags": {"type": "string", "description": "标签（逗号分隔）"},
+                "reason": {"type": "string", "description": "创建原因"}
+            },
+            "required": ["content"]
+        }
+    })
+    tools.append({
+        "name": "memory_update",
+        "description": "更新记忆（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "mem_id": {"type": "string", "description": "记忆 ID"},
+                "content": {"type": "string", "description": "新内容"},
+                "importance": {"type": "integer", "description": "新重要度"},
+                "tags": {"type": "string", "description": "新标签（逗号分隔）"},
+                "reason": {"type": "string", "description": "更新原因"}
+            },
+            "required": ["mem_id"]
+        }
+    })
+    tools.append({
+        "name": "memory_forget",
+        "description": "删除/归档记忆（需审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "mem_id": {"type": "string", "description": "记忆 ID"},
+                "reason": {"type": "string", "description": "删除原因"}
+            },
+            "required": ["mem_id"]
+        }
+    })
+    tools.append({
+        "name": "memory_search",
+        "description": "搜索记忆（全文检索）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "搜索关键词"},
+                "limit": {"type": "integer", "default": 20, "description": "返回数量上限"}
+            },
+            "required": ["query"]
+        }
+    })
+    # Review + Search (5)
+    tools.append({
+        "name": "review_list",
+        "description": "列出审核项",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string", "default": "pending", "description": "审核状态筛选"},
+                "limit": {"type": "integer", "default": 50, "description": "返回数量上限"}
+            }
+        }
+    })
+    tools.append({
+        "name": "review_stats",
+        "description": "获取审核统计",
+        "inputSchema": {"type": "object", "properties": {}}
+    })
+    tools.append({
+        "name": "unified_search",
+        "description": "跨类统一搜索（规则/知识/经验/记忆）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "搜索关键词"},
+                "types": {"type": "string", "description": "搜索类型（逗号分隔，如 rules,knowledge,experiences,memories）"},
+                "limit": {"type": "integer", "default": 30, "description": "返回数量上限"}
+            },
+            "required": ["query"]
+        }
+    })
+    tools.append({
+        "name": "knowledge_overview",
+        "description": "获取知识库概览统计",
+        "inputSchema": {"type": "object", "properties": {}}
+    })
+    tools.append({
+        "name": "context_budget_preview",
+        "description": "预览当前上下文预算分配",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "会话 ID"},
+                "query": {"type": "string", "description": "查询文本"}
+            }
+        }
+    },
+    # ---- Knowledge Base Compat Tools ----
+    {
+        "name": "knowledge_extract_session",
+        "description": "从指定会话中自动提取知识、经验、记忆（提交审核）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "会话 ID"},
+                "auto_submit": {"type": "boolean", "default": true, "description": "是否自动提交审核"}
+            },
+            "required": ["session_id"]
+        }
+    },
+    {
+        "name": "compat_sync_md_to_db",
+        "description": "从 MD 文件导入到知识库（MEMORY.md + USER.md + learnings.md）",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    },
+    {
+        "name": "compat_sync_db_to_md",
+        "description": "从知识库导出到 MD 文件",
+        "inputSchema": {
+            "type": "object",
+            "properties": {}
+        }
+    })
+
     return tools
 
 
@@ -2111,6 +2532,225 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
             raise
         except Exception as e:
             raise ValueError(f"❌ 调用外部工具 '{name}' 失败: {e}\n建议：\n1. 使用 refresh_mcp_servers 刷新服务器连接后重试\n2. 检查传递给工具的参数是否符合要求\n3. 确认外部 MCP 服务器正在运行且网络可达")
+
+    # ---- Knowledge Base Tools ----
+    elif name in ("rule_list", "rule_get", "rule_create", "rule_update", "rule_delete", "rule_search",
+                   "knowledge_list", "knowledge_get", "knowledge_create", "knowledge_update", "knowledge_delete", "knowledge_search", "knowledge_extract",
+                   "experience_list", "experience_get", "experience_create", "experience_update", "experience_resolve", "experience_search",
+                   "memory_list", "memory_get", "memory_create", "memory_update", "memory_forget", "memory_search",
+                   "review_list", "review_stats", "unified_search", "knowledge_overview", "context_budget_preview",
+                   "knowledge_extract_session", "compat_sync_md_to_db", "compat_sync_db_to_md"):
+        try:
+            from backend.services.knowledge_service import KnowledgeService
+            from backend.services.review_service import ReviewService
+            from backend.services.search_service import SearchService
+            from backend.services.context_budget_service import ContextBudgetService
+
+            knowledge_svc = KnowledgeService()
+            review_svc = ReviewService()
+            search_svc = SearchService()
+
+            if name == "rule_list":
+                tag_list = [t.strip() for t in arguments.get("tags", "").split(",") if t.strip()] if arguments.get("tags") else None
+                rules = knowledge_svc.list_rules(category=arguments.get("category") or None, tags=tag_list, priority_min=arguments.get("priority_min", 0) or None, limit=arguments.get("limit", 50))
+                return json.dumps({"success": True, "data": rules, "count": len(rules)}, ensure_ascii=False, indent=2)
+
+            elif name == "rule_get":
+                rule = knowledge_svc.get_rule(arguments["rule_id"])
+                if not rule: return json.dumps({"success": False, "error": f"规则 {arguments['rule_id']} 不存在"}, ensure_ascii=False)
+                return json.dumps({"success": True, "data": rule}, ensure_ascii=False, indent=2)
+
+            elif name == "rule_create":
+                tag_list = [t.strip() for t in arguments.get("tags", "").split(",") if t.strip()] if arguments.get("tags") else []
+                payload = json.dumps({"title": arguments["title"], "content": arguments["content"], "category": arguments.get("category", "general"), "priority": arguments.get("priority", 5), "scope": arguments.get("scope", "global"), "tags": tag_list}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="rule", action="create", title=arguments["title"], content=payload, reason=arguments.get("reason", ""), confidence=0.9, priority="normal")
+                return json.dumps({"success": True, "message": "规则已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "rule_update":
+                rule = knowledge_svc.get_rule(arguments["rule_id"])
+                if not rule: return json.dumps({"success": False, "error": f"规则 {arguments['rule_id']} 不存在"}, ensure_ascii=False)
+                updates = {}
+                if arguments.get("title"): updates["title"] = arguments["title"]
+                if arguments.get("content"): updates["content"] = arguments["content"]
+                if arguments.get("category"): updates["category"] = arguments["category"]
+                if arguments.get("priority", 0) > 0: updates["priority"] = arguments["priority"]
+                if arguments.get("tags"): updates["tags"] = [t.strip() for t in arguments["tags"].split(",") if t.strip()]
+                review = review_svc.submit_review(target_type="rule", action="update", title=f"更新规则: {rule['title']}", content=json.dumps(updates, ensure_ascii=False), old_content=json.dumps({"title": rule["title"], "content": rule["content"]}, ensure_ascii=False), reason=arguments.get("reason", ""), target_id=arguments["rule_id"])
+                return json.dumps({"success": True, "message": "规则更新已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "rule_delete":
+                rule = knowledge_svc.get_rule(arguments["rule_id"])
+                if not rule: return json.dumps({"success": False, "error": f"规则 {arguments['rule_id']} 不存在"}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="rule", action="delete", title=f"删除规则: {rule['title']}", content="", old_content=rule["content"], reason=arguments.get("reason", "AI 请求删除"), target_id=arguments["rule_id"], priority="urgent")
+                return json.dumps({"success": True, "message": "规则删除已提交审核（高风险）", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "rule_search":
+                results = search_svc.search_single_type("rules", arguments["query"], limit=arguments.get("limit", 20))
+                return json.dumps({"success": True, "data": results, "count": len(results)}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_list":
+                tag_list = [t.strip() for t in arguments.get("tags", "").split(",") if t.strip()] if arguments.get("tags") else None
+                items = knowledge_svc.list_knowledge(category=arguments.get("category") or None, tags=tag_list, confidence_min=arguments.get("confidence_min", 0) or None, limit=arguments.get("limit", 50))
+                return json.dumps({"success": True, "data": items, "count": len(items)}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_get":
+                item = knowledge_svc.get_knowledge(arguments["knowledge_id"])
+                if not item: return json.dumps({"success": False, "error": f"知识 {arguments['knowledge_id']} 不存在"}, ensure_ascii=False)
+                return json.dumps({"success": True, "data": item}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_create":
+                tag_list = [t.strip() for t in arguments.get("tags", "").split(",") if t.strip()] if arguments.get("tags") else []
+                payload = json.dumps({"title": arguments["title"], "content": arguments["content"], "summary": arguments.get("summary", ""), "category": arguments.get("category", "general"), "tags": tag_list, "source": arguments.get("source", "ai_extracted"), "source_ref": arguments.get("source_ref", ""), "confidence": arguments.get("confidence", 0.8)}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="knowledge", action="create", title=arguments["title"], content=payload, reason=arguments.get("reason", ""), confidence=arguments.get("confidence", 0.8))
+                return json.dumps({"success": True, "message": "知识条目已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_update":
+                kn = knowledge_svc.get_knowledge(arguments["knowledge_id"])
+                if not kn: return json.dumps({"success": False, "error": f"知识 {arguments['knowledge_id']} 不存在"}, ensure_ascii=False)
+                updates = {}
+                if arguments.get("title"): updates["title"] = arguments["title"]
+                if arguments.get("content"): updates["content"] = arguments["content"]
+                if arguments.get("summary"): updates["summary"] = arguments["summary"]
+                if arguments.get("category"): updates["category"] = arguments["category"]
+                if arguments.get("tags"): updates["tags"] = [t.strip() for t in arguments["tags"].split(",") if t.strip()]
+                review = review_svc.submit_review(target_type="knowledge", action="update", title=f"更新知识: {kn['title']}", content=json.dumps(updates, ensure_ascii=False), old_content=json.dumps({"title": kn["title"], "content": kn["content"]}, ensure_ascii=False), reason=arguments.get("reason", ""), target_id=arguments["knowledge_id"])
+                return json.dumps({"success": True, "message": "知识更新已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_delete":
+                kn = knowledge_svc.get_knowledge(arguments["knowledge_id"])
+                if not kn: return json.dumps({"success": False, "error": f"知识 {arguments['knowledge_id']} 不存在"}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="knowledge", action="delete", title=f"删除知识: {kn['title']}", content="", old_content=kn["content"], reason=arguments.get("reason", "AI 请求删除"), target_id=arguments["knowledge_id"], priority="urgent")
+                return json.dumps({"success": True, "message": "知识删除已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_search":
+                results = search_svc.search_single_type("knowledge", arguments["query"], limit=arguments.get("limit", 20))
+                return json.dumps({"success": True, "data": results, "count": len(results)}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_extract":
+                from backend.services.hermes_service import hermes_service as _hs
+                messages = _hs.get_session_messages(arguments["session_id"])
+                if not messages: return json.dumps({"success": False, "error": f"会话 {arguments['session_id']} 无消息"}, ensure_ascii=False)
+                assistant_msgs = [m for m in messages if m.get("role") == "assistant"]
+                if not assistant_msgs: return json.dumps({"success": False, "error": "会话中无 assistant 回复"}, ensure_ascii=False)
+                extracted = [msg.get("content", "")[:500] for msg in assistant_msgs[:5] if msg.get("content", "")]
+                payload = json.dumps({"title": f"从会话 {arguments['session_id'][:12]} 提取的知识", "content": "\n\n---\n\n".join(extracted), "category": "general", "tags": ["auto-extracted"], "source": "session", "source_ref": arguments["session_id"], "confidence": 0.6}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="knowledge", action="create", title=f"从会话提取知识: {arguments['session_id'][:12]}", content=payload, reason=arguments.get("reason", "AI 自动从对话中提取知识"), confidence=0.6, session_id=arguments["session_id"])
+                return json.dumps({"success": True, "message": "知识提取已提交审核", "review_id": review["id"], "status": "pending", "extracted_count": len(extracted)}, ensure_ascii=False, indent=2)
+
+            elif name == "experience_list":
+                items = knowledge_svc.list_experiences(category=arguments.get("category") or None, severity=arguments.get("severity") or None, is_resolved=arguments.get("is_resolved"), tool_name=arguments.get("tool_name") or None, limit=arguments.get("limit", 50))
+                return json.dumps({"success": True, "data": items, "count": len(items)}, ensure_ascii=False, indent=2)
+
+            elif name == "experience_get":
+                item = knowledge_svc.get_experience(arguments["exp_id"])
+                if not item: return json.dumps({"success": False, "error": f"经验 {arguments['exp_id']} 不存在"}, ensure_ascii=False)
+                return json.dumps({"success": True, "data": item}, ensure_ascii=False, indent=2)
+
+            elif name == "experience_create":
+                tag_list = [t.strip() for t in arguments.get("tags", "").split(",") if t.strip()] if arguments.get("tags") else []
+                payload = json.dumps({"title": arguments["title"], "content": arguments["content"], "category": arguments.get("category", "best_practice"), "context": arguments.get("context", ""), "tool_name": arguments.get("tool_name", ""), "error_type": arguments.get("error_type", ""), "severity": arguments.get("severity", "medium"), "tags": tag_list}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="experience", action="create", title=arguments["title"], content=payload, reason=arguments.get("reason", ""))
+                return json.dumps({"success": True, "message": "经验记录已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "experience_update":
+                exp = knowledge_svc.get_experience(arguments["exp_id"])
+                if not exp: return json.dumps({"success": False, "error": f"经验 {arguments['exp_id']} 不存在"}, ensure_ascii=False)
+                updates = {}
+                if arguments.get("title"): updates["title"] = arguments["title"]
+                if arguments.get("content"): updates["content"] = arguments["content"]
+                if arguments.get("category"): updates["category"] = arguments["category"]
+                if arguments.get("tags"): updates["tags"] = [t.strip() for t in arguments["tags"].split(",") if t.strip()]
+                review = review_svc.submit_review(target_type="experience", action="update", title=f"更新经验: {exp['title']}", content=json.dumps(updates, ensure_ascii=False), old_content=exp["content"], reason=arguments.get("reason", ""), target_id=arguments["exp_id"])
+                return json.dumps({"success": True, "message": "经验更新已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "experience_resolve":
+                exp = knowledge_svc.get_experience(arguments["exp_id"])
+                if not exp: return json.dumps({"success": False, "error": f"经验 {arguments['exp_id']} 不存在"}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="experience", action="resolve", title=f"标记已解决: {exp['title']}", content="", old_content=exp["content"], reason=arguments.get("reason", "AI 判断问题已解决"), target_id=arguments["exp_id"])
+                return json.dumps({"success": True, "message": "经验解决标记已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "experience_search":
+                results = search_svc.search_single_type("experiences", arguments["query"], limit=arguments.get("limit", 20))
+                return json.dumps({"success": True, "data": results, "count": len(results)}, ensure_ascii=False, indent=2)
+
+            elif name == "memory_list":
+                items = knowledge_svc.list_memories(category=arguments.get("category") or None, importance_min=arguments.get("importance_min", 0) or None, limit=arguments.get("limit", 50))
+                return json.dumps({"success": True, "data": items, "count": len(items)}, ensure_ascii=False, indent=2)
+
+            elif name == "memory_get":
+                item = knowledge_svc.get_memory(arguments["mem_id"])
+                if not item: return json.dumps({"success": False, "error": f"记忆 {arguments['mem_id']} 不存在"}, ensure_ascii=False)
+                return json.dumps({"success": True, "data": item}, ensure_ascii=False, indent=2)
+
+            elif name == "memory_create":
+                tag_list = [t.strip() for t in arguments.get("tags", "").split(",") if t.strip()] if arguments.get("tags") else []
+                payload = json.dumps({"content": arguments["content"], "category": arguments.get("category", "agent_memory"), "title": arguments.get("title", ""), "importance": arguments.get("importance", 5), "tags": tag_list}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="memory", action="create", title=arguments.get("title", "") or arguments["content"][:50], content=payload, reason=arguments.get("reason", ""))
+                return json.dumps({"success": True, "message": "记忆创建已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "memory_update":
+                mem = knowledge_svc.get_memory(arguments["mem_id"])
+                if not mem: return json.dumps({"success": False, "error": f"记忆 {arguments['mem_id']} 不存在"}, ensure_ascii=False)
+                updates = {}
+                if arguments.get("content"): updates["content"] = arguments["content"]
+                if arguments.get("importance", 0) > 0: updates["importance"] = arguments["importance"]
+                if arguments.get("tags"): updates["tags"] = [t.strip() for t in arguments["tags"].split(",") if t.strip()]
+                review = review_svc.submit_review(target_type="memory", action="update", title=f"更新记忆: {mem['title']}", content=json.dumps(updates, ensure_ascii=False), old_content=mem["content"], reason=arguments.get("reason", ""), target_id=arguments["mem_id"])
+                return json.dumps({"success": True, "message": "记忆更新已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "memory_forget":
+                mem = knowledge_svc.get_memory(arguments["mem_id"])
+                if not mem: return json.dumps({"success": False, "error": f"记忆 {arguments['mem_id']} 不存在"}, ensure_ascii=False)
+                review = review_svc.submit_review(target_type="memory", action="delete", title=f"删除记忆: {mem['title']}", content="", old_content=mem["content"], reason=arguments.get("reason", "AI 请求遗忘"), target_id=arguments["mem_id"])
+                return json.dumps({"success": True, "message": "记忆删除已提交审核", "review_id": review["id"], "status": "pending"}, ensure_ascii=False, indent=2)
+
+            elif name == "memory_search":
+                results = search_svc.search_single_type("memories", arguments["query"], limit=arguments.get("limit", 20))
+                return json.dumps({"success": True, "data": results, "count": len(results)}, ensure_ascii=False, indent=2)
+
+            elif name == "review_list":
+                items = review_svc.list_reviews(status=arguments.get("status", "pending"), limit=arguments.get("limit", 50))
+                return json.dumps({"success": True, "data": items, "count": len(items)}, ensure_ascii=False, indent=2)
+
+            elif name == "review_stats":
+                stats = review_svc.get_review_stats()
+                return json.dumps({"success": True, "data": stats}, ensure_ascii=False, indent=2)
+
+            elif name == "unified_search":
+                type_list = [t.strip() for t in arguments.get("types", "").split(",") if t.strip()] if arguments.get("types") else None
+                results = search_svc.search_unified(arguments["query"], types=type_list, limit=arguments.get("limit", 30))
+                return json.dumps({"success": True, "data": results, "count": len(results)}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_overview":
+                stats = knowledge_svc.get_overview_stats()
+                return json.dumps({"success": True, "data": stats}, ensure_ascii=False, indent=2)
+
+            elif name == "context_budget_preview":
+                budget_svc = ContextBudgetService()
+                context = budget_svc.build_context(session_id=arguments.get("session_id", ""), query=arguments.get("query", ""))
+                return json.dumps({"success": True, "data": {"content": context, "char_count": len(context)}}, ensure_ascii=False, indent=2)
+
+            elif name == "knowledge_extract_session":
+                from backend.services.knowledge_extractor import KnowledgeExtractor
+                extractor = KnowledgeExtractor()
+                result = extractor.extract_from_session(arguments["session_id"], auto_submit=arguments.get("auto_submit", True))
+                return json.dumps({"success": True, "data": result}, ensure_ascii=False, indent=2)
+
+            elif name == "compat_sync_md_to_db":
+                from backend.services.compat_service import CompatService
+                svc = CompatService()
+                results = {"memory_imported": svc.import_memory_md(), "user_imported": svc.import_user_md(), "learnings_imported": svc.import_learnings_md()}
+                svc.save_memory_md(); svc.save_user_md(); svc.save_learnings_md()
+                return json.dumps({"success": True, "data": results, "message": f"导入 {sum(results.values())} 条记录"}, ensure_ascii=False, indent=2)
+
+            elif name == "compat_sync_db_to_md":
+                from backend.services.compat_service import CompatService
+                svc = CompatService()
+                svc.save_memory_md(); svc.save_user_md(); svc.save_learnings_md()
+                return json.dumps({"success": True, "message": "已同步到 MD 文件"}, ensure_ascii=False, indent=2)
+
+        except Exception as e:
+            raise ValueError(f"❌ 知识库工具 '{name}' 执行失败: {e}")
 
     else:
         raise ValueError(f"❌ 未知工具: {name}\n建议：\n1. 使用 list_tools 工具查看所有可用的内置工具列表\n2. 如果要使用外部 MCP 工具，请先通过 add_mcp_server 添加对应服务器\n3. 检查工具名称拼写是否正确，注意大小写")
