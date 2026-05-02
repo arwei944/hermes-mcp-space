@@ -1,0 +1,157 @@
+// -*- coding: utf-8 -*-
+/**
+ * APIClient - 增强版 API 客户端
+ * 支持超时控制、指数退避自动重试、事件通知
+ */
+(function APIClientModule() {
+    'use strict';
+
+    const RETRIABLE_STATUS = [502, 503, 504];
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [1000, 2000, 4000];
+    const DEFAULT_TIMEOUT = 15000;
+
+    function detectBaseUrl() {
+        const { hostname } = window.location;
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:3000';
+        }
+        return '';
+    }
+
+    const client = {
+        baseUrl: detectBaseUrl(),
+        defaultHeaders: { 'Content-Type': 'application/json' },
+        defaultTimeout: DEFAULT_TIMEOUT,
+
+        /**
+         * 配置 API 客户端
+         * @param {Object} options - { baseUrl, defaultHeaders, defaultTimeout }
+         */
+        configure(options) {
+            if (options.baseUrl !== undefined) this.baseUrl = options.baseUrl;
+            if (options.defaultHeaders) this.defaultHeaders = { ...this.defaultHeaders, ...options.defaultHeaders };
+            if (options.defaultTimeout !== undefined) this.defaultTimeout = options.defaultTimeout;
+        },
+
+        /**
+         * 构建带查询参数的完整 URL
+         */
+        _buildUrl(path, params) {
+            let url = this.baseUrl + path;
+            if (params && typeof params === 'object' && Object.keys(params).length > 0) {
+                const qs = new URLSearchParams(params).toString();
+                url += (url.includes('?') ? '&' : '?') + qs;
+            }
+            return url;
+        },
+
+        /**
+         * 延迟指定毫秒
+         */
+        _delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        },
+
+        /**
+         * 核心请求方法
+         * @param {string} path - 请求路径
+         * @param {Object} [options] - { method, body, headers, params, timeout }
+         * @returns {Promise<Object>} 响应 JSON 数据
+         */
+        async request(path, options = {}) {
+            const method = (options.method || 'GET').toUpperCase();
+            const timeout = options.timeout !== undefined ? options.timeout : this.defaultTimeout;
+            const url = this._buildUrl(path, options.params);
+
+            const headers = { ...this.defaultHeaders, ...(options.headers || {}) };
+            const fetchOptions = { method, headers };
+            if (options.body && method !== 'GET' && method !== 'HEAD') {
+                fetchOptions.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+            }
+
+            let lastError = null;
+
+            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), timeout);
+                fetchOptions.signal = controller.signal;
+
+                try {
+                    const response = await fetch(url, fetchOptions);
+                    clearTimeout(timer);
+
+                    if (!response.ok) {
+                        const status = response.status;
+                        if (RETRIABLE_STATUS.includes(status) && attempt < MAX_RETRIES) {
+                            lastError = new Error(`HTTP ${status} from ${method} ${path}`);
+                            await this._delay(RETRY_DELAYS[attempt]);
+                            continue;
+                        }
+                        // 不可重试错误（4xx 等）直接抛出
+                        let errorBody;
+                        try { errorBody = await response.json(); } catch (_) { errorBody = await response.text(); }
+                        const err = new Error(`HTTP ${status}: ${response.statusText}`);
+                        err.status = status;
+                        err.body = errorBody;
+                        throw err;
+                    }
+
+                    const text = await response.text();
+                    try { return JSON.parse(text); } catch (_) { return text; }
+
+                } catch (err) {
+                    clearTimeout(timer);
+
+                    // AbortError 表示超时
+                    if (err.name === 'AbortError') {
+                        lastError = new Error(`Request timeout (${timeout}ms) for ${method} ${path}`);
+                        if (attempt < MAX_RETRIES) {
+                            await this._delay(RETRY_DELAYS[attempt]);
+                            continue;
+                        }
+                        break;
+                    }
+
+                    // 网络错误可重试
+                    if (err instanceof TypeError && attempt < MAX_RETRIES) {
+                        lastError = err;
+                        await this._delay(RETRY_DELAYS[attempt]);
+                        continue;
+                    }
+
+                    // 其他错误直接抛出
+                    throw err;
+                }
+            }
+
+            // 全部重试失败
+            if (window.Bus) {
+                Bus.emit('api:error', { path, error: lastError });
+            }
+            throw lastError;
+        },
+
+        /** GET 请求 */
+        get(path, params) {
+            return this.request(path, { method: 'GET', params });
+        },
+
+        /** POST 请求 */
+        post(path, body) {
+            return this.request(path, { method: 'POST', body });
+        },
+
+        /** PUT 请求 */
+        put(path, body) {
+            return this.request(path, { method: 'PUT', body });
+        },
+
+        /** DELETE 请求 */
+        del(path) {
+            return this.request(path, { method: 'DELETE' });
+        },
+    };
+
+    window.APIClient = client;
+})();
