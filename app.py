@@ -102,33 +102,50 @@ def build_full_html():
         if content:
             all_js += f"\n// === {jsf} ===\n{content}\n"
 
-    # In build_full_html mode, dynamic import() won't work because all JS is inlined
-    # into a single <script> tag. We use a two-step approach:
-    # 1. Replace `export default X` with `window.__m['filename'] = X` to register modules
-    # 2. Replace `import('./X.js')` with `Promise.resolve(window.__m['X.js'])` to resolve them
-    # This preserves the async/await flow while making everything work inline.
+    # In build_full_html mode, all JS is inlined into a single <script> tag.
+    # ES module syntax (import/export) is NOT valid in non-module scripts.
+    # We transform all import/export statements to work in a plain <script>:
+    #   1. `export default X` → `window.__m['file.js'] = X`
+    #   2. `export { A, B }` → `window.__m['file.js'] = { A, B }`
+    #   3. `import X from './Y.js'` → `var X = window.__m['Y.js']`
+    #   4. `import { A, B } from './C.js'` → `var { A, B } = window.__m['C.js']`
+    #   5. `import('./X.js')` → `Promise.resolve(window.__m['X.js'])`
 
-    # Step 1: Register export default modules
-    # Match: export default SomeName; or export default SomeName
-    # We need the filename to use as key. Since we process file by file, track current file.
     lines = all_js.split('\n')
     result_lines = []
     current_file = ""
     for line in lines:
         if line.startswith("// === "):
             current_file = line.split("/")[-1].replace(" ===", "").strip()
-        # Replace export default with window.__m registration
-        if "export default " in line:
-            line = line.replace(
-                "export default ",
-                f"window.__m = window.__m || {{}}; window.__m['{current_file}'] = "
-            )
+
+        # Skip empty export lines
+        stripped = line.strip()
+
+        # 1. export default X
+        if stripped.startswith("export default "):
+            val = stripped[len("export default "):]
+            line = f"window.__m = window.__m || {{}}; window.__m['{current_file}'] = {val}"
+        # 2. export { A, B }
+        elif stripped.startswith("export {") and stripped.endswith("};"):
+            names = stripped[len("export {"):-2].strip()
+            line = f"window.__m = window.__m || {{}}; window.__m['{current_file}'] = {{ {names} }}"
+        # 3. import { A, B } from './C.js' (named import) - check BEFORE default import
+        elif stripped.startswith("import {") and " from " in stripped and stripped.endswith(";"):
+            m = re.match(r"import\s+\{([^}]+)\}\s+from\s+['\"]\.\/([^'\"]+)['\"];?", stripped)
+            if m:
+                names, mod_file = m.group(1).strip(), m.group(2)
+                line = f"var {{ {names} }} = window.__m && window.__m['{mod_file}'];"
+        # 4. import X from './Y.js' (default import)
+        elif stripped.startswith("import ") and " from " in stripped and stripped.endswith(";"):
+            m = re.match(r"import\s+(\w+)\s+from\s+['\"]\.\/([^'\"]+)['\"];?", stripped)
+            if m:
+                var_name, mod_file = m.group(1), m.group(2)
+                line = f"var {var_name} = window.__m && window.__m['{mod_file}'];"
+
         result_lines.append(line)
     all_js = '\n'.join(result_lines)
 
-    # Step 2: Replace import('./X.js') calls
-    # Match patterns like: import('./page.js'), import('./StatsSection.js')
-    # In non-module <script>, import() is not available, so we replace with Promise.resolve
+    # 5. Replace dynamic import() calls
     all_js = re.sub(
         r"import\(['\"]\.\/([^'\"]+)['\"]\)",
         r"Promise.resolve(window.__m && window.__m['\1'])",
