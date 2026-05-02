@@ -8,10 +8,10 @@ const DashboardPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.statsSection = await import('./StatsSection.js');
-        _modules.activityFeed = await import('./ActivityFeed.js');
-        _modules.trendChart = await import('./TrendChart.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.statsSection = (await import('./StatsSection.js')).default;
+        _modules.activityFeed = (await import('./ActivityFeed.js')).default;
+        _modules.trendChart = (await import('./TrendChart.js')).default;
     }
 
     async function render() {

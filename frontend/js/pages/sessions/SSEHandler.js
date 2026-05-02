@@ -8,9 +8,9 @@ const SSEHandler = (() => {
 
     async function _ensureModules() {
         if (_modules.sessionList) return;
-        _modules.sessionList = await import('./SessionList.js');
-        _modules.chatView = await import('./ChatView.js');
-        _modules.sessionDetail = await import('./SessionDetail.js');
+        _modules.sessionList = (await import('./SessionList.js')).default;
+        _modules.chatView = (await import('./ChatView.js')).default;
+        _modules.sessionDetail = (await import('./SessionDetail.js')).default;
     }
 
     function onSSEEvent(type, data) {

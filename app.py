@@ -88,14 +88,9 @@ def build_full_html():
             # 旧式单文件页面
             page_files.append(f"js/pages/{item.name}")
         elif item.is_dir():
-            # V2 目录结构：优先 register.js
-            register = item / "register.js"
-            if register.exists():
-                page_files.append(f"js/pages/{item.name}/register.js")
-            else:
-                # 回退：扫描目录下所有 .js 文件
-                for jsf in sorted(item.glob("*.js")):
-                    page_files.append(f"js/pages/{item.name}/{jsf.name}")
+            # V2 目录结构：加载所有 .js 文件（import() 需要子模块在同一个 module 中）
+            for jsf in sorted(item.glob("*.js")):
+                page_files.append(f"js/pages/{item.name}/{jsf.name}")
     app_js = ["js/app.js"]
     js_files = core_js + page_files + app_js
 
@@ -106,6 +101,39 @@ def build_full_html():
         content = load_file(frontend_dir / jsf)
         if content:
             all_js += f"\n// === {jsf} ===\n{content}\n"
+
+    # In build_full_html mode, dynamic import() won't work because all JS is inlined
+    # into a single <script> tag. We use a two-step approach:
+    # 1. Replace `export default X` with `window.__m['filename'] = X` to register modules
+    # 2. Replace `import('./X.js')` with `Promise.resolve(window.__m['X.js'])` to resolve them
+    # This preserves the async/await flow while making everything work inline.
+
+    # Step 1: Register export default modules
+    # Match: export default SomeName; or export default SomeName
+    # We need the filename to use as key. Since we process file by file, track current file.
+    lines = all_js.split('\n')
+    result_lines = []
+    current_file = ""
+    for line in lines:
+        if line.startswith("// === "):
+            current_file = line.split("/")[-1].replace(" ===", "").strip()
+        # Replace export default with window.__m registration
+        if "export default " in line:
+            line = line.replace(
+                "export default ",
+                f"window.__m = window.__m || {{}}; window.__m['{current_file}'] = "
+            )
+        result_lines.append(line)
+    all_js = '\n'.join(result_lines)
+
+    # Step 2: Replace import('./X.js') calls
+    # Match patterns like: import('./page.js'), import('./StatsSection.js')
+    # In non-module <script>, import() is not available, so we replace with Promise.resolve
+    all_js = re.sub(
+        r"import\(['\"]\.\/([^'\"]+)['\"]\)",
+        r"Promise.resolve(window.__m && window.__m['\1'])",
+        all_js
+    )
 
     index_html = load_file(frontend_dir / "index.html")
 

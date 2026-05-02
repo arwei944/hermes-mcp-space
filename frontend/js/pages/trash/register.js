@@ -8,8 +8,8 @@ const TrashPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.trashList = await import('./TrashList.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.trashList = (await import('./TrashList.js')).default;
     }
 
     async function render() {

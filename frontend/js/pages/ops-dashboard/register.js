@@ -8,11 +8,11 @@ const OpsDashboardPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.resourceCards = await import('./ResourceCards.js');
-        _modules.trendChart = await import('./TrendChart.js');
-        _modules.mcpHealth = await import('./McpHealth.js');
-        _modules.cronStatus = await import('./CronStatus.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.resourceCards = (await import('./ResourceCards.js')).default;
+        _modules.trendChart = (await import('./TrendChart.js')).default;
+        _modules.mcpHealth = (await import('./McpHealth.js')).default;
+        _modules.cronStatus = (await import('./CronStatus.js')).default;
     }
 
     async function render() {

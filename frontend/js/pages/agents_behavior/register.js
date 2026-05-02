@@ -8,7 +8,7 @@ const AgentsBehaviorPage = (() => {
 
     async function _ensureModules() {
         if (_page) return;
-        _page = await import('./page.js');
+        _page = (await import('./page.js')).default;
     }
 
     async function render() {

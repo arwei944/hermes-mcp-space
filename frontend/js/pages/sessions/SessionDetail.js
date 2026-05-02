@@ -9,9 +9,9 @@ const SessionDetail = (() => {
 
     async function _ensureModules() {
         if (_modules.sessionList) return;
-        _modules.sessionList = await import('./SessionList.js');
-        _modules.chatView = await import('./ChatView.js');
-        _modules.knowledgeBatch = await import('./KnowledgeBatch.js');
+        _modules.sessionList = (await import('./SessionList.js')).default;
+        _modules.chatView = (await import('./ChatView.js')).default;
+        _modules.knowledgeBatch = (await import('./KnowledgeBatch.js')).default;
     }
 
     function getViewMode() { return _viewMode; }
@@ -191,8 +191,8 @@ const SessionDetail = (() => {
     // SSE 事件委托给 SSEHandler 模块
     async function onSSEEvent(type, data) {
         await _ensureModules();
-        _modules.sseHandler = await import('./SSEHandler.js');
-        _modules.sseHandler.default.onSSEEvent(type, data);
+        _modules.sseHandler = (await import('./SSEHandler.js')).default;
+        _modules.sseHandler.onSSEEvent(type, data);
     }
 
     function bindGlobalEvents() {

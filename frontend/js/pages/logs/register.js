@@ -8,8 +8,8 @@ const LogsPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.logList = await import('./LogList.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.logList = (await import('./LogList.js')).default;
     }
 
     async function render() {

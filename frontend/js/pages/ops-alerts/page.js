@@ -39,9 +39,9 @@ const OpsAlertsPageLayout = (() => {
         });
         // 通知子模块重新渲染
         if (tab === 'rules') {
-            import('./RulesTab.js').then(m => m.render('#ops-alerts-rules'));
+            import('./RulesTab.js').then(m => m.default.render('#ops-alerts-rules'));
         } else if (tab === 'history') {
-            import('./HistoryTab.js').then(m => m.render('#ops-alerts-history'));
+            import('./HistoryTab.js').then(m => m.default.render('#ops-alerts-history'));
         }
     }
 

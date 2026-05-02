@@ -8,13 +8,13 @@ const SyncPage = (() => {
 
     async function _ensureModules() {
         if (_modules.page) return;
-        _modules.page = await import('./page.js');
-        _modules.syncStatus = await import('./SyncStatus.js');
-        _modules.autoSync = await import('./AutoSync.js');
-        _modules.manualControls = await import('./ManualControls.js');
-        _modules.backendConfig = await import('./BackendConfig.js');
-        _modules.hotUpdate = await import('./HotUpdate.js');
-        _modules.changelog = await import('./Changelog.js');
+        _modules.page = (await import('./page.js')).default;
+        _modules.syncStatus = (await import('./SyncStatus.js')).default;
+        _modules.autoSync = (await import('./AutoSync.js')).default;
+        _modules.manualControls = (await import('./ManualControls.js')).default;
+        _modules.backendConfig = (await import('./BackendConfig.js')).default;
+        _modules.hotUpdate = (await import('./HotUpdate.js')).default;
+        _modules.changelog = (await import('./Changelog.js')).default;
     }
 
     async function render() {

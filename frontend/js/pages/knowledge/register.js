@@ -8,8 +8,8 @@ const KnowledgePage = (() => {
 
     async function _ensureModules() {
         if (_page) return;
-        _page = await import('./page.js');
-        const KnowledgeModal = await import('./Modal.js');
+        _page = (await import('./page.js')).default;
+        const KnowledgeModal = (await import('./Modal.js')).default;
         KnowledgeModal.init(_page.getActiveTab(), _page.loadTab);
     }
 
@@ -24,7 +24,7 @@ const KnowledgePage = (() => {
 
         // Load initial overview data (non-fatal)
         try {
-            const OverviewTab = await import('./OverviewTab.js');
+            const OverviewTab = (await import('./OverviewTab.js')).default;
             await OverviewTab.loadOverviewData();
         } catch (_err) {}
 
