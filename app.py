@@ -39,11 +39,11 @@ def load_file(path):
         with open(path, "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        logger.error(f"CRITICAL: Frontend file not found: {path}")
-        raise RuntimeError(f"Frontend file missing: {path}") from None
+        logger.warning(f"Frontend file not found: {path}")
+        return ""
     except Exception as e:
-        logger.error(f"CRITICAL: Failed to load {path}: {e}")
-        raise RuntimeError(f"Failed to load frontend file: {path}") from None
+        logger.error(f"Failed to load {path}: {e}")
+        return ""
 
 
 def build_full_html():
@@ -227,9 +227,17 @@ logger.info("Initializing Hermes Agent MCP Space...")
 import gradio as gr
 from gradio.routes import App
 
-# Build the full HTML FIRST
-full_html = build_full_html()
-logger.info(f"Frontend HTML built ({len(full_html)} bytes)")
+# Build the full HTML FIRST (with fallback to original index.html on error)
+try:
+    full_html = build_full_html()
+    logger.info(f"Frontend HTML built ({len(full_html)} bytes)")
+except Exception as e:
+    logger.error(f"build_full_html failed, falling back to index.html: {e}")
+    import traceback
+    traceback.print_exc()
+    frontend_dir = Path(__file__).resolve().parent / "frontend"
+    full_html = load_file(frontend_dir / "index.html")
+    logger.warning(f"Using original index.html ({len(full_html)} bytes) as fallback")
 
 # Monkey-patch App.create_app to inject our custom routes after Gradio creates the app
 _original_create_app = App.create_app
