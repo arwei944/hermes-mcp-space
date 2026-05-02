@@ -60,10 +60,10 @@ const KnowledgePage = (() => {
         if (isNaN(d.getTime())) return dateStr;
         const now = new Date();
         const diff = Math.floor((now - d) / 1000);
-        if (diff < 60) return 'just now';
-        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        if (diff < 60) return '刚刚';
+        if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+        if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+        if (diff < 604800) return Math.floor(diff / 86400) + '天前';
         return d.toLocaleDateString();
     }
 
@@ -169,34 +169,34 @@ const KnowledgePage = (() => {
                 <div class="knowledge-header">
                     <div class="knowledge-search">
                         <span class="search-icon">${Components.icon('search', 14)}</span>
-                        <input type="text" id="kbSearchInput" placeholder="Search knowledge base..." value="${escapeHtml(_searchTerm)}" />
-                        <button class="search-btn" data-action="doSearch">Search</button>
+                        <input type="text" id="kbSearchInput" placeholder="搜索知识库..." value="${escapeHtml(_searchTerm)}" />
+                        <button class="search-btn" data-action="doSearch">搜索</button>
                     </div>
                     <button class="btn-primary" data-action="showCreate" data-type="${_activeTab === 'overview' ? 'knowledge' : _activeTab}">
-                        ${Components.icon('plus', 14)} New
+                        ${Components.icon('plus', 14)} 新建
                     </button>
-                    <button class="btn-secondary" data-action="rebuildIndex" title="Rebuild search index">
-                        ${Components.icon('refresh', 14)} Rebuild Index
+                    <button class="btn-secondary" data-action="rebuildIndex" title="重建搜索索引">
+                        ${Components.icon('refresh', 14)} 重建索引
                     </button>
                 </div>
                 <div class="knowledge-tabs" id="kbTabs">
                     <button class="tab-btn ${_activeTab === 'overview' ? 'active' : ''}" data-action="switchTab" data-tab="overview">
-                        ${Components.icon('chart', 14)} Overview
+                        ${Components.icon('chart', 14)} 概览
                     </button>
                     <button class="tab-btn ${_activeTab === 'rules' ? 'active' : ''}" data-action="switchTab" data-tab="rules">
-                        ${Components.icon('shield', 14)} Rules <span class="tab-badge" id="rulesBadge">-</span>
+                        ${Components.icon('shield', 14)} 规则 <span class="tab-badge" id="rulesBadge">-</span>
                     </button>
                     <button class="tab-btn ${_activeTab === 'knowledge' ? 'active' : ''}" data-action="switchTab" data-tab="knowledge">
-                        ${Components.icon('book', 14)} Knowledge <span class="tab-badge" id="knowledgeBadge">-</span>
+                        ${Components.icon('book', 14)} 知识 <span class="tab-badge" id="knowledgeBadge">-</span>
                     </button>
                     <button class="tab-btn ${_activeTab === 'experiences' ? 'active' : ''}" data-action="switchTab" data-tab="experiences">
-                        ${Components.icon('lightbulb', 14)} Experiences <span class="tab-badge" id="experiencesBadge">-</span>
+                        ${Components.icon('lightbulb', 14)} 经验 <span class="tab-badge" id="experiencesBadge">-</span>
                     </button>
                     <button class="tab-btn ${_activeTab === 'memories' ? 'active' : ''}" data-action="switchTab" data-tab="memories">
-                        ${Components.icon('brain', 14)} Memories <span class="tab-badge" id="memoriesBadge">-</span>
+                        ${Components.icon('brain', 14)} 记忆 <span class="tab-badge" id="memoriesBadge">-</span>
                     </button>
                     <button class="tab-btn ${_activeTab === 'reviews' ? 'active' : ''}" data-action="switchTab" data-tab="reviews">
-                        ${Components.icon('clipboard', 14)} Reviews <span class="tab-badge" id="reviewsBadge">-</span>
+                        ${Components.icon('clipboard', 14)} 审核 <span class="tab-badge" id="reviewsBadge">-</span>
                     </button>
                 </div>
                 <div id="kbContent">${Components.createLoading()}</div>
@@ -255,11 +255,11 @@ const KnowledgePage = (() => {
                     await _loadReviewsTab(contentEl);
                     break;
                 default:
-                    contentEl.innerHTML = '<div class="empty-text">Unknown tab</div>';
+                    contentEl.innerHTML = '<div class="empty-text">未知标签页</div>';
             }
         } catch (err) {
             console.error('[KnowledgePage] Failed to load tab:', tabId, err);
-            contentEl.innerHTML = '<div class="empty-text">Failed to load data: ' + escapeHtml(err.message) + '</div>';
+            contentEl.innerHTML = '<div class="empty-text">数据加载失败: ' + escapeHtml(err.message) + '</div>';
         }
     }
 
@@ -327,84 +327,84 @@ const KnowledgePage = (() => {
             : [20, 20, 20, 20, 20];
 
         contentEl.innerHTML = `
-            <div class="overview-grid">
-                <div class="stat-card">
+            <div class="overview-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                <div class="stat-card" style="padding:16px">
                     <div class="stat-icon" style="background:var(--blue-bg);color:var(--blue)">${Components.icon('shield', 18)}</div>
-                    <div class="stat-label">Rules</div>
+                    <div class="stat-label">规则</div>
                     <div class="stat-value">${rulesTotal}</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" style="padding:16px">
                     <div class="stat-icon" style="background:var(--purple-bg);color:var(--purple)">${Components.icon('book', 18)}</div>
-                    <div class="stat-label">Knowledge Items</div>
+                    <div class="stat-label">知识条目</div>
                     <div class="stat-value">${knowledgeTotal}</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" style="padding:16px">
                     <div class="stat-icon" style="background:var(--orange-bg);color:var(--orange)">${Components.icon('lightbulb', 18)}</div>
-                    <div class="stat-label">Experiences</div>
+                    <div class="stat-label">经验</div>
                     <div class="stat-value">${experiencesTotal}</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" style="padding:16px">
                     <div class="stat-icon" style="background:var(--green-bg);color:var(--green)">${Components.icon('brain', 18)}</div>
-                    <div class="stat-label">Memories</div>
+                    <div class="stat-label">记忆</div>
                     <div class="stat-value">${memoriesTotal}</div>
                 </div>
-                <div class="stat-card ${reviewsPending > 0 ? 'stat-warning' : ''}">
+                <div class="stat-card ${reviewsPending > 0 ? 'stat-warning' : ''}" style="padding:16px">
                     <div class="stat-icon" style="background:var(--red-bg);color:var(--red)">${Components.icon('clipboard', 18)}</div>
-                    <div class="stat-label">Pending Reviews</div>
+                    <div class="stat-label">待审核</div>
                     <div class="stat-value">${reviewsPending}</div>
                 </div>
             </div>
 
-            <div class="budget-section">
-                <h4>Knowledge Base Distribution</h4>
+            <div class="budget-section" style="margin-top:16px">
+                <h4 style="font-size:14px;margin-bottom:8px">知识库分布</h4>
                 <div class="budget-bar">
-                    <div class="budget-item" style="width:${pcts[0]}%" title="Rules: ${rulesTotal}"></div>
-                    <div class="budget-item" style="width:${pcts[1]}%" title="Knowledge: ${knowledgeTotal}"></div>
-                    <div class="budget-item" style="width:${pcts[2]}%" title="Experiences: ${experiencesTotal}"></div>
-                    <div class="budget-item" style="width:${pcts[3]}%" title="Memories: ${memoriesTotal}"></div>
-                    <div class="budget-item" style="width:${pcts[4]}%" title="Reviews: ${reviewsTotal}"></div>
+                    <div class="budget-item" style="width:${pcts[0]}%" title="规则: ${rulesTotal}"></div>
+                    <div class="budget-item" style="width:${pcts[1]}%" title="知识: ${knowledgeTotal}"></div>
+                    <div class="budget-item" style="width:${pcts[2]}%" title="经验: ${experiencesTotal}"></div>
+                    <div class="budget-item" style="width:${pcts[3]}%" title="记忆: ${memoriesTotal}"></div>
+                    <div class="budget-item" style="width:${pcts[4]}%" title="审核: ${reviewsTotal}"></div>
                 </div>
                 <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-tertiary);flex-wrap:wrap">
-                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#6366f1;margin-right:4px"></span>Rules</span>
-                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:4px"></span>Knowledge</span>
-                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#8b5cf6;margin-right:4px"></span>Experiences</span>
-                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#a855f7;margin-right:4px"></span>Memories</span>
-                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#06b6d4;margin-right:4px"></span>Reviews</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#6366f1;margin-right:4px"></span>规则</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:4px"></span>知识</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#8b5cf6;margin-right:4px"></span>经验</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#a855f7;margin-right:4px"></span>记忆</span>
+                    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#06b6d4;margin-right:4px"></span>审核</span>
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-                <div class="stat-card" style="cursor:pointer" data-action="switchTab" data-tab="rules">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px">
+                <div class="stat-card" style="cursor:pointer;padding:14px" data-action="switchTab" data-tab="rules">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                         ${Components.icon('shield', 16)}
-                        <span style="font-size:14px;font-weight:600">Rules</span>
-                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${rulesTotal} items</span>
+                        <span style="font-size:14px;font-weight:600">规则</span>
+                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${rulesTotal} 条</span>
                     </div>
-                    <div style="font-size:12px;color:var(--text-secondary)">Behavioral rules and constraints for the agent</div>
+                    <div style="font-size:12px;color:var(--text-secondary)">Agent 行为规则与约束</div>
                 </div>
-                <div class="stat-card" style="cursor:pointer" data-action="switchTab" data-tab="knowledge">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div class="stat-card" style="cursor:pointer;padding:14px" data-action="switchTab" data-tab="knowledge">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                         ${Components.icon('book', 16)}
-                        <span style="font-size:14px;font-weight:600">Knowledge Items</span>
-                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${knowledgeTotal} items</span>
+                        <span style="font-size:14px;font-weight:600">知识条目</span>
+                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${knowledgeTotal} 条</span>
                     </div>
-                    <div style="font-size:12px;color:var(--text-secondary)">Structured knowledge entries and documentation</div>
+                    <div style="font-size:12px;color:var(--text-secondary)">结构化知识条目与文档</div>
                 </div>
-                <div class="stat-card" style="cursor:pointer" data-action="switchTab" data-tab="experiences">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div class="stat-card" style="cursor:pointer;padding:14px" data-action="switchTab" data-tab="experiences">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                         ${Components.icon('lightbulb', 16)}
-                        <span style="font-size:14px;font-weight:600">Experiences</span>
-                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${experiencesTotal} items</span>
+                        <span style="font-size:14px;font-weight:600">经验</span>
+                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${experiencesTotal} 条</span>
                     </div>
-                    <div style="font-size:12px;color:var(--text-secondary)">Learned patterns from past interactions</div>
+                    <div style="font-size:12px;color:var(--text-secondary)">从交互和错误中积累的经验</div>
                 </div>
-                <div class="stat-card" style="cursor:pointer" data-action="switchTab" data-tab="memories">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div class="stat-card" style="cursor:pointer;padding:14px" data-action="switchTab" data-tab="memories">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                         ${Components.icon('brain', 16)}
-                        <span style="font-size:14px;font-weight:600">Memories</span>
-                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${memoriesTotal} items</span>
+                        <span style="font-size:14px;font-weight:600">记忆</span>
+                        <span style="margin-left:auto;font-size:12px;color:var(--text-tertiary)">${memoriesTotal} 条</span>
                     </div>
-                    <div style="font-size:12px;color:var(--text-secondary)">Long-term memory entries for context retention</div>
+                    <div style="font-size:12px;color:var(--text-secondary)">Agent 记忆、用户偏好与上下文</div>
                 </div>
             </div>
         `;
@@ -437,16 +437,16 @@ const KnowledgePage = (() => {
         let html = '<div class="tab-header">';
         html += '<div class="tab-filters">';
         categories.forEach(function (cat) {
-            html += '<button class="filter-btn ' + (_rulesFilter === cat ? 'active' : '') + '" data-action="filterRules" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? 'All' : cat) + '</button>';
+            html += '<button class="filter-btn ' + (_rulesFilter === cat ? 'active' : '') + '" data-action="filterRules" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? '全部' : cat) + '</button>';
         });
         html += '</div>';
-        html += '<div class="tab-info">' + (_rulesData || []).length + ' rules</div>';
+        html += '<div class="tab-info">' + (_rulesData || []).length + ' 条规则</div>';
         html += '</div>';
 
         const filtered = _rulesFilter === 'all' ? _rulesData : _rulesData.filter(function (r) { return r.category === _rulesFilter; });
 
         if (filtered.length === 0) {
-            html += '<div class="empty-text">No rules found</div>';
+            html += '<div class="empty-text">暂无规则</div>';
             return html;
         }
 
@@ -521,16 +521,16 @@ const KnowledgePage = (() => {
         let html = '<div class="tab-header">';
         html += '<div class="tab-filters">';
         categories.forEach(function (cat) {
-            html += '<button class="filter-btn ' + (_knowledgeFilter === cat ? 'active' : '') + '" data-action="filterKnowledge" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? 'All' : cat) + '</button>';
+            html += '<button class="filter-btn ' + (_knowledgeFilter === cat ? 'active' : '') + '" data-action="filterKnowledge" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? '全部' : cat) + '</button>';
         });
         html += '</div>';
-        html += '<div class="tab-info">' + (_knowledgeData || []).length + ' items</div>';
+        html += '<div class="tab-info">' + (_knowledgeData || []).length + ' 条知识</div>';
         html += '</div>';
 
         const filtered = _knowledgeFilter === 'all' ? _knowledgeData : _knowledgeData.filter(function (k) { return k.category === _knowledgeFilter; });
 
         if (filtered.length === 0) {
-            html += '<div class="empty-text">No knowledge items found</div>';
+            html += '<div class="empty-text">暂无知识条目</div>';
             return html;
         }
 
@@ -609,16 +609,16 @@ const KnowledgePage = (() => {
         let html = '<div class="tab-header">';
         html += '<div class="tab-filters">';
         categories.forEach(function (cat) {
-            html += '<button class="filter-btn ' + (_experiencesFilter === cat ? 'active' : '') + '" data-action="filterExperiences" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? 'All' : cat) + '</button>';
+            html += '<button class="filter-btn ' + (_experiencesFilter === cat ? 'active' : '') + '" data-action="filterExperiences" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? '全部' : cat) + '</button>';
         });
         html += '</div>';
-        html += '<div class="tab-info">' + (_experiencesData || []).length + ' experiences</div>';
+        html += '<div class="tab-info">' + (_experiencesData || []).length + ' 条经验</div>';
         html += '</div>';
 
         const filtered = _experiencesFilter === 'all' ? _experiencesData : _experiencesData.filter(function (e) { return e.category === _experiencesFilter; });
 
         if (filtered.length === 0) {
-            html += '<div class="empty-text">No experiences found</div>';
+            html += '<div class="empty-text">暂无经验</div>';
             return html;
         }
 
@@ -695,16 +695,16 @@ const KnowledgePage = (() => {
         let html = '<div class="tab-header">';
         html += '<div class="tab-filters">';
         categories.forEach(function (cat) {
-            html += '<button class="filter-btn ' + (_memoriesFilter === cat ? 'active' : '') + '" data-action="filterMemories" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? 'All' : cat) + '</button>';
+            html += '<button class="filter-btn ' + (_memoriesFilter === cat ? 'active' : '') + '" data-action="filterMemories" data-filter="' + escapeHtml(cat) + '">' + escapeHtml(cat === 'all' ? '全部' : cat) + '</button>';
         });
         html += '</div>';
-        html += '<div class="tab-info">' + (_memoriesData || []).length + ' memories</div>';
+        html += '<div class="tab-info">' + (_memoriesData || []).length + ' 条记忆</div>';
         html += '</div>';
 
         const filtered = _memoriesFilter === 'all' ? _memoriesData : _memoriesData.filter(function (m) { return m.category === _memoriesFilter; });
 
         if (filtered.length === 0) {
-            html += '<div class="empty-text">No memories found</div>';
+            html += '<div class="empty-text">暂无记忆</div>';
             return html;
         }
 
@@ -768,7 +768,7 @@ const KnowledgePage = (() => {
 
     function _buildReviewsContent() {
         const statuses = ['pending', 'approved', 'rejected'];
-        const statusLabels = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' };
+        const statusLabels = { pending: '待审核', approved: '已通过', rejected: '已拒绝' };
 
         let html = '<div class="tab-header">';
         html += '<div class="tab-filters">';
@@ -777,9 +777,9 @@ const KnowledgePage = (() => {
         });
         html += '</div>';
         html += '<div class="tab-info">';
-        html += '<span>' + (_reviewsData || []).length + ' reviews</span>';
+        html += '<span>' + (_reviewsData || []).length + ' 条审核</span>';
         if (_selectedReviews.size > 0) {
-            html += '<span style="margin-left:8px;color:var(--accent)">' + _selectedReviews.size + ' selected</span>';
+            html += '<span style="margin-left:8px;color:var(--accent)">' + _selectedReviews.size + ' 已选择</span>';
         }
         html += '</div>';
         html += '</div>';
@@ -787,8 +787,8 @@ const KnowledgePage = (() => {
         // Batch actions
         if (_reviewsFilter === 'pending' && _reviewsData.length > 0) {
             html += '<div style="display:flex;gap:8px;margin-bottom:12px">';
-            html += '<button class="btn-success" data-action="batchApprove">' + Components.icon('check', 12) + ' Approve Selected</button>';
-            html += '<button class="btn-danger" data-action="batchReject">' + Components.icon('x', 12) + ' Reject Selected</button>';
+            html += '<button class="btn-success" data-action="batchApprove">' + Components.icon('check', 12) + ' 批量通过</button>';
+            html += '<button class="btn-danger" data-action="batchReject">' + Components.icon('x', 12) + ' 批量拒绝</button>';
             html += '</div>';
         }
 
@@ -797,7 +797,7 @@ const KnowledgePage = (() => {
         });
 
         if (filtered.length === 0) {
-            html += '<div class="empty-text">No reviews found</div>';
+            html += '<div class="empty-text">暂无审核记录</div>';
             return html;
         }
 
@@ -827,7 +827,7 @@ const KnowledgePage = (() => {
         html += '<div class="review-header">';
         html += '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
         html += '<span class="review-type">' + escapeHtml(reviewType) + '</span>';
-        if (confidence) html += '<span class="review-confidence">confidence: ' + escapeHtml(String(confidence)) + '</span>';
+        if (confidence) html += '<span class="review-confidence">置信度: ' + escapeHtml(String(confidence)) + '</span>';
         html += '<span class="review-time">' + createdAt + '</span>';
         html += '</div>';
         html += '</div>';
@@ -844,9 +844,9 @@ const KnowledgePage = (() => {
 
         if (status === 'pending') {
             html += '<div class="review-actions">';
-            html += '<label class="review-checkbox"><input type="checkbox" data-action="toggleReviewSelect" data-id="' + escapeHtml(String(id)) + '" ' + (isSelected ? 'checked' : '') + ' /> Select</label>';
-            html += '<button class="btn-success" data-action="approveReview" data-id="' + escapeHtml(String(id)) + '">' + Components.icon('check', 12) + ' Approve</button>';
-            html += '<button class="btn-danger" data-action="rejectReview" data-id="' + escapeHtml(String(id)) + '">' + Components.icon('x', 12) + ' Reject</button>';
+            html += '<label class="review-checkbox"><input type="checkbox" data-action="toggleReviewSelect" data-id="' + escapeHtml(String(id)) + '" ' + (isSelected ? 'checked' : '') + ' /> 全选</label>';
+            html += '<button class="btn-success" data-action="approveReview" data-id="' + escapeHtml(String(id)) + '">' + Components.icon('check', 12) + ' 通过</button>';
+            html += '<button class="btn-danger" data-action="rejectReview" data-id="' + escapeHtml(String(id)) + '">' + Components.icon('x', 12) + ' 拒绝</button>';
             html += '</div>';
         }
 
@@ -879,7 +879,7 @@ const KnowledgePage = (() => {
             _renderSearchResults(contentEl);
         } catch (err) {
             _searchLoading = false;
-            if (contentEl) contentEl.innerHTML = '<div class="empty-text">Search failed: ' + escapeHtml(err.message) + '</div>';
+            if (contentEl) contentEl.innerHTML = '<div class="empty-text">搜索失败: ' + escapeHtml(err.message) + '</div>';
         }
     }
 
@@ -887,21 +887,21 @@ const KnowledgePage = (() => {
         if (!contentEl) return;
 
         if (!_searchResults || !_searchResults.results || _searchResults.results.length === 0) {
-            contentEl.innerHTML = '<div class="empty-text">No results found for "' + escapeHtml(_searchTerm) + '"</div>';
+            contentEl.innerHTML = '<div class="empty-text">无搜索结果: "' + escapeHtml(_searchTerm) + '"</div>';
             return;
         }
 
         const typeLabels = {
-            rule: 'Rule',
-            knowledge: 'Knowledge',
-            experience: 'Experience',
-            memory: 'Memory',
-            review: 'Review',
+            rule: '规则',
+            knowledge: '知识',
+            experience: '经验',
+            memory: '记忆',
+            review: '审核',
         };
 
         let html = '<div class="tab-header">';
-        html += '<div class="tab-info">Found ' + (_searchResults.total || _searchResults.results.length) + ' results for "' + escapeHtml(_searchTerm) + '"</div>';
-        html += '<button class="btn-secondary" data-action="clearSearch">Clear Search</button>';
+        html += '<div class="tab-info">搜索结果：' + (_searchResults.total || _searchResults.results.length) + ' 条结果，关键词: "' + escapeHtml(_searchTerm) + '"</div>';
+        html += '<button class="btn-secondary" data-action="clearSearch">清除搜索</button>';
         html += '</div>';
 
         html += '<div class="items-list">';
@@ -931,13 +931,13 @@ const KnowledgePage = (() => {
     // ==========================================
     function showCreateDialog(type) {
         const typeLabels = {
-            rules: 'Create Rule',
-            knowledge: 'Create Knowledge Item',
-            experiences: 'Create Experience',
-            memories: 'Create Memory',
+            rules: '创建规则',
+            knowledge: '创建知识',
+            experiences: '创建经验',
+            memories: '创建记忆',
         };
 
-        const title = typeLabels[type] || 'Create Item';
+        const title = typeLabels[type] || '创建条目';
         const formHtml = _buildCreateForm(type);
 
         _showModal(title, formHtml, async function (modalOverlay) {
@@ -959,13 +959,13 @@ const KnowledgePage = (() => {
                         await API.post('/api/memories', data);
                         break;
                     default:
-                        showToast('Unknown type: ' + type, 'error');
+                        showToast('未知类型: ' + type, 'error');
                         return false;
                 }
-                showToast('Created successfully', 'success');
+                showToast('创建成功', 'success');
                 return true; // close modal
             } catch (err) {
-                showToast('Create failed: ' + (err.message || 'Unknown error'), 'error');
+                showToast('创建失败: ' + (err.message || '未知错误'), 'error');
                 return false; // keep modal open
             }
         });
@@ -976,88 +976,88 @@ const KnowledgePage = (() => {
 
         switch (type) {
             case 'rules':
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
-                html += '<input class="modal-input" name="title" placeholder="Rule title" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
-                html += '<textarea class="modal-textarea" name="content" placeholder="Rule content..." required></textarea></div>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
+                html += '<input class="modal-input" name="title" placeholder="规则标题" required /></div>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
+                html += '<textarea class="modal-textarea" name="content" placeholder="规则内容..." required></textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
-                html += '<input class="modal-input" name="category" placeholder="e.g. behavior, safety" /></div>';
-                html += '<div class="form-group"><label class="form-label">Priority</label>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
+                html += '<input class="modal-input" name="category" placeholder="例如: 行为, 安全" /></div>';
+                html += '<div class="form-group"><label class="form-label">优先级</label>';
                 html += '<select class="modal-select" name="priority">';
-                html += '<option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>';
+                html += '<option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option>';
                 html += '</select></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Scope</label>';
-                html += '<input class="modal-input" name="scope" placeholder="e.g. global, session" /></div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
-                html += '<input class="modal-input" name="tags" placeholder="tag1, tag2, tag3" /></div>';
+                html += '<div class="form-group"><label class="form-label">作用域</label>';
+                html += '<input class="modal-input" name="scope" placeholder="例如: 全局, 会话" /></div>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
+                html += '<input class="modal-input" name="tags" placeholder="标签1, 标签2, 标签3" /></div>';
                 break;
 
             case 'knowledge':
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
-                html += '<input class="modal-input" name="title" placeholder="Knowledge item title" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
-                html += '<textarea class="modal-textarea" name="content" placeholder="Knowledge content..." required></textarea></div>';
-                html += '<div class="form-group"><label class="form-label">Summary</label>';
-                html += '<textarea class="modal-textarea" name="summary" placeholder="Brief summary..." style="min-height:60px"></textarea></div>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
+                html += '<input class="modal-input" name="title" placeholder="知识标题" required /></div>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
+                html += '<textarea class="modal-textarea" name="content" placeholder="知识内容..." required></textarea></div>';
+                html += '<div class="form-group"><label class="form-label">摘要</label>';
+                html += '<textarea class="modal-textarea" name="summary" placeholder="简要摘要..." style="min-height:60px"></textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
-                html += '<input class="modal-input" name="category" placeholder="e.g. technical, process" /></div>';
-                html += '<div class="form-group"><label class="form-label">Source</label>';
-                html += '<input class="modal-input" name="source" placeholder="e.g. manual, auto-extracted" /></div>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
+                html += '<input class="modal-input" name="category" placeholder="例如: 技术, 流程" /></div>';
+                html += '<div class="form-group"><label class="form-label">来源</label>';
+                html += '<input class="modal-input" name="source" placeholder="例如: 手动, 自动提取" /></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
-                html += '<input class="modal-input" name="tags" placeholder="tag1, tag2, tag3" /></div>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
+                html += '<input class="modal-input" name="tags" placeholder="标签1, 标签2, 标签3" /></div>';
                 break;
 
             case 'experiences':
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
-                html += '<input class="modal-input" name="title" placeholder="Experience title" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
-                html += '<textarea class="modal-textarea" name="content" placeholder="What was learned..." required></textarea></div>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
+                html += '<input class="modal-input" name="title" placeholder="经验标题" required /></div>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
+                html += '<textarea class="modal-textarea" name="content" placeholder="学到了什么..." required></textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
-                html += '<input class="modal-input" name="category" placeholder="e.g. error, optimization" /></div>';
-                html += '<div class="form-group"><label class="form-label">Severity</label>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
+                html += '<input class="modal-input" name="category" placeholder="例如: 错误, 优化" /></div>';
+                html += '<div class="form-group"><label class="form-label">严重度</label>';
                 html += '<select class="modal-select" name="severity">';
-                html += '<option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>';
+                html += '<option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option>';
                 html += '</select></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Context</label>';
-                html += '<textarea class="modal-textarea" name="context" placeholder="Context or background..." style="min-height:60px"></textarea></div>';
+                html += '<div class="form-group"><label class="form-label">上下文</label>';
+                html += '<textarea class="modal-textarea" name="context" placeholder="上下文或背景..." style="min-height:60px"></textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Tool Name</label>';
-                html += '<input class="modal-input" name="tool_name" placeholder="Related tool" /></div>';
-                html += '<div class="form-group"><label class="form-label">Error Type</label>';
-                html += '<input class="modal-input" name="error_type" placeholder="Error classification" /></div>';
+                html += '<div class="form-group"><label class="form-label">工具名</label>';
+                html += '<input class="modal-input" name="tool_name" placeholder="相关工具" /></div>';
+                html += '<div class="form-group"><label class="form-label">错误类型</label>';
+                html += '<input class="modal-input" name="error_type" placeholder="错误分类" /></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
-                html += '<input class="modal-input" name="tags" placeholder="tag1, tag2, tag3" /></div>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
+                html += '<input class="modal-input" name="tags" placeholder="标签1, 标签2, 标签3" /></div>';
                 break;
 
             case 'memories':
-                html += '<div class="form-group"><label class="form-label">Title</label>';
-                html += '<input class="modal-input" name="title" placeholder="Memory title" /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
-                html += '<textarea class="modal-textarea" name="content" placeholder="Memory content..." required></textarea></div>';
+                html += '<div class="form-group"><label class="form-label">标题</label>';
+                html += '<input class="modal-input" name="title" placeholder="记忆标题" /></div>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
+                html += '<textarea class="modal-textarea" name="content" placeholder="记忆内容..." required></textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
-                html += '<input class="modal-input" name="category" placeholder="e.g. preference, fact" /></div>';
-                html += '<div class="form-group"><label class="form-label">Importance</label>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
+                html += '<input class="modal-input" name="category" placeholder="例如: 偏好, 事实" /></div>';
+                html += '<div class="form-group"><label class="form-label">重要性</label>';
                 html += '<select class="modal-select" name="importance">';
-                html += '<option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>';
+                html += '<option value="low">低</option><option value="medium" selected>中</option><option value="high">高</option>';
                 html += '</select></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
-                html += '<input class="modal-input" name="tags" placeholder="tag1, tag2, tag3" /></div>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
+                html += '<input class="modal-input" name="tags" placeholder="标签1, 标签2, 标签3" /></div>';
                 break;
 
             default:
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
-                html += '<input class="modal-input" name="title" placeholder="Title" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
-                html += '<textarea class="modal-textarea" name="content" placeholder="Content..." required></textarea></div>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
+                html += '<input class="modal-input" name="title" placeholder="标题" required /></div>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
+                html += '<textarea class="modal-textarea" name="content" placeholder="内容..." required></textarea></div>';
         }
 
         return html;
@@ -1071,7 +1071,7 @@ const KnowledgePage = (() => {
         const content = contentInput ? contentInput.value.trim() : '';
 
         if (!title && !content) {
-            showToast('Title or content is required', 'warning');
+            showToast('标题或内容为必填项', 'warning');
             return null;
         }
 
@@ -1137,29 +1137,29 @@ const KnowledgePage = (() => {
             case 'knowledge': endpoint = '/api/knowledge/items/' + id; break;
             case 'experiences': endpoint = '/api/experiences/' + id; break;
             case 'memories': endpoint = '/api/memories/' + id; break;
-            default: showToast('Unknown type', 'error'); return;
+            default: showToast('未知类型', 'error'); return;
         }
 
         try {
             item = await API.get(endpoint);
         } catch (err) {
-            showToast('Failed to load item: ' + err.message, 'error');
+            showToast('加载条目失败: ' + err.message, 'error');
             return;
         }
 
         if (!item) {
-            showToast('Item not found', 'error');
+            showToast('条目未找到', 'error');
             return;
         }
 
         const typeLabels = {
-            rules: 'Edit Rule',
-            knowledge: 'Edit Knowledge Item',
-            experiences: 'Edit Experience',
-            memories: 'Edit Memory',
+            rules: '编辑规则',
+            knowledge: '编辑知识',
+            experiences: '编辑经验',
+            memories: '编辑记忆',
         };
 
-        const title = typeLabels[type] || 'Edit Item';
+        const title = typeLabels[type] || '编辑条目';
         const formHtml = _buildEditForm(type, item);
 
         _showModal(title, formHtml, async function (modalOverlay) {
@@ -1168,10 +1168,10 @@ const KnowledgePage = (() => {
 
             try {
                 await API.put(endpoint, data);
-                showToast('Updated successfully', 'success');
+                showToast('更新成功', 'success');
                 return true;
             } catch (err) {
-                showToast('Update failed: ' + (err.message || 'Unknown error'), 'error');
+                showToast('更新失败: ' + (err.message || '未知错误'), 'error');
                 return false;
             }
         });
@@ -1183,93 +1183,93 @@ const KnowledgePage = (() => {
 
         switch (type) {
             case 'rules':
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
                 html += '<input class="modal-input" name="title" value="' + escapeHtml(item.title || '') + '" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
                 html += '<textarea class="modal-textarea" name="content" required>' + escapeHtml(item.content || '') + '</textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
                 html += '<input class="modal-input" name="category" value="' + escapeHtml(item.category || '') + '" /></div>';
-                html += '<div class="form-group"><label class="form-label">Priority</label>';
+                html += '<div class="form-group"><label class="form-label">优先级</label>';
                 html += '<select class="modal-select" name="priority">';
-                html += '<option value="low"' + (item.priority === 'low' ? ' selected' : '') + '>Low</option>';
-                html += '<option value="medium"' + (item.priority === 'medium' ? ' selected' : '') + '>Medium</option>';
-                html += '<option value="high"' + (item.priority === 'high' ? ' selected' : '') + '>High</option>';
+                html += '<option value="low"' + (item.priority === 'low' ? ' selected' : '') + '>低</option>';
+                html += '<option value="medium"' + (item.priority === 'medium' ? ' selected' : '') + '>中</option>';
+                html += '<option value="high"' + (item.priority === 'high' ? ' selected' : '') + '>高</option>';
                 html += '</select></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Scope</label>';
+                html += '<div class="form-group"><label class="form-label">作用域</label>';
                 html += '<input class="modal-input" name="scope" value="' + escapeHtml(item.scope || '') + '" /></div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
                 html += '<input class="modal-input" name="tags" value="' + escapeHtml((item.tags || []).join(', ')) + '" /></div>';
                 break;
 
             case 'knowledge':
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
                 html += '<input class="modal-input" name="title" value="' + escapeHtml(item.title || '') + '" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
                 html += '<textarea class="modal-textarea" name="content" required>' + escapeHtml(item.content || '') + '</textarea></div>';
-                html += '<div class="form-group"><label class="form-label">Summary</label>';
+                html += '<div class="form-group"><label class="form-label">摘要</label>';
                 html += '<textarea class="modal-textarea" name="summary" style="min-height:60px">' + escapeHtml(item.summary || '') + '</textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
                 html += '<input class="modal-input" name="category" value="' + escapeHtml(item.category || '') + '" /></div>';
-                html += '<div class="form-group"><label class="form-label">Source</label>';
+                html += '<div class="form-group"><label class="form-label">来源</label>';
                 html += '<input class="modal-input" name="source" value="' + escapeHtml(item.source || '') + '" /></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
                 html += '<input class="modal-input" name="tags" value="' + escapeHtml((item.tags || []).join(', ')) + '" /></div>';
                 break;
 
             case 'experiences':
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
                 html += '<input class="modal-input" name="title" value="' + escapeHtml(item.title || '') + '" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
                 html += '<textarea class="modal-textarea" name="content" required>' + escapeHtml(item.content || '') + '</textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
                 html += '<input class="modal-input" name="category" value="' + escapeHtml(item.category || '') + '" /></div>';
-                html += '<div class="form-group"><label class="form-label">Severity</label>';
+                html += '<div class="form-group"><label class="form-label">严重度</label>';
                 html += '<select class="modal-select" name="severity">';
-                html += '<option value="low"' + (item.severity === 'low' ? ' selected' : '') + '>Low</option>';
-                html += '<option value="medium"' + (item.severity === 'medium' ? ' selected' : '') + '>Medium</option>';
-                html += '<option value="high"' + (item.severity === 'high' ? ' selected' : '') + '>High</option>';
+                html += '<option value="low"' + (item.severity === 'low' ? ' selected' : '') + '>低</option>';
+                html += '<option value="medium"' + (item.severity === 'medium' ? ' selected' : '') + '>中</option>';
+                html += '<option value="high"' + (item.severity === 'high' ? ' selected' : '') + '>高</option>';
                 html += '</select></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Context</label>';
+                html += '<div class="form-group"><label class="form-label">上下文</label>';
                 html += '<textarea class="modal-textarea" name="context" style="min-height:60px">' + escapeHtml(item.context || '') + '</textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Tool Name</label>';
+                html += '<div class="form-group"><label class="form-label">工具名</label>';
                 html += '<input class="modal-input" name="tool_name" value="' + escapeHtml(item.tool_name || '') + '" /></div>';
-                html += '<div class="form-group"><label class="form-label">Error Type</label>';
+                html += '<div class="form-group"><label class="form-label">错误类型</label>';
                 html += '<input class="modal-input" name="error_type" value="' + escapeHtml(item.error_type || '') + '" /></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
                 html += '<input class="modal-input" name="tags" value="' + escapeHtml((item.tags || []).join(', ')) + '" /></div>';
                 break;
 
             case 'memories':
-                html += '<div class="form-group"><label class="form-label">Title</label>';
+                html += '<div class="form-group"><label class="form-label">标题</label>';
                 html += '<input class="modal-input" name="title" value="' + escapeHtml(item.title || '') + '" /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
                 html += '<textarea class="modal-textarea" name="content" required>' + escapeHtml(item.content || '') + '</textarea></div>';
                 html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-                html += '<div class="form-group"><label class="form-label">Category</label>';
+                html += '<div class="form-group"><label class="form-label">分类</label>';
                 html += '<input class="modal-input" name="category" value="' + escapeHtml(item.category || '') + '" /></div>';
-                html += '<div class="form-group"><label class="form-label">Importance</label>';
+                html += '<div class="form-group"><label class="form-label">重要性</label>';
                 html += '<select class="modal-select" name="importance">';
-                html += '<option value="low"' + (item.importance === 'low' ? ' selected' : '') + '>Low</option>';
-                html += '<option value="medium"' + (item.importance === 'medium' ? ' selected' : '') + '>Medium</option>';
-                html += '<option value="high"' + (item.importance === 'high' ? ' selected' : '') + '>High</option>';
+                html += '<option value="low"' + (item.importance === 'low' ? ' selected' : '') + '>低</option>';
+                html += '<option value="medium"' + (item.importance === 'medium' ? ' selected' : '') + '>中</option>';
+                html += '<option value="high"' + (item.importance === 'high' ? ' selected' : '') + '>高</option>';
                 html += '</select></div>';
                 html += '</div>';
-                html += '<div class="form-group"><label class="form-label">Tags (comma separated)</label>';
+                html += '<div class="form-group"><label class="form-label">标签（逗号分隔）</label>';
                 html += '<input class="modal-input" name="tags" value="' + escapeHtml((item.tags || []).join(', ')) + '" /></div>';
                 break;
 
             default:
-                html += '<div class="form-group"><label class="form-label">Title *</label>';
+                html += '<div class="form-group"><label class="form-label">标题 *</label>';
                 html += '<input class="modal-input" name="title" value="' + escapeHtml(item.title || '') + '" required /></div>';
-                html += '<div class="form-group"><label class="form-label">Content *</label>';
+                html += '<div class="form-group"><label class="form-label">内容 *</label>';
                 html += '<textarea class="modal-textarea" name="content" required>' + escapeHtml(item.content || '') + '</textarea></div>';
         }
 
@@ -1287,30 +1287,30 @@ const KnowledgePage = (() => {
             case 'knowledge': endpoint = '/api/knowledge/items/' + id; break;
             case 'experiences': endpoint = '/api/experiences/' + id; break;
             case 'memories': endpoint = '/api/memories/' + id; break;
-            default: showToast('Unknown type', 'error'); return;
+            default: showToast('未知类型', 'error'); return;
         }
 
         let item = null;
         try {
             item = await API.get(endpoint);
         } catch (err) {
-            showToast('Failed to load item: ' + err.message, 'error');
+            showToast('加载条目失败: ' + err.message, 'error');
             return;
         }
 
         if (!item) {
-            showToast('Item not found', 'error');
+            showToast('条目未找到', 'error');
             return;
         }
 
         const typeLabels = {
-            rules: 'Rule Details',
-            knowledge: 'Knowledge Item Details',
-            experiences: 'Experience Details',
-            memories: 'Memory Details',
+            rules: '规则详情',
+            knowledge: '知识详情',
+            experiences: '经验详情',
+            memories: '记忆详情',
         };
 
-        const title = typeLabels[type] || 'Item Details';
+        const title = typeLabels[type] || '条目详情';
         const detailHtml = _buildItemDetail(type, item);
 
         _showModal(title, detailHtml, null, true); // readonly modal
@@ -1329,11 +1329,11 @@ const KnowledgePage = (() => {
         }
 
         if (item.summary) {
-            html += '<div style="margin-bottom:12px"><strong>Summary:</strong><div style="margin-top:4px;color:var(--text-secondary)">' + escapeHtml(item.summary) + '</div></div>';
+            html += '<div style="margin-bottom:12px"><strong>摘要:</strong><div style="margin-top:4px;color:var(--text-secondary)">' + escapeHtml(item.summary) + '</div></div>';
         }
 
         if (item.context) {
-            html += '<div style="margin-bottom:12px"><strong>Context:</strong><div style="margin-top:4px;color:var(--text-secondary);white-space:pre-wrap">' + escapeHtml(item.context) + '</div></div>';
+            html += '<div style="margin-bottom:12px"><strong>上下文:</strong><div style="margin-top:4px;color:var(--text-secondary);white-space:pre-wrap">' + escapeHtml(item.context) + '</div></div>';
         }
 
         // Metadata
@@ -1348,10 +1348,10 @@ const KnowledgePage = (() => {
         });
 
         if (item.created_at) {
-            html += '<div><span style="color:var(--text-tertiary);font-size:11px">Created:</span> <span>' + formatTime(item.created_at) + '</span></div>';
+            html += '<div><span style="color:var(--text-tertiary);font-size:11px">创建时间:</span> <span>' + formatTime(item.created_at) + '</span></div>';
         }
         if (item.updated_at) {
-            html += '<div><span style="color:var(--text-tertiary);font-size:11px">Updated:</span> <span>' + formatTime(item.updated_at) + '</span></div>';
+            html += '<div><span style="color:var(--text-tertiary);font-size:11px">更新时间:</span> <span>' + formatTime(item.updated_at) + '</span></div>';
         }
 
         html += '</div>';
@@ -1372,34 +1372,34 @@ const KnowledgePage = (() => {
     // ==========================================
     async function confirmDelete(type, id) {
         const typeLabels = {
-            rules: 'rule',
-            knowledge: 'knowledge item',
-            experiences: 'experience',
-            memories: 'memory',
+            rules: '规则',
+            knowledge: '知识条目',
+            experiences: '经验',
+            memories: '记忆',
         };
 
-        const label = typeLabels[type] || 'item';
+        const label = typeLabels[type] || '条目';
 
         // Use Components.Modal.confirm if available
         if (Components && Components.Modal && Components.Modal.confirm) {
             const confirmed = await Components.Modal.confirm({
-                title: 'Delete ' + label,
-                message: 'Are you sure you want to delete this ' + label + '? This action cannot be undone.',
-                confirmText: 'Delete',
+                title: '删除' + label,
+                message: '确定要删除这条' + label + '吗？此操作不可撤销。',
+                confirmText: '删除',
                 type: 'danger',
             });
             if (!confirmed) return;
         } else if (typeof showConfirmDialog === 'function') {
             // Fallback to confirm-dialog.js
             showConfirmDialog(
-                'Delete ' + label,
-                'Are you sure you want to delete this ' + label + '? This action cannot be undone.',
+                '删除' + label,
+                '确定要删除这条' + label + '吗？此操作不可撤销。',
                 async function () { await _doDelete(type, id); }
             );
             return;
         } else {
             // Last resort: native confirm
-            if (!confirm('Delete this ' + label + '?')) return;
+            if (!confirm('确定删除此' + label + '？')) return;
         }
 
         await _doDelete(type, id);
@@ -1413,16 +1413,16 @@ const KnowledgePage = (() => {
             case 'knowledge': endpoint = '/api/knowledge/items/' + id; break;
             case 'experiences': endpoint = '/api/experiences/' + id; break;
             case 'memories': endpoint = '/api/memories/' + id; break;
-            default: showToast('Unknown type', 'error'); return;
+            default: showToast('未知类型', 'error'); return;
         }
 
         try {
             await API.del(endpoint);
-            showToast('Deleted successfully', 'success');
+            showToast('删除成功', 'success');
             // Reload current tab
             await loadTab(_activeTab);
         } catch (err) {
-            showToast('Delete failed: ' + (err.message || 'Unknown error'), 'error');
+            showToast('删除失败: ' + (err.message || '未知错误'), 'error');
         }
     }
 
@@ -1432,26 +1432,26 @@ const KnowledgePage = (() => {
     async function approveReview(id) {
         try {
             await API.put('/api/reviews/' + id + '/approve');
-            showToast('Review approved', 'success');
+            showToast('审核已通过', 'success');
             await loadTab('reviews');
         } catch (err) {
-            showToast('Approve failed: ' + (err.message || 'Unknown error'), 'error');
+            showToast('通过失败: ' + (err.message || '未知错误'), 'error');
         }
     }
 
     async function rejectReview(id) {
         try {
             await API.put('/api/reviews/' + id + '/reject', {});
-            showToast('Review rejected', 'success');
+            showToast('审核已拒绝', 'success');
             await loadTab('reviews');
         } catch (err) {
-            showToast('Reject failed: ' + (err.message || 'Unknown error'), 'error');
+            showToast('拒绝失败: ' + (err.message || '未知错误'), 'error');
         }
     }
 
     async function batchApprove() {
         if (_selectedReviews.size === 0) {
-            showToast('No reviews selected', 'warning');
+            showToast('未选择审核条目', 'warning');
             return;
         }
 
@@ -1459,19 +1459,19 @@ const KnowledgePage = (() => {
 
         if (Components && Components.Modal && Components.Modal.confirm) {
             const confirmed = await Components.Modal.confirm({
-                title: 'Batch Approve',
-                message: 'Are you sure you want to approve ' + ids.length + ' review(s)?',
-                confirmText: 'Approve All',
+                title: '批量通过',
+                message: '确定要通过 ' + ids.length + ' 条审核吗？',
+                confirmText: '全部通过',
                 type: 'info',
             });
             if (!confirmed) return;
         } else if (typeof showConfirmDialog === 'function') {
-            showConfirmDialog('Batch Approve', 'Approve ' + ids.length + ' review(s)?', async function () {
+            showConfirmDialog('批量通过', '通过 ' + ids.length + ' 条审核？', async function () {
                 await _doBatchApprove(ids);
             });
             return;
         } else {
-            if (!confirm('Approve ' + ids.length + ' review(s)?')) return;
+            if (!confirm('通过 ' + ids.length + ' 条审核？')) return;
         }
 
         await _doBatchApprove(ids);
@@ -1480,17 +1480,17 @@ const KnowledgePage = (() => {
     async function _doBatchApprove(ids) {
         try {
             await API.post('/api/reviews/batch/approve', { ids: ids });
-            showToast(ids.length + ' review(s) approved', 'success');
+            showToast(ids.length + ' 条审核已通过', 'success');
             _selectedReviews.clear();
             await loadTab('reviews');
         } catch (err) {
-            showToast('Batch approve failed: ' + (err.message || 'Unknown error'), 'error');
+            showToast('批量通过失败: ' + (err.message || '未知错误'), 'error');
         }
     }
 
     async function batchReject() {
         if (_selectedReviews.size === 0) {
-            showToast('No reviews selected', 'warning');
+            showToast('未选择审核条目', 'warning');
             return;
         }
 
@@ -1498,19 +1498,19 @@ const KnowledgePage = (() => {
 
         if (Components && Components.Modal && Components.Modal.confirm) {
             const confirmed = await Components.Modal.confirm({
-                title: 'Batch Reject',
-                message: 'Are you sure you want to reject ' + ids.length + ' review(s)?',
-                confirmText: 'Reject All',
+                title: '批量拒绝',
+                message: '确定要拒绝 ' + ids.length + ' 条审核吗？',
+                confirmText: '全部拒绝',
                 type: 'danger',
             });
             if (!confirmed) return;
         } else if (typeof showConfirmDialog === 'function') {
-            showConfirmDialog('Batch Reject', 'Reject ' + ids.length + ' review(s)?', async function () {
+            showConfirmDialog('批量拒绝', '拒绝 ' + ids.length + ' 条审核？', async function () {
                 await _doBatchReject(ids);
             });
             return;
         } else {
-            if (!confirm('Reject ' + ids.length + ' review(s)?')) return;
+            if (!confirm('拒绝 ' + ids.length + ' 条审核？')) return;
         }
 
         await _doBatchReject(ids);
@@ -1519,11 +1519,11 @@ const KnowledgePage = (() => {
     async function _doBatchReject(ids) {
         try {
             await API.post('/api/reviews/batch/reject', { ids: ids });
-            showToast(ids.length + ' review(s) rejected', 'success');
+            showToast(ids.length + ' 条审核已拒绝', 'success');
             _selectedReviews.clear();
             await loadTab('reviews');
         } catch (err) {
-            showToast('Batch reject failed: ' + (err.message || 'Unknown error'), 'error');
+            showToast('批量拒绝失败: ' + (err.message || '未知错误'), 'error');
         }
     }
 
@@ -1538,9 +1538,9 @@ const KnowledgePage = (() => {
         // Update the info display
         const infoEl = document.querySelector('.tab-info');
         if (infoEl) {
-            let infoHtml = '<span>' + (_reviewsData || []).length + ' reviews</span>';
+            let infoHtml = '<span>' + (_reviewsData || []).length + ' 条审核</span>';
             if (_selectedReviews.size > 0) {
-                infoHtml += '<span style="margin-left:8px;color:var(--accent)">' + _selectedReviews.size + ' selected</span>';
+                infoHtml += '<span style="margin-left:8px;color:var(--accent)">' + _selectedReviews.size + ' 已选择</span>';
             }
             infoEl.innerHTML = infoHtml;
         }
@@ -1550,12 +1550,12 @@ const KnowledgePage = (() => {
     // Rebuild Search Index
     // ==========================================
     async function rebuildIndex() {
-        showToast('Rebuilding search index...', 'info');
+        showToast('正在重建搜索索引...', 'info');
         try {
             await API.post('/api/search/index/rebuild');
-            showToast('Search index rebuilt successfully', 'success');
+            showToast('搜索索引已重建', 'success');
         } catch (err) {
-            showToast('Rebuild failed: ' + (err.message || 'Unknown error'), 'error');
+            showToast('重建失败: ' + (err.message || '未知错误'), 'error');
         }
     }
 
@@ -1571,10 +1571,10 @@ const KnowledgePage = (() => {
 
         let footerHtml = '';
         if (readonly) {
-            footerHtml = '<button class="btn-secondary" data-action="closeModal">Close</button>';
+            footerHtml = '<button class="btn-secondary" data-action="closeModal">关闭</button>';
         } else {
-            footerHtml = '<button class="btn-secondary" data-action="closeModal">Cancel</button>';
-            footerHtml += '<button class="btn-primary" data-action="submitModal">Save</button>';
+            footerHtml = '<button class="btn-secondary" data-action="closeModal">取消</button>';
+            footerHtml += '<button class="btn-primary" data-action="submitModal">保存</button>';
         }
 
         overlay.innerHTML =
