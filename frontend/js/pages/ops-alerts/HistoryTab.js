@@ -10,41 +10,74 @@ const HistoryTab = (() => {
     let _filterType = 'all';
     let _filterTimeRange = 'all';
     let _destroyed = false;
+    let _unwatch = null;
+    let _containerSelector = null;
 
-    async function loadData() {
-        try {
-            const data = await API.get('/api/ops/alerts/history');
-            _history = data.history || data || [];
-        } catch (_err) {
-            _history = [];
+    function _loadFromStore() {
+        if (!window.Store) return;
+        var data = Store.get('ops.alertHistory');
+        _history = data ? (data.history || data || []) : [];
+    }
+
+    function _onHistoryUpdate(history) {
+        if (_destroyed) return;
+        _history = history ? (history.history || history || []) : [];
+        _rerenderContent();
+        updateStats();
+    }
+
+    function _rerenderContent() {
+        if (_destroyed || !_containerSelector) return;
+        var container = document.querySelector(_containerSelector);
+        if (!container) return;
+        // 只刷新历史列表和统计，不重建整个 tab（保留筛选状态）
+        var historyContent = document.getElementById('alertsHistoryContent');
+        if (historyContent) {
+            historyContent.innerHTML = buildHistoryList();
+            bindHistoryEvents(historyContent);
+        }
+        updateStats();
+    }
+
+    function startWatching() {
+        if (!window.Store) return;
+        if (_unwatch) return;
+        _unwatch = Store.watch('ops.alertHistory', _onHistoryUpdate);
+    }
+
+    function stopWatching() {
+        if (_unwatch) {
+            _unwatch();
+            _unwatch = null;
         }
     }
 
+    async function loadData() {
+        _loadFromStore();
+    }
+
     function onSSEAlert() {
-        loadData().then(() => {
-            const historyContent = document.getElementById('alertsHistoryContent');
-            if (historyContent) {
-                historyContent.innerHTML = buildHistoryList();
-                bindHistoryEvents(historyContent);
-            }
-            updateStats();
-        }).catch(() => {});
+        // SSE 告警事件由 AlertNotifier 处理并更新 Store
+        // Store 更新会自动触发 watch 回调，无需手动刷新
     }
 
     async function render(containerSelector) {
         _destroyed = false;
+        _containerSelector = containerSelector;
         const container = document.querySelector(containerSelector);
         if (!container) return;
 
         container.innerHTML = Components.createLoading();
 
-        try {
-            await loadData();
-        } catch (_err) {}
+        // 从 Store 读取初始数据
+        _loadFromStore();
 
         if (_destroyed) return;
         container.innerHTML = buildHistoryTab();
         bindEvents(container);
+
+        // 启动响应式监听
+        startWatching();
     }
 
     function buildHistoryTab() {
@@ -152,13 +185,7 @@ const HistoryTab = (() => {
         try {
             await API.post(`/api/ops/alerts/acknowledge/${id}`);
             Components.Toast.success('告警已确认');
-            await loadData();
-            const historyContent = document.getElementById('alertsHistoryContent');
-            if (historyContent) {
-                historyContent.innerHTML = buildHistoryList();
-                bindHistoryEvents(historyContent);
-            }
-            updateStats();
+            // OpsSyncService 会重新同步并更新 Store，watch 回调会自动刷新
         } catch (err) {
             Components.Toast.error(`确认失败: ${err.message}`);
         }
@@ -166,13 +193,10 @@ const HistoryTab = (() => {
 
     async function refreshHistory() {
         Components.Toast.info('正在刷新...');
-        await loadData();
-        const historyContent = document.getElementById('alertsHistoryContent');
-        if (historyContent) {
-            historyContent.innerHTML = buildHistoryList();
-            bindHistoryEvents(historyContent);
-        }
-        updateStats();
+        // 触发 OpsSyncService 重新同步告警数据
+        // Store 更新后 watch 回调会自动刷新 UI
+        _loadFromStore();
+        _rerenderContent();
         Components.Toast.success('已刷新');
     }
 
@@ -218,9 +242,11 @@ const HistoryTab = (() => {
 
     function destroy() {
         _destroyed = true;
+        stopWatching();
+        _containerSelector = null;
     }
 
-    return { loadData, render, destroy, onSSEAlert };
+    return { loadData, render, destroy, onSSEAlert, startWatching, stopWatching };
 })();
 
 export default HistoryTab;

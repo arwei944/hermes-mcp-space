@@ -18,14 +18,8 @@ const OpsAlertsPage = (() => {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
-        try {
-            await Promise.all([
-                _modules.rulesTab.loadData(),
-                _modules.historyTab.loadData(),
-            ]);
-        } catch (_err) {
-            // 静默处理
-        }
+        // 数据由 OpsSyncService 同步到 Store，子模块 render 时从 Store 读取
+        // 无需在此处手动 loadData()
 
         container.innerHTML = _modules.page.buildLayout();
         _modules.page.bindEvents();
