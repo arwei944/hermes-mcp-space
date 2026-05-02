@@ -4,6 +4,8 @@
 创建 FastAPI 应用，挂载所有路由和静态文件。
 """
 
+from backend.version import __version__
+
 from pathlib import Path
 from typing import Dict
 
@@ -161,7 +163,7 @@ async def serve_index():
 @app.get("/api/health", tags=["system"])
 async def health_check() -> Dict[str, str]:
     """健康检查接口"""
-    return {"status": "healthy", "service": "hermes-mcp-space", "version": "6.5.2"}
+    return {"status": "healthy", "service": "hermes-mcp-space", "version": __version__}
 
 
 # ==================== 启动和关闭事件 ====================

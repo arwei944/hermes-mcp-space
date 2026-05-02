@@ -223,6 +223,31 @@ class HermesService:
         data["sessions"].insert(0, session)
         data["messages"][session_id] = []
         self._save_sessions_data(data)
+        # 同步写入 SQLite
+        db_path = self._get_session_db_path()
+        if db_path:
+            try:
+                conn = sqlite3.connect(str(db_path))
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS sessions (
+                        id TEXT PRIMARY KEY,
+                        title TEXT NOT NULL DEFAULT '',
+                        model TEXT NOT NULL DEFAULT '',
+                        source TEXT NOT NULL DEFAULT '',
+                        status TEXT NOT NULL DEFAULT 'active',
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                """)
+                cursor.execute(
+                    "INSERT OR IGNORE INTO sessions (id, title, model, source, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (session_id, session["title"], session["model"], session["source"], session["status"], session["created_at"], session["updated_at"]),
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
         return {"success": True, "session": session}
 
     def add_session_message(self, session_id: str, role: str, content: str, metadata: dict = None) -> Dict[str, Any]:
@@ -312,6 +337,18 @@ class HermesService:
         data["sessions"] = [s for s in sessions if s["id"] != session_id]
         data.get("messages", {}).pop(session_id, None)
         self._save_sessions_data(data)
+        # 同步删除 SQLite
+        db_path = self._get_session_db_path()
+        if db_path:
+            try:
+                conn = sqlite3.connect(str(db_path))
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+                cursor.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
         return {"success": True, "message": "会话已删除"}
 
     def compress_session(self, session_id: str) -> Dict[str, Any]:
@@ -425,6 +462,19 @@ class HermesService:
                     s[key] = value
                 s["updated_at"] = datetime.now().isoformat()
                 self._save_sessions_data(data)
+                # 同步更新 SQLite
+                db_path = self._get_session_db_path()
+                if db_path:
+                    try:
+                        conn = sqlite3.connect(str(db_path))
+                        cursor = conn.cursor()
+                        set_clause = ", ".join(f"{k} = ?" for k in fields.keys())
+                        values = list(fields.values()) + [session_id]
+                        cursor.execute(f"UPDATE sessions SET {set_clause}, updated_at = ? WHERE id = ?", values + [s["updated_at"]])
+                        conn.commit()
+                        conn.close()
+                    except Exception:
+                        pass
                 # 触发 SSE 事件
                 try:
                     from backend.routers.events import emit_event
@@ -726,17 +776,18 @@ class HermesService:
         return {"name": name, "content": content, "files": files, "format": fmt}
 
     def create_skill(self, name: str, content: str = "", description: str = "", tags: list = None) -> Dict[str, Any]:
-        """创建新技能（文件格式）"""
+        """创建新技能（目录格式：skills/{name}/SKILL.md）"""
         skills_dir = get_skills_dir()
         skill_dir = skills_dir / name
-        skill_file = skills_dir / f"{name}.md"
+        skill_file_legacy = skills_dir / f"{name}.md"
 
-        if skill_dir.exists() or skill_file.exists():
+        if skill_dir.exists() or skill_file_legacy.exists():
             return {"success": False, "message": f"技能 '{name}' 已存在"}
 
         try:
-            skills_dir.mkdir(parents=True, exist_ok=True)
-            # 将 description 和 tags 写入内容头部
+            # 使用目录格式 skills/{name}/SKILL.md
+            skill_dir.mkdir(parents=True, exist_ok=True)
+            skill_file = skill_dir / "SKILL.md"
             if not content:
                 content = f"# {name}\n\n{description or '技能描述'}"
             elif description and not content.startswith(f"# {name}"):
@@ -935,7 +986,17 @@ class HermesService:
     def read_memory(self) -> Dict[str, str]:
         """读取当前记忆（MEMORY.md + USER.md）"""
         memories_dir = get_memories_dir()
-        result = {"memory": "", "user": "", "memory_usage": 0, "memory_limit": 2200, "user_usage": 0, "user_limit": 1375}
+        # 动态获取上下文预算限制
+        try:
+            from backend.services.context_budget_service import ContextBudgetService
+            budget_svc = ContextBudgetService()
+            budget = budget_svc.get_budget()
+            memory_budget = int(budget["total_budget"] * budget["memory_pct"] / 100 * 2)
+            user_budget = int(budget["total_budget"] * budget["session_pct"] / 100 * 2)
+        except Exception:
+            memory_budget = 2200
+            user_budget = 1375
+        result = {"memory": "", "user": "", "memory_usage": 0, "memory_limit": memory_budget, "user_usage": 0, "user_limit": user_budget}
 
         memory_md = memories_dir / "MEMORY.md"
         if memory_md.exists():
@@ -978,11 +1039,16 @@ class HermesService:
             memory = "\n".join(deduped)
 
             # 容量限制：超出时截断旧内容
-            MEMORY_LIMIT = 2200
+            try:
+                from backend.services.context_budget_service import ContextBudgetService
+                budget_svc = ContextBudgetService()
+                budget = budget_svc.get_budget()
+                MEMORY_LIMIT = int(budget["total_budget"] * budget["memory_pct"] / 100 * 2)
+            except Exception:
+                MEMORY_LIMIT = 2200
             if len(memory) > MEMORY_LIMIT:
                 warnings.append(f"MEMORY.md 超出 {MEMORY_LIMIT} 字符限制 ({len(memory)})，已截断旧内容")
                 memory = memory[-MEMORY_LIMIT:]
-                # 确保从完整行开始
                 first_newline = memory.find("\n")
                 if first_newline > 0:
                     memory = memory[first_newline + 1:]
@@ -1004,7 +1070,13 @@ class HermesService:
             user = "\n".join(deduped)
 
             # 容量限制
-            USER_LIMIT = 1375
+            try:
+                from backend.services.context_budget_service import ContextBudgetService
+                budget_svc = ContextBudgetService()
+                budget = budget_svc.get_budget()
+                USER_LIMIT = int(budget["total_budget"] * budget["session_pct"] / 100 * 2)
+            except Exception:
+                USER_LIMIT = 1375
             if len(user) > USER_LIMIT:
                 warnings.append(f"USER.md 超出 {USER_LIMIT} 字符限制 ({len(user)})，已截断旧内容")
                 user = user[-USER_LIMIT:]
