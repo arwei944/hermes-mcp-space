@@ -233,11 +233,13 @@ import gradio as gr
 from gradio.routes import App
 
 # Build the full HTML FIRST (with fallback to original index.html on error)
+_build_error = None
 try:
     full_html = build_full_html()
     logger.info(f"Frontend HTML built ({len(full_html)} bytes)")
 except Exception as e:
-    logger.error(f"build_full_html failed, falling back to index.html: {e}")
+    _build_error = f"{type(e).__name__}: {e}"
+    logger.error(f"build_full_html failed, falling back to index.html: {_build_error}")
     import traceback
     traceback.print_exc()
     frontend_dir = Path(__file__).resolve().parent / "frontend"

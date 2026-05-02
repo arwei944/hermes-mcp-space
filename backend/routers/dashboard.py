@@ -311,7 +311,7 @@ async def get_status():
     remote_url = os.environ.get("HERMES_API_URL", "")
     first_deploy = _get_first_deploy_time()
     total_uptime = int((datetime.now() - first_deploy).total_seconds())
-    return {
+    result = {
         "status": "ok",
         "version": __version__,
         "uptime": int(time.time() - _start_time),
@@ -322,3 +322,12 @@ async def get_status():
         "hermes_remote_url": remote_url if remote_url else None,
         "data_source": "远程 API" if remote_url else ("本地" if hermes_service.hermes_available else "降级数据"),
     }
+    # Expose build_full_html error if any
+    try:
+        from app import _build_error
+        if _build_error:
+            result["build_error"] = _build_error
+            result["status"] = "degraded"
+    except ImportError:
+        pass
+    return result
