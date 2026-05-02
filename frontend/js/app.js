@@ -20,6 +20,8 @@ const App = (() => {
         trash: TrashPage,
         screenshot: ScreenshotPage,
         sync: SyncPage,
+        ops_dashboard: OpsDashboardPage,
+        ops_alerts: OpsAlertsPage,
     };
 
     const pageTitles = {
@@ -37,6 +39,8 @@ const App = (() => {
         trash: '回收站',
         screenshot: '截图工具',
         sync: '数据同步',
+        ops_dashboard: '运维监控',
+        ops_alerts: '告警管理',
     };
 
     let _currentPage = null;
@@ -277,6 +281,12 @@ const App = (() => {
             配置: 'config',
             设置: 'config',
             config: 'config',
+            运维: 'ops_dashboard',
+            监控: 'ops_dashboard',
+            ops: 'ops_dashboard',
+            告警: 'ops_alerts',
+            报警: 'ops_alerts',
+            alert: 'ops_alerts',
         };
         for (const [keyword, page] of Object.entries(searchMap)) {
             if (keyword.includes(term) || term.includes(keyword)) {

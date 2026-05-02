@@ -148,7 +148,7 @@ def _patched_create_app(blocks, **kwargs):
         from backend.routers import (
             sessions, tools, skills, memory, cron, agents, mcp, config_api,
             dashboard, logs, events, plugins, trash, evals, stats, knowledge,
-            screenshot, persistence, version
+            screenshot, persistence, version, ops
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -169,6 +169,7 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(screenshot.router)
         app.include_router(persistence.router)
         app.include_router(version.router)
+        app.include_router(ops.router)
         logger.info("Backend API routers mounted successfully")
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")

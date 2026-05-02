@@ -61,6 +61,7 @@ from backend.routers import (  # noqa: E402
     persistence,
     knowledge,
     trash,
+    ops,
 )
 
 # 知识库增强模块路由
@@ -87,6 +88,7 @@ app.include_router(plugins.router)
 app.include_router(persistence.router)
 app.include_router(knowledge.router)
 app.include_router(trash.router)
+app.include_router(ops.router)
 
 # 知识库增强路由
 app.include_router(rules.router)
