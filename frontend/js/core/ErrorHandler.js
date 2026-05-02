@@ -2,6 +2,7 @@
 /**
  * ErrorHandler — 三层错误边界处理器
  * 支持 wrap / handleError / fallbackUI / getErrorLog / initGlobal
+ * v12: 新增 sendBeacon 错误上报后端（去重 + 批量 + 限流）
  */
 const ErrorHandler = (() => {
     'use strict';
@@ -9,11 +10,57 @@ const ErrorHandler = (() => {
     const _errorLog = [];
     const MAX_LOG = 100;
 
+    // --- 错误上报模块 ---
+    const _reportQueue = [];
+    const _dedupMap = new Map();
+    let _flushTimer = null;
+    const DEDUP_WINDOW = 30000;  // 30秒内相同错误不重复上报
+    const FLUSH_INTERVAL = 5000; // 5秒批量刷出
+    const MAX_QUEUE = 5;         // 最多缓存5条
+
+    function _reportToBackend(error) {
+        // 去重：相同 message + context 在 DEDUP_WINDOW 内只上报一次
+        var key = (error.message || '') + ':' + (error.context || '');
+        var last = _dedupMap.get(key);
+        if (last && Date.now() - last < DEDUP_WINDOW) return;
+        _dedupMap.set(key, Date.now());
+
+        _reportQueue.push({
+            type: 'js_error',
+            message: error.message || String(error),
+            stack: error.stack || null,
+            context: error.context || 'unknown',
+            url: typeof location !== 'undefined' ? location.pathname : '',
+            browser: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+            build_version: (typeof window !== 'undefined' && window.__BUILD_VERSION__) ? window.__BUILD_VERSION__ : 'unknown',
+        });
+
+        if (_reportQueue.length >= MAX_QUEUE) _flushReports();
+        if (!_flushTimer) _flushTimer = setInterval(_flushReports, FLUSH_INTERVAL);
+    }
+
+    function _flushReports() {
+        if (_reportQueue.length === 0) return;
+        var payload = _reportQueue.splice(0, MAX_QUEUE)[0];
+        try {
+            if (navigator && navigator.sendBeacon) {
+                navigator.sendBeacon('/api/ops/frontend-errors', JSON.stringify(payload));
+            } else if (typeof fetch !== 'undefined') {
+                fetch('/api/ops/frontend-errors', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true,
+                }).catch(function() {});
+            }
+        } catch (_) { /* ignore */ }
+    }
+
     /**
-     * 记录错误到日志（最多100条）
+     * 记录错误到日志（最多100条）+ 上报后端
      */
     function handleError(err, context) {
-        const entry = {
+        var entry = {
             error: err,
             context: context || 'unknown',
             timestamp: new Date().toISOString(),
@@ -24,7 +71,7 @@ const ErrorHandler = (() => {
         if (_errorLog.length > MAX_LOG) _errorLog.shift();
 
         // console.error
-        console.error(`[ErrorHandler] (${entry.context})`, err);
+        console.error('[ErrorHandler] (' + entry.context + ')', err);
 
         // Bus.emit
         if (window.Bus && typeof Bus.emit === 'function') {
@@ -35,6 +82,9 @@ const ErrorHandler = (() => {
         if (window.Toast && typeof Toast.error === 'function') {
             try { Toast.error(entry.message); } catch (_) { /* ignore */ }
         }
+
+        // 上报后端
+        _reportToBackend({ message: entry.message, stack: entry.stack, context: entry.context });
     }
 
     /**

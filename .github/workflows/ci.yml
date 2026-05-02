@@ -178,3 +178,49 @@ jobs:
           )
           print(f"Deployed to https://huggingface.co/spaces/{repo_id}")
           SCRIPT
+
+      - name: Verify deployment
+        run: |
+          echo "=== 验证部署状态 ==="
+          DEPLOY_URL="https://arwei944-hermes-mcp-space.hf.space"
+          MAX_WAIT=300  # 最多等待 5 分钟
+          INTERVAL=15   # 每 15 秒检查一次
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            echo "等待部署就绪... (${ELAPSED}s/${MAX_WAIT}s)"
+
+            # 检查 /api/status 是否返回 200
+            HTTP_CODE=$(curl -s -o /tmp/status_response.json -w "%{http_code}" "${DEPLOY_URL}/api/status" 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "API 状态端点返回 200"
+
+              # 检查状态是否为 degraded
+              STATUS_VALUE=$(python3 -c "import json; d=json.load(open('/tmp/status_response.json')); print(d.get('status', d.get('service_status', 'unknown')))" 2>/dev/null || echo "unknown")
+              echo "状态值: ${STATUS_VALUE}"
+
+              if [ "$STATUS_VALUE" = "degraded" ]; then
+                echo "::error::部署状态为 degraded，可能存在构建错误"
+                exit 1
+              fi
+
+              # 检查页面大小（首页 > 100KB，排除回退模式）
+              PAGE_SIZE=$(curl -s -o /tmp/page_content.html -w "%{size_download}" "${DEPLOY_URL}/" 2>/dev/null || echo "0")
+              echo "首页大小: ${PAGE_SIZE} bytes"
+
+              if [ "$PAGE_SIZE" -lt 102400 ]; then
+                echo "::error::首页大小 ${PAGE_SIZE} bytes < 100KB，可能处于回退模式"
+                exit 1
+              fi
+
+              echo "部署验证通过: status=${STATUS_VALUE}, page_size=${PAGE_SIZE} bytes"
+              exit 0
+            fi
+
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "::error::部署验证超时：${MAX_WAIT}s 内 /api/status 未返回 200"
+          exit 1

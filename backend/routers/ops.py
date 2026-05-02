@@ -151,3 +151,68 @@ async def check_alerts() -> Dict[str, Any]:
         "triggered_count": len(triggered),
         "triggered": triggered,
     }
+
+
+# ============================================================
+# API 错误查询（由 error_tracker 中间件收集）
+# ============================================================
+
+@router.get("/api-errors", summary="查询 API 错误列表")
+async def list_api_errors(
+    status: Optional[int] = Query(default=None, description="按状态码过滤"),
+    limit: int = Query(default=50, ge=1, le=200, description="返回条数上限"),
+) -> List[Dict[str, Any]]:
+    """获取 API 未处理异常列表（最新的在前）"""
+    from backend.middleware.error_tracker import get_api_errors
+    return get_api_errors(status=status, limit=limit)
+
+
+@router.get("/api-errors/stats", summary="API 错误统计")
+async def api_error_stats() -> Dict[str, Any]:
+    """获取 API 错误统计数据"""
+    from backend.middleware.error_tracker import get_api_error_stats
+    return get_api_error_stats()
+
+
+# ============================================================
+# 聚合概览
+# ============================================================
+
+@router.get("/overview", summary="聚合概览数据")
+async def get_overview() -> Dict[str, Any]:
+    """聚合系统指标、MCP 健康、定时任务、前端错误和 API 错误的概览数据"""
+    result: Dict[str, Any] = {}
+
+    # 系统指标
+    try:
+        result["metrics"] = ops_service.get_system_metrics()
+    except Exception as e:
+        result["metrics"] = {"error": str(e)}
+
+    # MCP 健康状态
+    try:
+        result["mcp_health"] = ops_service.get_mcp_health()
+    except Exception as e:
+        result["mcp_health"] = {"error": str(e)}
+
+    # 定时任务
+    try:
+        result["cron"] = ops_service.get_cron_monitor()
+    except Exception as e:
+        result["cron"] = {"error": str(e)}
+
+    # 前端错误统计
+    try:
+        from backend.routers.frontend_errors import frontend_error_stats
+        result["frontend_errors"] = await frontend_error_stats()
+    except Exception as e:
+        result["frontend_errors"] = {"error": str(e)}
+
+    # API 错误统计
+    try:
+        from backend.middleware.error_tracker import get_api_error_stats
+        result["api_errors"] = get_api_error_stats()
+    except Exception as e:
+        result["api_errors"] = {"error": str(e)}
+
+    return result

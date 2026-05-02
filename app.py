@@ -15,6 +15,7 @@ os.environ["TZ"] = "Asia/Shanghai"
 import json
 import logging
 import re
+import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -44,6 +45,131 @@ def load_file(path):
     except Exception as e:
         logger.error(f"Failed to load {path}: {e}")
         return ""
+
+
+def _get_build_version() -> str:
+    """获取 git short commit hash 作为构建版本号"""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+            cwd=Path(__file__).resolve().parent,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return "unknown"
+
+
+def _get_cache_dir() -> Path:
+    """获取构建缓存目录"""
+    try:
+        from backend.config import get_hermes_home
+        cache_dir = get_hermes_home() / "cache"
+    except ImportError:
+        cache_dir = Path.home() / ".hermes" / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
+
+
+def _save_build_cache(html: str) -> None:
+    """保存构建结果到缓存"""
+    try:
+        cache_path = _get_cache_dir() / "last_good_html.html"
+        cache_path.write_text(html, encoding="utf-8")
+        logger.info(f"构建缓存已保存 ({len(html)} bytes)")
+    except Exception as e:
+        logger.warning(f"保存构建缓存失败: {e}")
+
+
+def _load_build_cache() -> str:
+    """从缓存加载上一次成功的构建结果"""
+    try:
+        cache_path = _get_cache_dir() / "last_good_html.html"
+        if cache_path.exists():
+            html = cache_path.read_text(encoding="utf-8")
+            logger.info(f"从构建缓存恢复 ({len(html)} bytes)")
+            return html
+    except Exception as e:
+        logger.warning(f"加载构建缓存失败: {e}")
+    return ""
+
+
+def _validate_build(html: str) -> list:
+    """验证构建产物的完整性，返回警告列表
+
+    检查项：
+    - 无外部 CSS/JS 链接残留
+    - 无 import/export 语句残留
+    - 无 const/let 关键字残留
+    - __m key 一致性（无缺失导出）
+    - __m key 无前导空格
+    - 关键全局变量存在
+    """
+    warnings = []
+
+    # 提取 <script> 内容
+    script_match = re.search(r'<script>(.*?)</script>', html, re.DOTALL)
+    if not script_match:
+        warnings.append("构建验证: 未找到 <script> 标签")
+        return warnings
+
+    js_content = script_match.group(1)
+
+    # 1. 检查外部 CSS/JS 链接残留
+    ext_css = re.findall(r'<link[^>]+href=["\']https?://[^"\']+\.css["\']', html)
+    if ext_css:
+        warnings.append(f"构建验证: 发现 {len(ext_css)} 个外部 CSS 链接残留")
+
+    ext_js = re.findall(r'<script[^>]+src=["\']https?://[^"\']+\.js["\']', html)
+    if ext_js:
+        warnings.append(f"构建验证: 发现 {len(ext_js)} 个外部 JS 链接残留")
+
+    # 2. 检查 import/export 语句残留
+    import_lines = [l.strip() for l in js_content.split('\n')
+                    if l.strip().startswith('import ') and ' from ' in l.strip()]
+    if import_lines:
+        warnings.append(f"构建验证: 发现 {len(import_lines)} 行 import 语句残留")
+
+    export_lines = [l.strip() for l in js_content.split('\n')
+                    if l.strip().startswith('export ')]
+    if export_lines:
+        warnings.append(f"构建验证: 发现 {len(export_lines)} 行 export 语句残留")
+
+    # 3. 检查 const/let 关键字残留（排除注释和字符串中的）
+    for line in js_content.split('\n'):
+        stripped = line.strip()
+        if stripped.startswith('//') or stripped.startswith('*') or stripped.startswith('/*'):
+            continue
+        if re.match(r'^\s*(const|let)\s+\w+', line):
+            warnings.append(f"构建验证: 发现 const/let 残留: {stripped[:60]}")
+            break  # 只报告第一个
+
+    # 4. __m key 一致性检查
+    # 收集所有 __m 的赋值 key
+    assigned_keys = set(re.findall(r"window\.__m\[['\"]([^'\"]+)['\"]\]\s*=", js_content))
+    # 收集所有 __m 的读取 key
+    read_keys = set(re.findall(r"window\.__m\[['\"]([^'\"]+)['\"]\]", js_content))
+    # 读取但未赋值的 key（排除 .default 和 .then 等属性访问）
+    missing_keys = read_keys - assigned_keys
+    if missing_keys:
+        warnings.append(f"构建验证: {len(missing_keys)} 个 __m key 缺失导出: {list(missing_keys)[:5]}")
+
+    # 5. __m key 无前导空格
+    leading_space_keys = re.findall(r"window\.__m\[['\"]\s+([^'\"]+)['\"]\]", js_content)
+    if leading_space_keys:
+        warnings.append(f"构建验证: {len(leading_space_keys)} 个 __m key 有前导空格: {leading_space_keys[:3]}")
+
+    # 6. 关键全局变量存在性检查
+    required_globals = ["SSEManager", "Components", "API", "Store", "Bus", "Router"]
+    for var in required_globals:
+        # 检查是否有 var XXX = 或 window.XXX = 的定义
+        pattern = rf'(?:var\s+{var}\s*=|window\.{var}\s*=)'
+        if not re.search(pattern, js_content):
+            warnings.append(f"构建验证: 关键全局变量 '{var}' 未定义")
+
+    return warnings
 
 
 def build_full_html():
@@ -211,6 +337,15 @@ def build_full_html():
 
     all_js = '\n'.join(all_js_parts)
 
+    # 注入构建版本信息
+    build_commit = _get_build_version()
+    build_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    version_inject = (
+        f"window.__BUILD_VERSION__ = '{build_commit}';\n"
+        f"window.__BUILD_TIME__ = '{build_time_str}';\n"
+    )
+    all_js = version_inject + all_js
+
     index_html = load_file(frontend_dir / "index.html")
     logger.info(f"index.html: {len(index_html)} bytes")
 
@@ -223,6 +358,14 @@ def build_full_html():
 
     # Insert all JS inline before </body>
     html = html.replace('</body>', f'<script>\n{all_js}\n</script>\n</body>')
+
+    # 构建验证
+    build_warnings = _validate_build(html)
+    if build_warnings:
+        for w in build_warnings:
+            logger.warning(w)
+    else:
+        logger.info("构建验证通过，无警告")
 
     return html
 
@@ -237,14 +380,24 @@ _build_error = None
 try:
     full_html = build_full_html()
     logger.info(f"Frontend HTML built ({len(full_html)} bytes)")
+    # 构建成功，保存缓存
+    _save_build_cache(full_html)
 except Exception as e:
     _build_error = f"{type(e).__name__}: {e}"
-    logger.error(f"build_full_html failed, falling back to index.html: {_build_error}")
+    logger.error(f"build_full_html failed: {_build_error}")
     import traceback
     traceback.print_exc()
-    frontend_dir = Path(__file__).resolve().parent / "frontend"
-    full_html = load_file(frontend_dir / "index.html")
-    logger.warning(f"Using original index.html ({len(full_html)} bytes) as fallback")
+
+    # 尝试从缓存恢复
+    cached_html = _load_build_cache()
+    if cached_html:
+        full_html = cached_html
+        logger.info(f"从构建缓存恢复成功 ({len(full_html)} bytes)")
+    else:
+        # 最终回退到原始 index.html
+        frontend_dir = Path(__file__).resolve().parent / "frontend"
+        full_html = load_file(frontend_dir / "index.html")
+        logger.warning(f"缓存不可用，使用原始 index.html ({len(full_html)} bytes) 作为最终回退")
 
 # Monkey-patch App.create_app to inject our custom routes after Gradio creates the app
 _original_create_app = App.create_app
@@ -299,7 +452,7 @@ def _patched_create_app(blocks, **kwargs):
         from backend.routers import (
             sessions, tools, skills, memory, cron, agents, mcp, config_api,
             dashboard, logs, events, plugins, trash, evals, stats, knowledge,
-            screenshot, persistence, version, ops
+            screenshot, persistence, version, ops, frontend_errors
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -321,6 +474,7 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(persistence.router)
         app.include_router(version.router)
         app.include_router(ops.router)
+        app.include_router(frontend_errors.router)
         logger.info("Backend API routers mounted successfully")
     except Exception as e:
         logger.warning(f"Failed to mount backend API routers: {e}")
@@ -401,6 +555,14 @@ def _patched_create_app(blocks, **kwargs):
         logger.info("Event emit middleware added")
     except Exception as e:
         logger.warning(f"Failed to add event middleware: {e}")
+
+    # Add ErrorTrackerMiddleware（在 CORS 之后、其他中间件之前）
+    try:
+        from backend.middleware.error_tracker import ErrorTrackerMiddleware
+        app.add_middleware(ErrorTrackerMiddleware)
+        logger.info("Error tracker middleware added")
+    except Exception as e:
+        logger.warning(f"Failed to add error tracker middleware: {e}")
 
     return app
 

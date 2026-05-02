@@ -1,7 +1,8 @@
 // -*- coding: utf-8 -*-
 /**
  * APIClient - 增强版 API 客户端
- * 支持超时控制、指数退避自动重试、事件通知
+ * 支持超时控制、指数退避自动重试、事件通知、链路追踪
+ * v12: 注入 X-Trace-Id 请求头，API 错误自动上报
  */
 (function APIClientModule() {
     'use strict';
@@ -10,6 +11,28 @@
     const MAX_RETRIES = 3;
     const RETRY_DELAYS = [1000, 2000, 4000];
     const DEFAULT_TIMEOUT = 15000;
+
+    function _generateTraceId() {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID().slice(0, 8);
+        }
+        return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    function _reportApiError(url, error, traceId) {
+        try {
+            var payload = {
+                type: 'api_error',
+                message: (error.message || String(error)) + ' (' + url + ')',
+                context: 'API:' + url + ' [' + traceId + ']',
+                url: typeof location !== 'undefined' ? location.pathname : '',
+                build_version: (typeof window !== 'undefined' && window.__BUILD_VERSION__) ? window.__BUILD_VERSION__ : 'unknown',
+            };
+            if (navigator && navigator.sendBeacon) {
+                navigator.sendBeacon('/api/ops/frontend-errors', JSON.stringify(payload));
+            }
+        } catch (_) { /* ignore */ }
+    }
 
     function detectBaseUrl() {
         const { hostname } = window.location;
@@ -63,8 +86,9 @@
             const method = (options.method || 'GET').toUpperCase();
             const timeout = options.timeout !== undefined ? options.timeout : this.defaultTimeout;
             const url = this._buildUrl(path, options.params);
+            const traceId = _generateTraceId();
 
-            const headers = { ...this.defaultHeaders, ...(options.headers || {}) };
+            const headers = { ...this.defaultHeaders, ...(options.headers || {}), 'X-Trace-Id': traceId };
             const fetchOptions = { method, headers };
             if (options.body && method !== 'GET' && method !== 'HEAD') {
                 fetchOptions.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
@@ -127,8 +151,9 @@
 
             // 全部重试失败
             if (window.Bus) {
-                Bus.emit('api:error', { path, error: lastError });
+                Bus.emit('api:error', { path, error: lastError, traceId });
             }
+            _reportApiError(path, lastError, traceId);
             throw lastError;
         },
 
