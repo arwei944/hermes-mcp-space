@@ -1142,7 +1142,7 @@ def _get_tools():
             "type": "object",
             "properties": {
                 "session_id": {"type": "string", "description": "会话 ID"},
-                "auto_submit": {"type": "boolean", "default": true, "description": "是否自动提交审核"}
+                "auto_submit": {"type": "boolean", "default": True, "description": "是否自动提交审核"}
             },
             "required": ["session_id"]
         }
