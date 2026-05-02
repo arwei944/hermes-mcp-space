@@ -76,6 +76,11 @@ def build_full_html():
         # 回退：扫描 components 目录下所有 .js 文件
         for jsf in sorted(components_dir.glob("*.js")):
             core_js.append(f"js/components/{jsf.name}")
+    # V2 Services
+    services_dir = frontend_dir / "js" / "services"
+    if services_dir.exists():
+        for jsf in sorted(services_dir.glob("*.js")):
+            core_js.append(f"js/services/{jsf.name}")
     pages_dir = frontend_dir / "js" / "pages"
     page_files = []
     for item in sorted(pages_dir.iterdir()):

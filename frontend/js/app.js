@@ -58,6 +58,22 @@ const App = (() => {
         // 初始化 Router 并注册所有路由
         initRouter();
 
+        // 初始化告警通知服务
+        if (typeof AlertNotifier !== 'undefined') AlertNotifier.init();
+
+        // 路由守卫：运维页面时启动同步和告警检查
+        if (typeof Router !== 'undefined') {
+            Router.guard(function(to) {
+                if (to === 'ops_dashboard' || to === 'ops_alerts') {
+                    if (typeof OpsSyncService !== 'undefined') OpsSyncService.start();
+                    if (typeof AlertChecker !== 'undefined') AlertChecker.start();
+                } else {
+                    if (typeof OpsSyncService !== 'undefined') OpsSyncService.stop();
+                    if (typeof AlertChecker !== 'undefined') AlertChecker.stop();
+                }
+            });
+        }
+
         // 预加载版本元数据
         API.meta();
 
