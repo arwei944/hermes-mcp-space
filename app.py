@@ -215,7 +215,7 @@ def build_full_html():
     logger.info(f"index.html: {len(index_html)} bytes")
 
     # Replace CSS link with inline style (all CSS files combined)
-    html = re.sub(r'<link\s+rel="stylesheet"\s+href="[^"]*\.css"[^>]*>', '', html)
+    html = re.sub(r'<link\s+rel="stylesheet"\s+href="[^"]*\.css"[^>]*>', '', index_html)
     html = html.replace('</head>', f'<style>\n{all_css}\n</style>\n</head>')
 
     # Remove all <script src=...> tags (with optional attributes like defer, type, etc.)
