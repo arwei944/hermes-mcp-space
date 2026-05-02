@@ -50,16 +50,26 @@ const KnowledgePage = (() => {
 
     function formatTime(dateStr) {
         if (!dateStr) return '-';
-        return Components.formatTime(dateStr);
+        try {
+            if (Components && typeof Components.formatTime === 'function') {
+                return Components.formatTime(dateStr);
+            }
+        } catch (e) {}
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        const now = new Date();
+        const diff = Math.floor((now - d) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        return d.toLocaleDateString();
     }
 
     function showToast(message, type) {
-        if (Components && Components.Toast) {
+        if (Components && Components.Toast && typeof Components.Toast.show === 'function') {
             Components.Toast.show(message, type || 'info');
-        } else if (typeof showToast === 'function') {
-            showToast(message, type || 'info');
         } else {
-            // Fallback: simple custom toast
             _customToast(message, type || 'info');
         }
     }
