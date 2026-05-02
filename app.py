@@ -167,7 +167,8 @@ def build_full_html():
         preceding = all_js[:pos]
         last_marker = preceding.rfind("// === ")
         if last_marker >= 0:
-            end_marker = preceding.find(" ===", last_marker)
+            # Skip "// === " (6 chars) to find the closing " ==="
+            end_marker = preceding.find(" ===", last_marker + 6)
             if end_marker >= 0:
                 dir_path = preceding[last_marker+6:end_marker]
                 parts = dir_path.rsplit('/', 1)
