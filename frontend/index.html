@@ -172,7 +172,7 @@
 <button id="themeToggle" class="theme-toggle" title="切换深色模式" data-icon="moon"></button>
 
 <!-- Scripts -->
-<!-- V2 Core Layer (Phase 0) -->
+<!-- V2 Core Layer -->
 <script src="/js/core/Logger.js" defer></script>
 <script src="/js/core/Store.js" defer></script>
 <script src="/js/core/Bus.js" defer></script>
@@ -180,13 +180,14 @@
 <script src="/js/core/APIClient.js" defer></script>
 <script src="/js/core/constants.js" defer></script>
 <script src="/js/core/init.js" defer></script>
-<!-- V2 Core Layer End -->
+<!-- Utilities & Base -->
 <script src="/js/i18n.js" defer></script>
 <script src="/js/utils/sse.js" defer></script>
 <script src="/js/utils/export-progress.js" defer></script>
 <script src="/js/utils/confirm-dialog.js" defer></script>
 <script src="/js/api.js" defer></script>
 <script src="/js/components.js" defer></script>
+<!-- V2 Page Modules (register.js entry points) -->
 <script src="/js/pages/dashboard/register.js" defer></script>
 <script src="/js/pages/knowledge/register.js" defer></script>
 <script src="/js/pages/sessions/register.js" defer></script>
@@ -195,21 +196,20 @@
 <script src="/js/pages/cron/register.js" defer></script>
 <script src="/js/pages/agents_behavior/register.js" defer></script>
 <script src="/js/pages/config/register.js" defer></script>
-<!-- V2 Page Modules (Phase 1) -->
 <script src="/js/pages/about/register.js" defer></script>
 <script src="/js/pages/trash/register.js" defer></script>
 <script src="/js/pages/agents/register.js" defer></script>
 <script src="/js/pages/screenshot/register.js" defer></script>
-<!-- V2 Page Modules End -->
 <script src="/js/pages/marketplace/register.js" defer></script>
 <script src="/js/pages/logs/register.js" defer></script>
 <script src="/js/pages/sync/register.js" defer></script>
 <script src="/js/app.js" defer></script>
 
-<!-- 全局错误边界：JS 报错时显示友好提示而不是白屏 -->
+<!-- 全局错误边界：由 V2 ErrorHandler.initGlobal() 接管，此处为降级兜底 -->
 <script>
 window.onerror = function(msg, url, line, col, err) {
-    console.error('[JS Error]', msg, url, line, col, err);
+    if (typeof Logger !== 'undefined') Logger.error('[Global]', msg, url, line, col);
+    else console.error('[JS Error]', msg, url, line, col, err);
     var content = document.getElementById('contentBody');
     if (content && !content.querySelector('.js-error-boundary')) {
         content.innerHTML = '<div class="js-error-boundary" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center">' +
@@ -222,7 +222,8 @@ window.onerror = function(msg, url, line, col, err) {
     return true;
 };
 window.addEventListener('unhandledrejection', function(e) {
-    console.error('[Promise Error]', e.reason);
+    if (typeof Logger !== 'undefined') Logger.error('[Promise]', e.reason);
+    else console.error('[Promise Error]', e.reason);
 });
 </script>
 
