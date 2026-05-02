@@ -152,6 +152,14 @@ def build_full_html():
         all_js
     )
 
+    # 6. Replace `const` and `let` with `var` to avoid redeclaration errors.
+    # In ES modules, each file has its own scope, so declarations in different files
+    # don't conflict. But in build_full_html, all files are inlined into one
+    # <script>, and `const`/`let` cannot be redeclared in the same scope.
+    # `var` allows redeclaration, so this is safe for our IIFE-based code.
+    all_js = re.sub(r'^(\s*)const\s+', r'\1var ', all_js, flags=re.MULTILINE)
+    all_js = re.sub(r'^(\s*)let\s+', r'\1var ', all_js, flags=re.MULTILINE)
+
     index_html = load_file(frontend_dir / "index.html")
 
     # Replace CSS link with inline style
