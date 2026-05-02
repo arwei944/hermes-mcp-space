@@ -393,7 +393,7 @@ const App = (() => {
                 'position:fixed;top:20px;right:20px;z-index:10000;padding:12px 20px;' +
                 'background:#fee2e2;color:#991b1b;border-radius:8px;' +
                 'box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:14px;max-width:400px;';
-            toast.textContent = '操作出错，请刷新页面重试';
+            toast.textContent = '操作出错: ' + message;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 5000);
             return true; // 阻止默认错误处理
