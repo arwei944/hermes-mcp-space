@@ -61,6 +61,17 @@ from backend.routers import (  # noqa: E402
     trash,
 )
 
+# 知识库增强模块路由
+from backend.routers import (  # noqa: E402
+    rules,
+    knowledge_items,
+    experiences,
+    memories as memories_router,
+    reviews,
+    search,
+    context_budget,
+)
+
 app.include_router(sessions.router)
 app.include_router(tools.router)
 app.include_router(skills.router)
@@ -73,6 +84,15 @@ app.include_router(plugins.router)
 app.include_router(persistence.router)
 app.include_router(knowledge.router)
 app.include_router(trash.router)
+
+# 知识库增强路由
+app.include_router(rules.router)
+app.include_router(knowledge_items.router)
+app.include_router(experiences.router)
+app.include_router(memories_router.router)
+app.include_router(reviews.router)
+app.include_router(search.router)
+app.include_router(context_budget.router)
 
 # ==================== v1 API 版本化路由（与原路由共享实例，向后兼容） ====================
 
@@ -152,6 +172,15 @@ async def on_startup():
     print(f"[Hermes Panel] Hermes 主目录: {config['hermes_home']}")
     print(f"[Hermes Panel] 前端目录: {FRONTEND_DIR} (存在: {FRONTEND_DIR.exists()})")
     print(f"[Hermes Panel] API 文档: http://localhost:{config['port']}/docs")
+
+    # 初始化知识库数据库
+    try:
+        from backend.db import get_knowledge_db, init_knowledge_db
+        conn = get_knowledge_db()
+        init_knowledge_db(conn)
+        print(f"[Hermes Panel] 知识库数据库已初始化")
+    except Exception as e:
+        print(f"[Hermes Panel] ⚠️ 知识库数据库初始化失败: {e}")
 
 
 @app.on_event("shutdown")
