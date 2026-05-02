@@ -1133,9 +1133,9 @@ def _get_tools():
                 "query": {"type": "string", "description": "查询文本"}
             }
         }
-    },
+    })
     # ---- Knowledge Base Compat Tools ----
-    {
+    tools.append({
         "name": "knowledge_extract_session",
         "description": "从指定会话中自动提取知识、经验、记忆（提交审核）",
         "inputSchema": {
@@ -1146,16 +1146,16 @@ def _get_tools():
             },
             "required": ["session_id"]
         }
-    },
-    {
+    })
+    tools.append({
         "name": "compat_sync_md_to_db",
         "description": "从 MD 文件导入到知识库（MEMORY.md + USER.md + learnings.md）",
         "inputSchema": {
             "type": "object",
             "properties": {}
         }
-    },
-    {
+    })
+    tools.append({
         "name": "compat_sync_db_to_md",
         "description": "从知识库导出到 MD 文件",
         "inputSchema": {
