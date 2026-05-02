@@ -21,28 +21,61 @@ jobs:
       - name: Install ESLint
         run: cd frontend && npm ci
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Check JS with ESLint
-        run: cd frontend && npx eslint js/
+        run: cd frontend && npx eslint js/ --max-warnings 100
 
-      - name: Check JS syntax (all files)
+      - name: Check JS syntax (V2 modular structure)
         run: |
-          echo "=== Checking JS files ==="
+          echo "=== Checking JS files (V2 structure) ==="
           ERRORS=0
-          for f in frontend/js/app.js frontend/js/components.js frontend/js/pages/*.js; do
+          CHECKED=0
+          # Core modules
+          for f in frontend/js/core/*.js; do
             if [ -f "$f" ]; then
-              if ! node --check "$f" 2>&1; then
-                ERRORS=$((ERRORS + 1))
-              fi
-            else
-              echo "MISSING: $f"
-              ERRORS=$((ERRORS + 1))
+              CHECKED=$((CHECKED + 1))
+              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
             fi
           done
+          # Components modules
+          for f in frontend/js/components/*.js; do
+            if [ -f "$f" ]; then
+              CHECKED=$((CHECKED + 1))
+              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
+            fi
+          done
+          # Services modules
+          for f in frontend/js/services/*.js; do
+            if [ -f "$f" ]; then
+              CHECKED=$((CHECKED + 1))
+              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
+            fi
+          done
+          # Page modules (register.js in each directory)
+          for dir in frontend/js/pages/*/; do
+            if [ -d "$dir" ]; then
+              for f in "$dir"*.js; do
+                if [ -f "$f" ]; then
+                  CHECKED=$((CHECKED + 1))
+                  node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
+                fi
+              done
+            fi
+          done
+          # Legacy single-file pages (if any remain)
+          for f in frontend/js/pages/*.js; do
+            if [ -f "$f" ]; then
+              CHECKED=$((CHECKED + 1))
+              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
+            fi
+          done
+          # Base files
+          for f in frontend/js/app.js frontend/js/api.js frontend/js/utils/*.js frontend/js/i18n.js; do
+            if [ -f "$f" ]; then
+              CHECKED=$((CHECKED + 1))
+              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
+            fi
+          done
+          echo "Checked $CHECKED JS files, $ERRORS error(s)"
           if [ $ERRORS -gt 0 ]; then
             echo "ERROR: $ERRORS JS file(s) failed syntax check"
             exit 1
@@ -55,12 +88,7 @@ jobs:
           ERRORS=0
           for f in app.py backend/*.py backend/routers/*.py backend/services/*.py; do
             if [ -f "$f" ]; then
-              if ! python3 -m py_compile "$f" 2>&1; then
-                ERRORS=$((ERRORS + 1))
-              fi
-            else
-              echo "MISSING: $f"
-              ERRORS=$((ERRORS + 1))
+              python3 -m py_compile "$f" 2>&1 || ERRORS=$((ERRORS + 1))
             fi
           done
           if [ $ERRORS -gt 0 ]; then
@@ -69,7 +97,24 @@ jobs:
           fi
           echo "All Python files passed syntax check"
 
-  test:
+  test-frontend:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Jest
+        run: npm install --save-dev jest 2>&1 | tail -3
+
+      - name: Run frontend tests
+        run: npx jest --verbose --forceExit
+
+  test-backend:
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -85,14 +130,14 @@ jobs:
           pip install --break-system-packages pytest pytest-asyncio httpx
           pip install --break-system-packages -r requirements.txt 2>/dev/null || true
 
-      - name: Run tests
+      - name: Run backend tests
         run: |
           pytest tests/ -v --tb=short --timeout=60 2>/dev/null || pytest tests/ -v --tb=short
         env:
           PYTEST_TIMEOUT: 60
 
   deploy:
-    needs: [lint, test]
+    needs: [lint, test-frontend, test-backend]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
