@@ -81,6 +81,11 @@ def build_full_html():
     if services_dir.exists():
         for jsf in sorted(services_dir.glob("*.js")):
             core_js.append(f"js/services/{jsf.name}")
+    # Utility files (SSEManager, confirm-dialog, charts, etc.)
+    utils_dir = frontend_dir / "js" / "utils"
+    if utils_dir.exists():
+        for jsf in sorted(utils_dir.glob("*.js")):
+            core_js.append(f"js/utils/{jsf.name}")
     pages_dir = frontend_dir / "js" / "pages"
     page_files = []
     for item in sorted(pages_dir.iterdir()):
