@@ -96,101 +96,105 @@ def build_full_html():
 
     logger.info(f"Auto-discovered {len(page_files)} page files: {[f.split('/')[-1] for f in page_files]}")
 
-    all_js = ""
+    # In build_full_html mode, all JS is inlined into a single <script> tag.
+    # Strategy: transform ES module syntax to plain JS, with each file wrapped
+    # in try-catch for isolation.
+    #
+    # Transformations:
+    #   1. `export default X` → append `window.__m['dir/file.js'] = X;`
+    #   2. `export { A, B }` → append `window.__m['dir/file.js'] = { A, B };`
+    #   3. `import X from './Y.js'` → remove (X is already in scope via var)
+    #   4. `import { A, B } from './C.js'` → remove (same reason)
+    #   5. `(await) import('./X.js').default` → `window.__m['dir/X.js']`
+    #   6. `(await) import('./X.js')` → `window.__m['dir/X.js']`
+    #   7. `const`/`let` → `var` (allow redeclaration in shared scope)
+
+    all_js_parts = []  # Final assembled JS parts
+
     for jsf in js_files:
         content = load_file(frontend_dir / jsf)
-        if content:
-            all_js += f"\n// === {jsf} ===\n{content}\n"
-
-    # In build_full_html mode, all JS is inlined into a single <script> tag.
-    # ES module syntax (import/export) is NOT valid in non-module scripts.
-    # We transform all import/export statements to work in a plain <script>:
-    #   1. `export default X` → `window.__m['dir/file.js'] = X`
-    #   2. `export { A, B }` → `window.__m['dir/file.js'] = { A, B }`
-    #   3. `import X from './Y.js'` → `var X = window.__m['dir/Y.js']`
-    #   4. `import { A, B } from './C.js'` → `var { A, B } = window.__m['dir/C.js']`
-    #   5. `import('./X.js')` → `Promise.resolve(window.__m['dir/X.js'])
-    # NOTE: Keys use full path (dir/file.js) to avoid collisions between files
-    # with the same name in different directories (e.g., constants.js).
-    # NOTE: Export registrations are hoisted to the top to avoid load-order issues.
-
-    # --- Pass 1: Collect all export registrations ---
-    lines = all_js.split('\n')
-    export_lines = []  # registration code lines
-    import_lines = []  # (var_name_or_destructure, full_key) for deferred resolution
-    current_file = ""
-    current_dir = ""
-    for line in lines:
-        if line.startswith("// === "):
-            path_match = re.match(r'// === (.+) ===', line)
-            if path_match:
-                current_file = path_match.group(1)
-                parts = current_file.rsplit('/', 1)
-                current_dir = parts[0] if len(parts) > 1 else ""
-        stripped = line.strip()
-        if stripped.startswith("export default "):
-            val = stripped[len("export default "):]
-            export_lines.append(f"window.__m = window.__m || {{}}; window.__m['{current_file}'] = {val}")
-        elif stripped.startswith("export {") and stripped.endswith("};"):
-            names = stripped[len("export {"):-2].strip()
-            export_lines.append(f"window.__m = window.__m || {{}}; window.__m['{current_file}'] = {{ {names} }}")
-        elif stripped.startswith("import {") and " from " in stripped and stripped.endswith(";"):
-            m = re.match(r"import\s+\{([^}]+)\}\s+from\s+['\"]\.\/([^'\"]+)['\"];?", stripped)
-            if m:
-                names, mod_file = m.group(1).strip(), m.group(2)
-                full_key = f"{current_dir}/{mod_file}"
-                import_lines.append(f"var {{ {names} }} = window.__m && window.__m['{full_key}'];")
-        elif stripped.startswith("import ") and " from " in stripped and stripped.endswith(";"):
-            m = re.match(r"import\s+(\w+)\s+from\s+['\"]\.\/([^'\"]+)['\"];?", stripped)
-            if m:
-                var_name, mod_file = m.group(1), m.group(2)
-                full_key = f"{current_dir}/{mod_file}"
-                import_lines.append(f"var {var_name} = window.__m && window.__m['{full_key}'];")
-
-    # --- Pass 2: Remove export and import lines from file content ---
-    result_lines = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("export default ") or (stripped.startswith("export {") and stripped.endswith("};")):
-            result_lines.append(f"// [export hoisted]")
+        if not content:
             continue
-        if stripped.startswith("import ") and " from " in stripped and stripped.endswith(";"):
-            result_lines.append(f"// [import deferred]")
-            continue
-        result_lines.append(line)
-    all_js = '\n'.join(result_lines)
 
-    # 5. Replace dynamic import() calls - resolve relative to current file's directory
-    def _resolve_dynamic_import(match):
-        mod_file = match.group(1)
-        pos = match.start()
-        preceding = all_js[:pos]
-        last_marker = preceding.rfind("// === ")
-        if last_marker >= 0:
-            # Skip "// === " (7 chars: // + space + === + space) to find the closing " ==="
-            end_marker = preceding.find(" ===", last_marker + 7)
-            if end_marker >= 0:
-                dir_path = preceding[last_marker+7:end_marker]
-                parts = dir_path.rsplit('/', 1)
-                if len(parts) > 1:
-                    return f"Promise.resolve(window.__m && window.__m['{parts[0]}/{mod_file}'])"
-        return f"Promise.resolve(window.__m && window.__m['{mod_file}'])"
+        # Determine directory for resolving relative imports
+        parts = jsf.rsplit('/', 1)
+        file_dir = parts[0] if len(parts) > 1 else ""
 
-    all_js = re.sub(
-        r"import\(['\"]\.\/([^'\"]+)['\"]\)",
-        _resolve_dynamic_import,
-        all_js
-    )
+        lines = content.split('\n')
+        export_stmts = []  # Collected export registrations for this file
+        result_lines = []
 
-    # 6. Replace `const` and `let` with `var` to avoid redeclaration errors.
-    all_js = re.sub(r'^(\s*)const\s+', r'\1var ', all_js, flags=re.MULTILINE)
-    all_js = re.sub(r'^(\s*)let\s+', r'\1var ', all_js, flags=re.MULTILINE)
+        for line in lines:
+            stripped = line.strip()
 
-    # 7. Assemble: file content (no export/import) + export registrations + import resolutions
-    # Order: files first (define variables) → exports (register to __m) → imports (read from __m)
-    hoisted_exports = "\n// === [export registrations] ===\n" + "\n".join(export_lines)
-    deferred_imports = "\n// === [import resolutions] ===\n" + "\n".join(import_lines)
-    all_js = all_js + "\n" + hoisted_exports + "\n" + deferred_imports + "\n"
+            # 1. export default X → collect for end-of-file registration
+            if stripped.startswith("export default "):
+                val = stripped[len("export default "):]
+                export_stmts.append(
+                    f"window.__m = window.__m || {{}}; window.__m['{jsf}'] = {val};"
+                )
+                continue
+
+            # 2. export { A, B } → collect for end-of-file registration
+            if stripped.startswith("export {") and stripped.endswith("};"):
+                names = stripped[len("export {"):-2].strip()
+                export_stmts.append(
+                    f"window.__m = window.__m || {{}}; window.__m['{jsf}'] = {{ {names} }};"
+                )
+                continue
+
+            # 3. import X from './Y.js' → remove (var X is already in scope)
+            if stripped.startswith("import ") and " from " in stripped and stripped.endswith(";"):
+                continue
+
+            # 4. import { A, B } from './C.js' → remove
+            if stripped.startswith("import {") and " from " in stripped and stripped.endswith(";"):
+                continue
+
+            # 5. (await) import('./X.js').default → window.__m['dir/X.js']
+            line = re.sub(
+                r"\(?\s*await\s+import\(['\"]\.\/([^'\"]+)['\"]\)\s*\)?\s*\.default",
+                f"window.__m['{file_dir}/\\1']",
+                line
+            )
+            # Also handle: var X = (await import('./X.js')).default;
+            line = re.sub(
+                r"await\s+import\(['\"]\.\/([^'\"]+)['\"]\)\)\.default",
+                f"window.__m['{file_dir}/\\1']",
+                line
+            )
+            # Handle: import('./X.js').then(m => m.default.render(...))
+            line = re.sub(
+                r"import\(['\"]\.\/([^'\"]+)['\"]\)\.then\(m\s*=>\s*m\.default\.(\w+)\(([^)]*)\)\)",
+                r"(function(){ var _m = window.__m && window.__m['" + file_dir + r"/\1']; if(_m && _m.default) _m.default.\2(\3); })()",
+                line
+            )
+
+            # 6. (await) import('./X.js') → window.__m['dir/X.js']
+            line = re.sub(
+                r"\(?\s*await\s+import\(['\"]\.\/([^'\"]+)['\"]\)\s*\)?",
+                f"window.__m['{file_dir}/\\1']",
+                line
+            )
+
+            # 7. const/let → var
+            line = re.sub(r'^(\s*)const\s+', r'\1var ', line)
+            line = re.sub(r'^(\s*)let\s+', r'\1var ', line)
+
+            result_lines.append(line)
+
+        # Assemble: file content + export registrations at the end
+        file_js = '\n'.join(result_lines)
+        if export_stmts:
+            file_js += '\n' + '\n'.join(export_stmts) + '\n'
+
+        # Wrap in try-catch for isolation
+        all_js_parts.append(
+            f"\n// === {jsf} ===\n"
+            f"try {{\n{file_js}}} catch(_fileErr) {{ console.warn('[build] {jsf}:', _fileErr); }}\n"
+        )
+
+    all_js = '\n'.join(all_js_parts)
 
     index_html = load_file(frontend_dir / "index.html")
 
