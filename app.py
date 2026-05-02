@@ -160,8 +160,8 @@ def build_full_html():
         f'<style>\n{css}\n</style>'
     )
 
-    # Remove all <script src=...> tags
-    html = re.sub(r'<script\s+src="[^"]*"></script>', '', html)
+    # Remove all <script src=...> tags (with optional attributes like defer, type, etc.)
+    html = re.sub(r'<script\s+[^>]*src="[^"]*"[^>]*></script>', '', html)
 
     # Insert all JS inline before </body>
     html = html.replace('</body>', f'<script>\n{all_js}\n</script>\n</body>')
