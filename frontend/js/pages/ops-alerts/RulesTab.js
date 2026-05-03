@@ -5,7 +5,7 @@
 
 import { ALERT_TYPES } from './constants.js';
 
-const RulesTab = (() => {
+const OpsAlertsRulesTab = (() => {
     let _rules = [];
     let _destroyed = false;
     let _unwatch = null;
@@ -253,4 +253,4 @@ const RulesTab = (() => {
     return { loadData, render, destroy, startWatching, stopWatching };
 })();
 
-export default RulesTab;
+export default OpsAlertsRulesTab;

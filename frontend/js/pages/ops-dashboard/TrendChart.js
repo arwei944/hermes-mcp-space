@@ -3,7 +3,7 @@
  * 资源趋势折线图（双 Y 轴）+ 水平条形图
  */
 
-const TrendChart = (() => {
+const OpsTrendChart = (() => {
 
     /**
      * 资源趋势折线图（双 Y 轴）
@@ -166,4 +166,4 @@ const TrendChart = (() => {
     return { buildTrendChart, buildHorizontalBar };
 })();
 
-export default TrendChart;
+export default OpsTrendChart;

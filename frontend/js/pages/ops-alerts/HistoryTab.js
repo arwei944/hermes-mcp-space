@@ -5,7 +5,7 @@
 
 import { ALERT_TYPES, LEVEL_COLORS, LEVEL_BADGE } from './constants.js';
 
-const HistoryTab = (() => {
+const OpsAlertsHistoryTab = (() => {
     let _history = [];
     let _filterType = 'all';
     let _filterTimeRange = 'all';
@@ -249,4 +249,4 @@ const HistoryTab = (() => {
     return { loadData, render, destroy, onSSEAlert, startWatching, stopWatching };
 })();
 
-export default HistoryTab;
+export default OpsAlertsHistoryTab;
