@@ -15,13 +15,10 @@ const App = (() => {
         agents: AgentsPage,
         agents_behavior: AgentsBehaviorPage,
         config: ConfigPage,
-        logs: LogsPage,
-        about: AboutPage,
         trash: TrashPage,
         screenshot: ScreenshotPage,
         sync: SyncPage,
-        ops_dashboard: OpsDashboardPage,
-        ops_alerts: OpsAlertsPage,
+        ops_center: OpsCenterPage,
     };
 
     const pageTitles = {
@@ -34,13 +31,10 @@ const App = (() => {
         agents: '子 Agent',
         agents_behavior: '行为管理',
         config: '系统配置',
-        logs: '操作日志',
-        about: '关于',
         trash: '回收站',
         screenshot: '截图工具',
         sync: '数据同步',
-        ops_dashboard: '运维监控',
-        ops_alerts: '告警管理',
+        ops_center: '运维中心',
     };
 
     let _currentPage = null;

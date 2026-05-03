@@ -29,6 +29,10 @@ const OpsSyncService = (() => {
         _syncMcpHealth();
         _syncCronMonitor();
         _syncAlerts();
+        _syncFrontendErrors();
+        _syncApiErrors();
+        _syncRecentEvents();
+        _syncEvalData();
 
         // 页面可见性优化
         document.addEventListener('visibilitychange', _onVisibilityChange);
@@ -128,6 +132,85 @@ const OpsSyncService = (() => {
         }
         if (_active) {
             _timers.alerts = setInterval(_syncAlerts, 30000);
+        }
+    }
+
+    async function _syncFrontendErrors() {
+        try {
+            var data = await API.get('/api/ops/frontend-errors?limit=50');
+            if (window.Store) {
+                Store.set('ops.frontendErrors', data || []);
+                // 更新最近错误列表（合并前端+API错误）
+                _updateRecentErrors();
+            }
+        } catch (err) {
+            if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '前端错误同步失败:', err.message);
+        }
+        if (_active) {
+            _timers.frontendErrors = setInterval(_syncFrontendErrors, 10000);
+        }
+    }
+
+    async function _syncApiErrors() {
+        try {
+            var data = await API.get('/api/ops/api-errors?limit=50');
+            if (window.Store) {
+                Store.set('ops.apiErrors', data || []);
+                _updateRecentErrors();
+            }
+        } catch (err) {
+            if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', 'API错误同步失败:', err.message);
+        }
+        if (_active) {
+            _timers.apiErrors = setInterval(_syncApiErrors, 10000);
+        }
+    }
+
+    function _updateRecentErrors() {
+        var fe = Store.get('ops.frontendErrors') || [];
+        var ae = Store.get('ops.apiErrors') || [];
+        var all = [];
+        fe.forEach(function(e) { all.push(Object.assign({}, e, { _source: 'frontend' })); });
+        ae.forEach(function(e) { all.push(Object.assign({}, e, { _source: 'api' })); });
+        all.sort(function(a, b) { return (b.timestamp || '').localeCompare(a.timestamp || ''); });
+        Store.set('ops.recentErrors', all.slice(0, 30));
+    }
+
+    async function _syncRecentEvents() {
+        try {
+            var data = await API.get('/api/events/history?limit=30');
+            if (window.Store) {
+                Store.set('ops.recentEvents', data || []);
+            }
+        } catch (err) {
+            if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '事件同步失败:', err.message);
+        }
+        if (_active) {
+            _timers.events = setInterval(_syncRecentEvents, 10000);
+        }
+    }
+
+    async function _syncEvalData() {
+        try {
+            var results = await Promise.all([
+                API.get('/api/evals/summary'),
+                API.get('/api/evals/tools'),
+                API.get('/api/evals/errors'),
+                API.get('/api/evals/trend?days=7'),
+            ]);
+            if (window.Store) {
+                Store.batch(function() {
+                    Store.set('ops.evalSummary', results[0]);
+                    Store.set('ops.evalTools', results[1] || []);
+                    Store.set('ops.evalErrors', results[2] || []);
+                    Store.set('ops.evalTrend', results[3] || []);
+                });
+            }
+        } catch (err) {
+            if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '评估数据同步失败:', err.message);
+        }
+        if (_active) {
+            _timers.eval = setInterval(_syncEvalData, 30000);
         }
     }
 

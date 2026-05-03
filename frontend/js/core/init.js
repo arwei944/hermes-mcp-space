@@ -31,6 +31,14 @@
         alertRules: [],
         alertHistory: [],
         alerts: { unread: 0, lastTriggered: null },
+        frontendErrors: [],
+        apiErrors: [],
+        recentErrors: [],
+        recentEvents: [],
+        evalSummary: null,
+        evalTools: [],
+        evalErrors: [],
+        evalTrend: [],
     });
     Store.define('ui', { loading: {}, modals: [], toasts: [], notifications: [] });
 
