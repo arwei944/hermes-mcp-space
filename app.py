@@ -42,9 +42,70 @@ def load_file(path):
     except FileNotFoundError:
         logger.warning(f"Frontend file not found: {path}")
         return ""
-    except Exception as e:
-        logger.error(f"Failed to load {path}: {e}")
-        return ""
+
+# Changelog data - auto-generated from git tags
+# Regenerate: python3 -c "import subprocess,json; tags=subprocess.run(['git','tag','-l','v*'],capture_output=True,text=True).stdout.strip().split('\n'); tags.sort(key=lambda t:[int(x) for x in t.replace('v','').split('.')],reverse=True); entries=[]; [entries.append({'version':t,'date':subprocess.run(['git','log','-1','--format=%ci',t],capture_output=True,text=True).stdout.strip()[:16],'title':subprocess.run(['git','log','-1','--format=%s',t],capture_output=True,text=True).stdout.strip(),'changes':[l.strip().lstrip('-* ') for l in subprocess.run(['git','log','-1','--format=%b',t],capture_output=True,text=True).stdout.strip().split('\n') if l.strip()]}) for t in tags[:20] if t.strip()]; open('backend/data/changelog.py','w').write('# Auto-generated\nCHANGELOG_FALLBACK='+json.dumps(entries,ensure_ascii=False,indent=2)+'\n')"
+_CHANGELOG_INLINE = None  # Will be loaded on first use
+
+
+def _get_changelog_json():
+    """Get changelog data as JSON string, trying multiple sources."""
+    global _CHANGELOG_INLINE
+    if _CHANGELOG_INLINE is not None:
+        return _CHANGELOG_INLINE
+
+    # 1. Try git tags (dev environment)
+    try:
+        import subprocess as _sp
+        _tags = _sp.run(["git", "tag", "-l", "v*"], capture_output=True, text=True, timeout=5).stdout.strip().split('\n')
+        _tags = [t.strip() for t in _tags if t.strip()]
+        _tags.sort(key=lambda t: [int(x) for x in t.replace('v', '').split('.')], reverse=True)
+        _entries = []
+        for _tag in _tags[:20]:
+            _msg = _sp.run(["git", "log", "-1", "--format=%s%n%b", _tag], capture_output=True, text=True, timeout=5).stdout.strip()
+            _date = _sp.run(["git", "log", "-1", "--format=%ci", _tag], capture_output=True, text=True, timeout=5).stdout.strip()[:16]
+            _lines = _msg.split('\n')
+            _title = _lines[0] if _lines else _tag
+            _changes = [l.strip().lstrip('-* ') for l in _lines[1:] if l.strip()]
+            _entries.append({"version": _tag, "date": _date, "title": _title, "changes": _changes if _changes else [_msg]})
+        if _entries:
+            _CHANGELOG_INLINE = json.dumps(_entries, ensure_ascii=False)
+            return _CHANGELOG_INLINE
+    except Exception:
+        pass
+
+    # 2. Try loading from backend/data/changelog.py via importlib
+    try:
+        import importlib.util as _ilu
+        _paths_to_try = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend", "data", "changelog.py"),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend", "data", "changelog.py"),
+        ]
+        for _cl_path in _paths_to_try:
+            if os.path.exists(_cl_path):
+                _spec = _ilu.spec_from_file_location("changelog_data", _cl_path)
+                _mod = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                _data = getattr(_mod, "CHANGELOG_FALLBACK", [])
+                if _data:
+                    _CHANGELOG_INLINE = json.dumps(_data, ensure_ascii=False)
+                    logger.info(f"Loaded changelog from {_cl_path}: {len(_data)} versions")
+                    return _CHANGELOG_INLINE
+    except Exception as _e:
+        logger.debug(f"importlib changelog failed: {_e}")
+
+    # 3. Try from package import
+    try:
+        from backend.data.changelog import CHANGELOG_FALLBACK
+        if CHANGELOG_FALLBACK:
+            _CHANGELOG_INLINE = json.dumps(CHANGELOG_FALLBACK, ensure_ascii=False)
+            return _CHANGELOG_INLINE
+    except Exception:
+        pass
+
+    # 4. Empty fallback
+    _CHANGELOG_INLINE = "[]"
+    return _CHANGELOG_INLINE
 
 
 def _get_build_version() -> str:
@@ -237,47 +298,9 @@ def build_full_html():
 
     logger.info(f"Auto-discovered {len(page_files)} page files: {[f.split('/')[-1] for f in page_files]}")
 
-    # Pre-generate changelog from git tags or changelog.json
-    _changelog_json = "[]"
-    try:
-        import subprocess as _sp
-        _tags = _sp.run(["git", "tag", "-l", "v*"], capture_output=True, text=True, timeout=5).stdout.strip().split('\n')
-        _tags = [t.strip() for t in _tags if t.strip()]
-        _tags.sort(key=lambda t: [int(x) for x in t.replace('v', '').split('.')], reverse=True)
-        _changelog_entries = []
-        for _tag in _tags[:20]:
-            _msg = _sp.run(["git", "log", "-1", "--format=%s%n%b", _tag], capture_output=True, text=True, timeout=5).stdout.strip()
-            _date = _sp.run(["git", "log", "-1", "--format=%ci", _tag], capture_output=True, text=True, timeout=5).stdout.strip()[:16]
-            _lines = _msg.split('\n')
-            _title = _lines[0] if _lines else _tag
-            _changes = []
-            for _l in _lines[1:]:
-                _l = _l.strip()
-                if _l.startswith('- ') or _l.startswith('* '):
-                    _changes.append(_l.lstrip('- *'))
-                elif _l and not _l.startswith('Version bump'):
-                    _changes.append(_l)
-            _changelog_entries.append({"version": _tag, "date": _date, "title": _title, "changes": _changes if _changes else [_msg]})
-        if _changelog_entries:
-            _changelog_json = json.dumps(_changelog_entries, ensure_ascii=False)
-            logger.info(f"Pre-generated changelog from git: {len(_changelog_entries)} versions")
-    except Exception as _e:
-        logger.info(f"Git changelog failed: {_e}, trying module fallback")
-        # Fallback: load changelog from backend/data/changelog.py
-        try:
-            import importlib.util as _ilu
-            _cl_spec = _ilu.spec_from_file_location(
-                "changelog_data",
-                os.path.join(os.path.dirname(__file__), "backend", "data", "changelog.py")
-            )
-            _cl_mod = _ilu.module_from_spec(_cl_spec)
-            _cl_spec.loader.exec_module(_cl_mod)
-            _changelog_data = getattr(_cl_mod, "CHANGELOG_FALLBACK", [])
-            if _changelog_data:
-                _changelog_json = json.dumps(_changelog_data, ensure_ascii=False)
-                logger.info(f"Loaded changelog via importlib: {len(_changelog_data)} versions")
-        except Exception as _e2:
-            logger.warning(f"Changelog fallback failed: {_e2}")
+    # Get changelog data for frontend injection
+    _changelog_json = _get_changelog_json()
+    logger.info(f"Changelog data: {len(_changelog_json)} bytes")
 
     # In build_full_html mode, all JS is inlined into a single <script> tag.
     # Strategy: transform ES module syntax to plain JS, with each file wrapped
