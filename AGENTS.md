@@ -166,3 +166,45 @@ MCP 发现超时需设为 15 秒，同时探测 `/mcp`、`/sse`、`/api/mcp` 三
 
 ### 6.6 外部服务器丢失
 HF Space 重启后外部 MCP 服务器配置丢失，需重新通过 API 注册。
+
+### 6.7 build_full_html 全局变量冲突（⚠️ 高危）
+**根因**：`build_full_html` 将所有 JS 内联到一个 `<script>` 标签，`const/let` 转为 `var`，不同目录的同名模块变量在全局作用域冲突，后定义的覆盖先定义的。
+
+**症状**：
+- 某个页面功能异常（如"X is not a function"、"Invalid selector [object HTMLDivElement]"）
+- 控制台报错提到某个模块名
+
+**预防规则**：
+- **新增页面模块时，所有顶层变量必须加目录前缀**（如 `ops-center/OverviewTab.js` 中的变量用 `OpsOverviewTab`）
+- **不要使用通用名称**（如 `OverviewTab`、`RulesTab`、`HistoryTab`），必须加目录特征前缀
+- **构建时自动检测**：`_validate_build` 会扫描全局变量冲突并报告 warning
+
+**已修复的冲突**：
+- `OverviewTab` → ops-center 改为 `OpsOverviewTab`
+- `RulesTab` → ops-alerts 改为 `OpsAlertsRulesTab`
+- `TrendChart` → ops-dashboard 改为 `OpsTrendChart`
+
+### 6.8 Changelog 注入失败
+Docker 环境中无 `.git` 目录，changelog 需通过 `backend/data/changelog.py`（Python 模块）加载。
+**注意**：`backend/data/__init__.py` 必须存在，否则包导入失败。
+
+## 7. 会话初始化规范
+
+### 7.1 每次新会话必须执行
+```bash
+git clone https://github.com/arwei944/hermes-mcp-space.git /data/user/work/repo
+```
+沙箱的 `/data/user/work` 每次会话重置为空，必须重新 clone。
+
+### 7.2 文件交付规范
+| 类型 | 路径 | 说明 |
+|------|------|------|
+| 最终交付物 | `/workspace/` | 用户可见，持久化 |
+| 中间产物 | `/data/user/work/` | 临时，会话间重置 |
+| 临时脚本 | `/data/user/work/` | 不要放 /workspace |
+
+### 7.3 部署验证流程
+1. `git push origin main` 后等待 ~3 分钟
+2. 检查 `curl https://arwei944-hermes-mcp-space.hf.space/api/status`
+3. 确认 `build_error` 为空
+4. 前端 Ctrl+Shift+R 强刷验证

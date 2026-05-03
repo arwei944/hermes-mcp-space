@@ -230,6 +230,27 @@ def _validate_build(html: str) -> list:
         if not re.search(pattern, js_content):
             warnings.append(f"构建验证: 关键全局变量 '{var}' 未定义")
 
+    # 7. 全局变量名冲突检测（跨文件同名 var 定义）
+    var_definitions = {}  # var_name -> [file_path, ...]
+    for section_match in re.finditer(r'// === (.+?) ===', js_content):
+        file_path = section_match.group(1)
+        # 找到这个 section 中的所有顶层 var 定义
+        section_start = section_match.end()
+        next_section = re.search(r'\n// === ', js_content[section_start:])
+        section_end = section_start + next_section.start() if next_section else len(js_content)
+        section = js_content[section_start:section_end]
+        for var_match in re.finditer(r'(?:var|const|let)\s+(\w+)\s*=', section):
+            var_name = var_match.group(1)
+            if var_name.startswith('_') or var_name in ('i', 'j', 'k', 'e', 'err', 'm', 'fn', 'cb', 'el', 'key', 'val', 'idx', 'len', 'str', 'obj', 'arr', 'data', 'result', 'opts', 'args', 'cfg', 'ctx', 'req', 'res', 'url', 'msg', 'err', 'item', 'items', 'row', 'rows', 'col', 'tab', 'nav', 'btn', 'div', 'span', 'p', 'a', 'h'):
+                continue  # 跳过常见局部变量
+            if var_name not in var_definitions:
+                var_definitions[var_name] = []
+            var_definitions[var_name].append(file_path)
+    conflicts = {name: files for name, files in var_definitions.items() if len(files) > 1}
+    if conflicts:
+        conflict_details = [f"{name}({', '.join(files)})" for name, files in conflicts.items()]
+        warnings.append(f"构建验证: {len(conflicts)} 个全局变量名冲突: {'; '.join(conflict_details[:5])}")
+
     return warnings
 
 
