@@ -285,36 +285,44 @@ def build_full_html():
                 continue
 
             # 3. import X from './Y.js' → remove (var X is already in scope)
+            #    import X from '../Y.js' → remove
             if stripped.startswith("import ") and " from " in stripped and stripped.endswith(";"):
                 continue
 
             # 4. import { A, B } from './C.js' → remove
+            #    import { A, B } from '../C.js' → remove
             if stripped.startswith("import {") and " from " in stripped and stripped.endswith(";"):
                 continue
 
             # 5. (await) import('./X.js').default → window.__m['dir/X.js']
+            #     (await) import('../X.js').default → window.__m['resolved/X.js']
+            def _resolve_import_path(rel_path):
+                """Resolve relative import path against file_dir"""
+                resolved = os.path.normpath(file_dir + '/' + rel_path)
+                return resolved
+
             line = re.sub(
-                r"\(?\s*await\s+import\(['\"]\.\/([^'\"]+)['\"]\)\s*\)?\s*\.default",
-                f"window.__m['{file_dir}/\\1']",
+                r"\(?\s*await\s+import\(['\"](\.\.?\/[^'\"]+)['\"]\)\s*\)?\s*\.default",
+                lambda m: "window.__m['" + _resolve_import_path(m.group(1)) + "']",
                 line
             )
             # Also handle: var X = (await import('./X.js')).default;
             line = re.sub(
-                r"await\s+import\(['\"]\.\/([^'\"]+)['\"]\)\)\.default",
-                f"window.__m['{file_dir}/\\1']",
+                r"await\s+import\(['\"](\.\.?\/[^'\"]+)['\"]\)\)\.default",
+                lambda m: "window.__m['" + _resolve_import_path(m.group(1)) + "']",
                 line
             )
             # Handle: import('./X.js').then(m => m.default.render(...))
             line = re.sub(
-                r"import\(['\"]\.\/([^'\"]+)['\"]\)\.then\(m\s*=>\s*m\.default\.(\w+)\(([^)]*)\)\)",
-                r"(function(){ var _m = window.__m && window.__m['" + file_dir + r"/\1']; if(_m && _m.default) _m.default.\2(\3); })()",
+                r"import\(['\"](\.\.?\/[^'\"]+)['\"]\)\.then\(m\s*=>\s*m\.default\.(\w+)\(([^)]*)\)\)",
+                lambda m: "(function(){ var _m = window.__m && window.__m['" + _resolve_import_path(m.group(1)) + "']; if(_m && _m.default) _m.default." + m.group(2) + "(" + m.group(3) + "); })()",
                 line
             )
 
             # 6. (await) import('./X.js') → window.__m['dir/X.js']
             line = re.sub(
-                r"\(?\s*await\s+import\(['\"]\.\/([^'\"]+)['\"]\)\s*\)?",
-                f"window.__m['{file_dir}/\\1']",
+                r"\(?\s*await\s+import\(['\"](\.\.?\/[^'\"]+)['\"]\)\s*\)?",
+                lambda m: "window.__m['" + _resolve_import_path(m.group(1)) + "']",
                 line
             )
 
