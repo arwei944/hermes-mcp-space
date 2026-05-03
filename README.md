@@ -121,7 +121,7 @@ python app.py
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
 | `HERMES_API_URL` | 空 | 远程 Hermes API 地址（配置后使用真实数据） |
-| `APP_VERSION` | `11.0.0` | 应用版本号 |
+| `APP_VERSION` | `12.0.0` | 应用版本号 |
 | `HERMES_HOME` | `~/.hermes` | 数据存储目录 |
 
 ## 项目结构
@@ -137,7 +137,7 @@ hermes-mcp-space/
 │   └── setup-secrets.yml       # HF Space Secrets 管理
 ├── backend/
 │   ├── config.py               # 配置管理
-│   ├── version.py              # 统一版本管理（v11.0.0）
+│   ├── version.py              # 统一版本管理（v12.0.0）
 │   ├── mcp/
 │   │   ├── registry.py         # 🆕 ToolRegistry（工具自动发现 + O(1) 调度）
 │   │   ├── middleware.py       # 🆕 MCP 中间件管道
