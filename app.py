@@ -263,13 +263,21 @@ def build_full_html():
             logger.info(f"Pre-generated changelog from git: {len(_changelog_entries)} versions")
     except Exception as _e:
         logger.info(f"Git changelog failed: {_e}, trying module fallback")
-        # Fallback: import from backend/data/changelog.py
+        # Fallback: load changelog from backend/data/changelog.py
         try:
-            from backend.data.changelog import CHANGELOG_FALLBACK
-            _changelog_json = json.dumps(CHANGELOG_FALLBACK, ensure_ascii=False)
-            logger.info(f"Loaded changelog from module: {len(CHANGELOG_FALLBACK)} versions")
+            import importlib.util as _ilu
+            _cl_spec = _ilu.spec_from_file_location(
+                "changelog_data",
+                os.path.join(os.path.dirname(__file__), "backend", "data", "changelog.py")
+            )
+            _cl_mod = _ilu.module_from_spec(_cl_spec)
+            _cl_spec.loader.exec_module(_cl_mod)
+            _changelog_data = getattr(_cl_mod, "CHANGELOG_FALLBACK", [])
+            if _changelog_data:
+                _changelog_json = json.dumps(_changelog_data, ensure_ascii=False)
+                logger.info(f"Loaded changelog via importlib: {len(_changelog_data)} versions")
         except Exception as _e2:
-            logger.warning(f"Changelog module fallback failed: {_e2}")
+            logger.warning(f"Changelog fallback failed: {_e2}")
 
     # In build_full_html mode, all JS is inlined into a single <script> tag.
     # Strategy: transform ES module syntax to plain JS, with each file wrapped
