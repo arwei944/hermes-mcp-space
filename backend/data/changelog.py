@@ -1,0 +1,303 @@
+# -*- coding: utf-8 -*-
+# Auto-generated changelog data. Do not edit manually.
+
+CHANGELOG_FALLBACK = [
+  {
+    "version": "v12.0.0",
+    "date": "2026-05-03 00:18",
+    "title": "release: v12.0.0 - Unified Ops Center + full observability",
+    "changes": [
+      "v12.0.0 Changes:",
+      "Unified Ops Center (8 tabs): Overview, Pipeline, Resource, Quality, Errors, Alerts, Logs, About",
+      "Frontend error reporting via sendBeacon (ErrorHandler + Logger)",
+      "API error tracking via ErrorTrackerMiddleware (X-Trace-Id)",
+      "Build validation (_validate_build) + build cache + auto-rollback",
+      "CI deploy verification (status + page size check)",
+      "AI Code Quality panel (evals API integration)",
+      "7 new OpsSyncService channels (frontend errors, API errors, events, evals)",
+      "Replaced 4 separate pages with 1 unified ops_center"
+    ]
+  },
+  {
+    "version": "v11.0.0",
+    "date": "2026-05-02 23:20",
+    "title": "release: v11.0.0 - Build system overhaul + ops resilience",
+    "changes": [
+      "v11.0.0 Changes:",
+      "build_full_html: Complete rewrite with per-file transform + try-catch isolation",
+      "build_full_html: All CSS files inlined (style + dark-theme + knowledge)",
+      "build_full_html: js/utils/ directory included (SSEManager, confirm-dialog, etc.)",
+      "App resilience: load_file() never throws, build_full_html has fallback",
+      "CI: Deploy only needs lint (broke 503 death loop)",
+      "/api/status: Exposes build_error for remote diagnosis",
+      "Error toast: Shows actual error message instead of generic text"
+    ]
+  },
+  {
+    "version": "v10.0.0",
+    "date": "2026-05-02 21:12",
+    "title": "release: v10.0.0 - V2 Frontend Architecture",
+    "changes": [
+      "Major release: Complete V2 frontend architecture overhaul",
+      "Architecture Changes:",
+      "8 core modules (Store/Bus/Router/ErrorHandler/APIClient/Logger/Constants/Init)",
+      "3 service modules (OpsSyncService/AlertChecker/AlertNotifier)",
+      "8 component modules (icons/utils/feedback/layout/form/data-display/index/register)",
+      "93 page module files across 16 page directories",
+      "35 CSS Design Tokens (5 categories)",
+      "Store-driven reactive data flow for ops pages",
+      "Router with guards, history, and Bus integration",
+      "Quality:",
+      "94 unit tests (68 core + 26 service) all passing",
+      "ESLint 10.x with flat config (0 errors)",
+      "CI/CD pipeline with lint + frontend tests + backend tests + HF deploy",
+      "Migration:",
+      "All 16 pages migrated from single-file to modular directory structure",
+      "Zero-build architecture preserved (pure Vanilla JS + IIFE)",
+      "ErrorHandler.wrap() on all page entries",
+      "data-action event delegation replacing inline onclick",
+      "Dynamic import() lazy loading for sub-modules"
+    ]
+  },
+  {
+    "version": "v9.0.0",
+    "date": "2026-05-02 18:03",
+    "title": "chore: 更新版本号至 v9.0.0 + 更新 README 反映新架构",
+    "changes": [
+      "chore: 更新版本号至 v9.0.0 + 更新 README 反映新架构"
+    ]
+  },
+  {
+    "version": "v8.1.0",
+    "date": "2026-05-02 12:33",
+    "title": "style: 知识库概览页 Apple 极简风格重设计 (方案A)",
+    "changes": [
+      "style: 知识库概览页 Apple 极简风格重设计 (方案A)"
+    ]
+  },
+  {
+    "version": "v8.0.2",
+    "date": "2026-05-02 12:18",
+    "title": "fix: mcp_server.py _get_tools() append() syntax error (3 places)",
+    "changes": [
+      "fix: mcp_server.py _get_tools() append() syntax error (3 places)"
+    ]
+  },
+  {
+    "version": "v8.0.1",
+    "date": "2026-05-02 03:28",
+    "title": "release: v8.0.1 - 热修复 + 中文化",
+    "changes": [
+      "release: v8.0.1 - 热修复 + 中文化"
+    ]
+  },
+  {
+    "version": "v8.0.0",
+    "date": "2026-05-02 02:23",
+    "title": "release: v8.0.0 - 知识库增强大版本",
+    "changes": [
+      "release: v8.0.0 - 知识库增强大版本"
+    ]
+  },
+  {
+    "version": "v1.10.0",
+    "date": "2026-04-28 20:30",
+    "title": "release: v1.10.0 - 回收站 + 按钮事件修复",
+    "changes": [
+      "release: v1.10.0 - 回收站 + 按钮事件修复"
+    ]
+  },
+  {
+    "version": "v1.9.0",
+    "date": "2026-04-28 19:44",
+    "title": "release: v1.9.0 - 插件市场 + 数据动态化",
+    "changes": [
+      "release: v1.9.0 - 插件市场 + 数据动态化"
+    ]
+  },
+  {
+    "version": "v1.8.0",
+    "date": "2026-04-28 19:22",
+    "title": "release: v1.8.0 - 插件系统 + SVG图标 + 实时对话记录",
+    "changes": [
+      "release: v1.8.0 - 插件系统 + SVG图标 + 实时对话记录"
+    ]
+  },
+  {
+    "version": "v1.7.0",
+    "date": "2026-04-28 18:41",
+    "title": "feat: 会话模块合并 + 实时数据记录",
+    "changes": [
+      "会话模块合并:",
+      "会话管理 + 会话对话合并为一个「会话」模块",
+      "左侧会话列表 + 右侧对话区（类似聊天应用）",
+      "搜索/状态筛选/创建/删除/压缩全部保留",
+      "移除独立的「会话对话」页面",
+      "实时数据记录:",
+      "add_log() 自动将操作记录到最近活跃会话",
+      "MCP 调用 → 自动写入系统消息到会话",
+      "系统操作 → 自动写入系统消息到会话",
+      "消息格式: [MCP] MCP 调用: read_memory — ...",
+      "仪表盘最近会话自动显示实时数据",
+      "侧边栏:",
+      "12 个导航项 → 11 个（合并后减少一个）"
+    ]
+  },
+  {
+    "version": "v1.6.0",
+    "date": "2026-04-28 17:56",
+    "title": "feat: 配置版本管理 + 关于页面 + 系统配置重构",
+    "changes": [
+      "系统配置重构:",
+      "移除工具/记忆/MCP 设置（归入各自模块页面）",
+      "新增数据管理（会话保留天数/日志条数/导出格式）",
+      "新增通知设置（SSE推送/操作通知/Agent通知）",
+      "新增安全设置（API密钥/外部访问）",
+      "新增高级设置（请求超时/最大并发）",
+      "每次保存自动记录版本快照",
+      "支持回滚到任意历史版本",
+      "关于页面:",
+      "项目信息（版本/运行时间/MCP工具数/API端点数）",
+      "技术栈展示（后端/前端/协议/部署）",
+      "版本变更记录（v1.0.0 ~ v1.6.0 共 7 个版本）",
+      "GitHub/HuggingFace 链接",
+      "后端 API:",
+      "GET /api/config/versions: 获取版本历史",
+      "POST /api/config/rollback/{index}: 回滚到指定版本",
+      "PUT /api/config: 保存时自动创建版本快照",
+      "配置版本持久化到 data/config_versions.json"
+    ]
+  },
+  {
+    "version": "v1.5.0",
+    "date": "2026-04-28 17:43",
+    "title": "feat: 前端全面管理权限 - 所有页面完整 CRUD",
+    "changes": [
+      "chat.js (会话对话):",
+      "新建会话按钮 + 弹窗表单",
+      "发送消息输入框（Enter 发送）",
+      "删除会话按钮",
+      "乐观更新 UI + 自动滚动",
+      "sessions.js (会话管理):",
+      "新建会话按钮",
+      "状态筛选（活跃/完成）",
+      "标题列显示",
+      "移除 mock 数据",
+      "tools.js (工具管理):",
+      "每个工具卡片添加启用/禁用开关",
+      "详情按钮",
+      "点击卡片查看详情",
+      "memory.js (记忆管理):",
+      "导出按钮（下载 .md 文件）",
+      "重置按钮（恢复默认模板）",
+      "logs.js (操作日志):",
+      "搜索框（按操作/详情/目标搜索）",
+      "自动刷新开关（5秒间隔）",
+      "关键词过滤",
+      "后端:",
+      "POST /api/sessions/{id}/messages: 添加消息到会话",
+      "API.sessions.create() + API.sessions.addMessage()"
+    ]
+  },
+  {
+    "version": "v1.4.0",
+    "date": "2026-04-28 17:35",
+    "title": "feat: MCP 工具从 16 个扩展到 24 个，全面管理能力",
+    "changes": [
+      "新增 8 个 MCP 工具:",
+      "update_skill: 更新技能内容",
+      "delete_skill: 删除技能",
+      "create_session: 创建会话",
+      "add_message: 向会话添加消息",
+      "delete_cron_job: 删除定时任务",
+      "get_logs: 查看操作日志（支持来源过滤）",
+      "get_config: 获取系统配置（敏感信息脱敏）",
+      "update_config: 更新系统配置",
+      "所有 MCP 调用自动记录到操作日志:",
+      "来源标记为 'mcp'",
+      "HF 前端操作日志页面可实时查看",
+      "SSE 事件实时推送",
+      "Trae 可通过 MCP 完整管理:",
+      "会话: 创建/查看/搜索/删除/添加消息",
+      "技能: 创建/查看/更新/删除",
+      "记忆: 读取/写入",
+      "定时任务: 创建/查看/删除",
+      "配置: 查看/更新",
+      "日志: 查看",
+      "系统: 状态/仪表盘"
+    ]
+  },
+  {
+    "version": "v1.3.0",
+    "date": "2026-04-28 17:01",
+    "title": "feat: 数据真实化 - JSON 持久化 + 操作日志自动记录",
+    "changes": [
+      "会话数据真实化:",
+      "新增 JSON 文件持久化（data/sessions.json）",
+      "create_session: 创建会话并保存",
+      "add_session_message: 向会话添加消息",
+      "delete_session: 删除会话及其消息",
+      "list_sessions: 优先 SQLite → JSON → 空列表（不再返回 demo）",
+      "POST /api/sessions: 新增创建会话路由",
+      "操作日志自动记录:",
+      "EventEmitMiddleware 同时写入操作日志",
+      "所有写操作（PUT/POST/DELETE）自动记录",
+      "中文操作描述（更新记忆/创建技能/删除会话等）",
+      "日志页面现在有真实数据",
+      "记忆/技能/配置:",
+      "之前已支持真实文件读写（MEMORY.md/USER.md/技能文件）",
+      "Trae 通过 MCP 调用即可真正管理数据"
+    ]
+  },
+  {
+    "version": "v1.2.0",
+    "date": "2026-04-28 16:41",
+    "title": "feat: 仪表盘数据可视化 + API 文档",
+    "changes": [
+      "仪表盘新增 5 种 SVG 图表（纯前端，零依赖）:",
+      "环形图: 会话来源分布（Trae/Web/CLI/API）",
+      "柱状图: 模型使用频率",
+      "折线图: 7 天会话趋势（渐变填充）",
+      "仪表盘: 内存/CPU/活跃会话（圆环进度条）",
+      "所有图表自适应深色模式",
+      "API 文档:",
+      "/docs: Swagger UI（交互式 API 测试）",
+      "/redoc: ReDoc（阅读友好文档）",
+      "/openapi.json: OpenAPI 3.0 规范",
+      "自动发现 99 个端点",
+      "侧边栏添加「API 文档」链接（新窗口打开）"
+    ]
+  },
+  {
+    "version": "v1.1.0",
+    "date": "2026-04-28 16:06",
+    "title": "feat: MCP 工具增强（10→16）+ 深色模式",
+    "changes": [
+      "MCP 新增 6 个工具：",
+      "search_sessions: 搜索会话（按标题/模型/ID 模糊匹配）",
+      "delete_session: 删除会话",
+      "create_skill: 创建新技能",
+      "write_user_profile: 写入用户画像",
+      "list_cron_jobs: 列出定时任务",
+      "create_cron_job: 创建定时任务",
+      "深色模式：",
+      "CSS 变量覆盖 [data-theme=dark]",
+      "自动跟随系统主题偏好",
+      "localStorage 持久化用户选择",
+      "右下角切换按钮（🌙/☀️）",
+      "Apple 深色风格配色"
+    ]
+  },
+  {
+    "version": "v1.0.0",
+    "date": "2026-04-28 12:04",
+    "title": "feat: Hermes Agent MCP Space - 管理面板 + MCP服务 + 魔搭部署",
+    "changes": [
+      "FastAPI 后端：28个REST API端点（会话/工具/技能/记忆/定时任务/子Agent/配置/MCP）",
+      "Obsidian风格前端：暗色主题SPA管理面板（9个页面）",
+      "MCP Server：24个工具暴露给Trae等MCP客户端（stdio+SSE双传输）",
+      "Gradio SDK入口：一键部署到魔搭社区",
+      "优雅降级：Hermes未安装时自动使用模拟数据"
+    ]
+  }
+]
