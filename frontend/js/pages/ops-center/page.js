@@ -55,8 +55,9 @@ var OpsCenterPageLayout = (() => {
         });
 
         // 通知 register.js 渲染对应 tab（首次切换时懒加载）
-        if (window.OpsCenterPage && typeof window.OpsCenterPage.switchTab === 'function') {
-            window.OpsCenterPage.switchTab(tab);
+        // 注意：直接调用 _renderTab 而非 switchTab，避免循环
+        if (window.OpsCenterPage && typeof window.OpsCenterPage._renderTab === 'function') {
+            window.OpsCenterPage._renderTab(tab);
         }
     }
 

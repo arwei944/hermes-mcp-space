@@ -85,7 +85,7 @@ var OpsCenterPage = (() => {
         _initializedTabs = {};
     }
 
-    return { render, switchTab, onSSEEvent, destroy };
+    return { render, switchTab, _renderTab, onSSEEvent, destroy };
 })();
 
 window.OpsCenterPage = ErrorHandler.wrap(OpsCenterPage);
