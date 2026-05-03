@@ -1,4 +1,3 @@
-# ==================== 构建阶段 ====================
 FROM python:3.11-slim AS builder
 
 WORKDIR /build
@@ -48,6 +47,7 @@ ENV PANEL_PORT=7860
 ENV MCP_SSE_PORT=8765
 ENV ENABLE_MCP_SSE=true
 ENV LOG_LEVEL=INFO
+ENV OPS_SERVER=https://arwei944-ops-center.hf.space
 
 # 暴露端口
 EXPOSE 7860 8765
