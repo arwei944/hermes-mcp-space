@@ -5,7 +5,7 @@
 
 import { ERROR_TYPES, HEALTH_THRESHOLDS } from './constants.js';
 
-var OverviewTab = (() => {
+var OpsOverviewTab = (() => {
     var _destroyed = false;
     var _unwatchers = [];
     var _heatmapData = null;
@@ -344,4 +344,4 @@ var OverviewTab = (() => {
     return { buildOverviewTab, render, destroy };
 })();
 
-export default OverviewTab;
+export default OpsOverviewTab;

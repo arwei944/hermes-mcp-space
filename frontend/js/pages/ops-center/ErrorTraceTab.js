@@ -5,7 +5,7 @@
 
 import { ERROR_TYPES } from './constants.js';
 
-var ErrorTraceTab = (() => {
+var OpsErrorTraceTab = (() => {
     var _destroyed = false;
     var _filterType = 'all';
     var _autoRefresh = false;
@@ -281,4 +281,4 @@ var ErrorTraceTab = (() => {
     return { render, destroy };
 })();
 
-export default ErrorTraceTab;
+export default OpsErrorTraceTab;

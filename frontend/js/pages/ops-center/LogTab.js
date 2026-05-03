@@ -3,7 +3,7 @@
  * 操作日志 + SSE 事件 两个子 Tab
  */
 
-var LogTab = (() => {
+var OpsLogTab = (() => {
     var _destroyed = false;
     var _currentSubTab = 'logs';
     var _logs = [];
@@ -205,4 +205,4 @@ var LogTab = (() => {
     return { render, destroy };
 })();
 
-export default LogTab;
+export default OpsLogTab;

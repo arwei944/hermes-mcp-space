@@ -3,7 +3,7 @@
  * 复用 ops-dashboard 组件: ResourceCards, TrendChart, McpHealth, CronStatus
  */
 
-var ResourceTab = (() => {
+var OpsResourceTab = (() => {
     var _destroyed = false;
     var _modules = {};
     var _unwatchers = [];
@@ -138,4 +138,4 @@ var ResourceTab = (() => {
     return { render, destroy };
 })();
 
-export default ResourceTab;
+export default OpsResourceTab;

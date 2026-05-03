@@ -5,7 +5,7 @@
 
 import { PIPELINE_STEPS } from './constants.js';
 
-var PipelineTab = (() => {
+var OpsPipelineTab = (() => {
     var _destroyed = false;
     var _statusHistory = [];
     var _refreshTimer = null;
@@ -214,4 +214,4 @@ var PipelineTab = (() => {
     return { buildPipelineTab, render, destroy };
 })();
 
-export default PipelineTab;
+export default OpsPipelineTab;

@@ -3,7 +3,7 @@
  * AI 调用评估: 摘要卡片 + 工具性能表 + 错误模式 + 7天趋势
  */
 
-var QualityTab = (() => {
+var OpsQualityTab = (() => {
     var _destroyed = false;
     var _summary = null;
     var _tools = [];
@@ -222,4 +222,4 @@ var QualityTab = (() => {
     return { buildQualityTab, render, destroy };
 })();
 
-export default QualityTab;
+export default OpsQualityTab;

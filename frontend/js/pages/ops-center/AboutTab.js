@@ -3,7 +3,7 @@
  * 复用 about 页面的 VersionTab, ChangelogTab, TechStackTab
  */
 
-var AboutTab = (() => {
+var OpsAboutTab = (() => {
     var _destroyed = false;
     var _modules = {};
     var _currentSubTab = 'version';
@@ -113,4 +113,4 @@ var AboutTab = (() => {
     return { render, destroy };
 })();
 
-export default AboutTab;
+export default OpsAboutTab;

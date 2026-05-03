@@ -3,7 +3,7 @@
  * 复用 ops-alerts 的 RulesTab 和 HistoryTab
  */
 
-var AlertTab = (() => {
+var OpsAlertTab = (() => {
     var _destroyed = false;
     var _modules = {};
     var _currentSubTab = 'rules';
@@ -109,4 +109,4 @@ var AlertTab = (() => {
     return { render, onSSEEvent, destroy };
 })();
 
-export default AlertTab;
+export default OpsAlertTab;
