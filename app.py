@@ -237,6 +237,33 @@ def build_full_html():
 
     logger.info(f"Auto-discovered {len(page_files)} page files: {[f.split('/')[-1] for f in page_files]}")
 
+    # Pre-generate changelog from git tags (only works in dev, not Docker)
+    _changelog_json = "[]"
+    try:
+        import subprocess as _sp
+        _tags = _sp.run(["git", "tag", "-l", "v*"], capture_output=True, text=True, timeout=5).stdout.strip().split('\n')
+        _tags = [t.strip() for t in _tags if t.strip()]
+        _tags.sort(key=lambda t: [int(x) for x in t.replace('v', '').split('.')], reverse=True)
+        _changelog_entries = []
+        for _tag in _tags[:20]:
+            _msg = _sp.run(["git", "log", "-1", "--format=%s%n%b", _tag], capture_output=True, text=True, timeout=5).stdout.strip()
+            _date = _sp.run(["git", "log", "-1", "--format=%ci", _tag], capture_output=True, text=True, timeout=5).stdout.strip()[:16]
+            _lines = _msg.split('\n')
+            _title = _lines[0] if _lines else _tag
+            _changes = []
+            for _l in _lines[1:]:
+                _l = _l.strip()
+                if _l.startswith('- ') or _l.startswith('* '):
+                    _changes.append(_l.lstrip('- *'))
+                elif _l and not _l.startswith('Version bump'):
+                    _changes.append(_l)
+            _changelog_entries.append({"version": _tag, "date": _date, "title": _title, "changes": _changes if _changes else [_msg]})
+        if _changelog_entries:
+            _changelog_json = json.dumps(_changelog_entries, ensure_ascii=False)
+            logger.info(f"Pre-generated changelog: {len(_changelog_entries)} versions")
+    except Exception as _e:
+        logger.debug(f"Changelog pre-generation skipped: {_e}")
+
     # In build_full_html mode, all JS is inlined into a single <script> tag.
     # Strategy: transform ES module syntax to plain JS, with each file wrapped
     # in try-catch for isolation.
@@ -365,6 +392,7 @@ def build_full_html():
     version_inject = (
         f"window.__BUILD_VERSION__ = '{build_commit}';\n"
         f"window.__BUILD_TIME__ = '{build_time_str}';\n"
+        f"window.__CHANGELOG_DATA__ = {_changelog_json};\n"
     )
     all_js = version_inject + all_js
 

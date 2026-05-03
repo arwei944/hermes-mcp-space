@@ -609,13 +609,16 @@ const ChangelogTab = (() => {
 
         container.innerHTML = Components.createLoading();
 
-        // 从 API 获取动态 changelog
+        // 优先使用构建时预注入的 changelog（window.__CHANGELOG_DATA__）
         var changelogData = [];
-        try {
-            changelogData = await API.get('/api/changelog');
-        } catch (_err) {
-            // fallback 到硬编码数据
-            changelogData = CHANGELOG;
+        if (window.__CHANGELOG_DATA__ && Array.isArray(window.__CHANGELOG_DATA__) && window.__CHANGELOG_DATA__.length > 0) {
+            changelogData = window.__CHANGELOG_DATA__;
+        } else {
+            try {
+                changelogData = await API.get('/api/changelog');
+            } catch (_err) {
+                changelogData = CHANGELOG;
+            }
         }
 
         if (_destroyed) return;
