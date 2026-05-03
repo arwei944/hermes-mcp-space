@@ -265,6 +265,11 @@ def build_full_html():
         export_stmts = []  # Collected export registrations for this file
         result_lines = []
 
+        def _resolve_import_path(rel_path):
+            """Resolve relative import path against file_dir"""
+            resolved = os.path.normpath(file_dir + '/' + rel_path)
+            return resolved
+
         for line in lines:
             stripped = line.strip()
 
@@ -284,23 +289,32 @@ def build_full_html():
                 )
                 continue
 
-            # 3. import X from './Y.js' → remove (var X is already in scope)
-            #    import X from '../Y.js' → remove
+            # 3. import X from './Y.js' → var X = window.__m['dir/Y.js']
+            #    import X from '../Y.js' → var X = window.__m['resolved/Y.js']
             if stripped.startswith("import ") and " from " in stripped and stripped.endswith(";"):
+                import_match = re.match(r"import\s+(\w+)\s+from\s+['\"](\.\.?\/[^'\"]+)['\"]\s*;", stripped)
+                if import_match:
+                    var_name = import_match.group(1)
+                    import_path = _resolve_import_path(import_match.group(2))
+                    line = f"var {var_name} = window.__m && window.__m['{import_path}'];"
+                # Always add the (possibly transformed) line
+                result_lines.append(line)
                 continue
 
-            # 4. import { A, B } from './C.js' → remove
-            #    import { A, B } from '../C.js' → remove
+            # 4. import { A, B } from './C.js' → var A = window.__m['dir/C.js'].A; var B = ...
+            #    import { A, B } from '../C.js' → var A = window.__m['resolved/C.js'].A; var B = ...
             if stripped.startswith("import {") and " from " in stripped and stripped.endswith(";"):
+                named_match = re.match(r"import\s*\{([^}]+)\}\s+from\s+['\"](\.\.?\/[^'\"]+)['\"]\s*;", stripped)
+                if named_match:
+                    names = [n.strip() for n in named_match.group(1).split(",")]
+                    import_path = _resolve_import_path(named_match.group(2))
+                    assigns = [f"var {n} = window.__m && window.__m['{import_path}'] && window.__m['{import_path}'].{n};" for n in names]
+                    line = " ".join(assigns)
+                result_lines.append(line)
                 continue
 
             # 5. (await) import('./X.js').default → window.__m['dir/X.js']
             #     (await) import('../X.js').default → window.__m['resolved/X.js']
-            def _resolve_import_path(rel_path):
-                """Resolve relative import path against file_dir"""
-                resolved = os.path.normpath(file_dir + '/' + rel_path)
-                return resolved
-
             line = re.sub(
                 r"\(?\s*await\s+import\(['\"](\.\.?\/[^'\"]+)['\"]\)\s*\)?\s*\.default",
                 lambda m: "window.__m['" + _resolve_import_path(m.group(1)) + "']",
