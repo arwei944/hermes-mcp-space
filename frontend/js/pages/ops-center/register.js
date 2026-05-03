@@ -41,7 +41,7 @@ var OpsCenterPage = (() => {
             try {
                 await fn();
             } catch (_err) {
-                // ignore render errors
+                console.error('[OpsCenter] Tab render error (' + tab + '):', _err);
             }
         }
     }

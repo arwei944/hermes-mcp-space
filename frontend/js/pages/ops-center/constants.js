@@ -24,14 +24,14 @@ var PIPELINE_STEPS = [
 ];
 
 var OPS_TABS = [
-    { key: 'overview', label: '实时总览' },
-    { key: 'pipeline', label: '构建部署' },
-    { key: 'resource', label: '资源监控' },
-    { key: 'quality', label: '代码质量' },
-    { key: 'errors', label: '错误追踪' },
-    { key: 'alerts', label: '告警管理' },
-    { key: 'logs', label: '事件日志' },
-    { key: 'about', label: '关于系统' },
+    { key: 'overview', label: '实时总览', version: '1.0.0' },
+    { key: 'pipeline', label: '构建部署', version: '1.0.0' },
+    { key: 'resource', label: '资源监控', version: '1.0.0' },
+    { key: 'quality', label: '代码质量', version: '1.0.0' },
+    { key: 'errors', label: '错误追踪', version: '1.0.0' },
+    { key: 'alerts', label: '告警管理', version: '1.0.0' },
+    { key: 'logs', label: '事件日志', version: '1.0.0' },
+    { key: 'about', label: '关于系统', version: '1.0.0' },
 ];
 
 export { ERROR_TYPES, HEALTH_THRESHOLDS, PIPELINE_STEPS, OPS_TABS };
