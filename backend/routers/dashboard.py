@@ -331,3 +331,59 @@ async def get_status():
     except ImportError:
         pass
     return result
+
+
+@router.get("/changelog")
+async def get_changelog():
+    """从 git tags 自动生成版本变更记录"""
+    import subprocess
+    changelog = []
+    try:
+        # 获取所有版本 tag（按版本号降序）
+        tags_result = subprocess.run(
+            ["git", "tag", "-l", "v*"],
+            capture_output=True, text=True, timeout=5
+        )
+        tags = [t.strip() for t in tags_result.stdout.strip().split('\n') if t.strip()]
+        # 按版本号降序排序
+        tags.sort(key=lambda t: [int(x) for x in t.replace('v', '').split('.')], reverse=True)
+
+        for tag in tags[:20]:  # 最多 20 个版本
+            # 获取 tag 的 commit message
+            msg_result = subprocess.run(
+                ["git", "log", "-1", "--format=%s%n%b", tag],
+                capture_output=True, text=True, timeout=5
+            )
+            msg = msg_result.stdout.strip()
+            # 获取 tag 日期
+            date_result = subprocess.run(
+                ["git", "log", "-1", "--format=%ci", tag],
+                capture_output=True, text=True, timeout=5
+            )
+            date = date_result.stdout.strip()[:16] if date_result.stdout.strip() else ''
+
+            # 解析 commit message 为标题和变更列表
+            lines = msg.split('\n')
+            title = lines[0] if lines else tag
+            changes = []
+            for line in lines[1:]:
+                line = line.strip()
+                if line.startswith('- ') or line.startswith('* '):
+                    changes.append(line.lstrip('- *'))
+                elif line and not line.startswith('Version bump'):
+                    changes.append(line)
+
+            changelog.append({
+                "version": tag,
+                "date": date,
+                "title": title,
+                "changes": changes if changes else [msg],
+            })
+    except Exception:
+        pass
+
+    # 如果没有 git tags，返回硬编码的 fallback
+    if not changelog:
+        changelog = [{"version": __version__, "date": "", "title": "当前版本", "changes": []}]
+
+    return changelog

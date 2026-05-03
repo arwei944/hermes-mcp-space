@@ -604,19 +604,59 @@ const ChangelogTab = (() => {
 
     async function render(containerSelector) {
         _destroyed = false;
-        const container = document.querySelector(containerSelector);
+        var container = document.querySelector(containerSelector);
         if (!container) return;
 
-        let currentVersion = '';
+        container.innerHTML = Components.createLoading();
+
+        // 从 API 获取动态 changelog
+        var changelogData = [];
         try {
-            const status = await API.system.health();
-            currentVersion = status.version || APP_VERSION;
+            changelogData = await API.get('/api/changelog');
         } catch (_err) {
-            currentVersion = APP_VERSION;
+            // fallback 到硬编码数据
+            changelogData = CHANGELOG;
         }
 
         if (_destroyed) return;
-        container.innerHTML = buildChangelogTab(currentVersion);
+
+        var currentVersion = '';
+        try {
+            var status = await API.get('/api/status');
+            currentVersion = status.version || '';
+        } catch (_err) {}
+
+        if (_destroyed) return;
+        container.innerHTML = buildChangelogFromData(changelogData, currentVersion);
+    }
+
+    function buildChangelogFromData(data, currentVersion) {
+        if (!data || data.length === 0) {
+            return '<div class="empty-text">暂无变更记录</div>';
+        }
+        return '<div style="max-height:600px;overflow-y:auto">' +
+            data.map(function(rel) {
+                var isCurrent = rel.version === currentVersion || rel.version === 'v' + currentVersion;
+                var headerStyle = isCurrent
+                    ? 'background:var(--accent);color:#fff;border-radius:6px 6px 0 0'
+                    : 'background:var(--bg-secondary);border-radius:6px 6px 0 0';
+                var badge = isCurrent ? '<span style="margin-left:8px;font-size:10px;background:rgba(255,255,255,0.3);padding:2px 6px;border-radius:3px">当前版本</span>' : '';
+                var changesHtml = (rel.changes || []).map(function(c) {
+                    return '<li style="padding:3px 0;color:var(--text-secondary);font-size:12px">' + Components.escapeHtml(c) + '</li>';
+                }).join('');
+                return '<div style="margin-bottom:12px;border:1px solid var(--border);border-radius:6px;overflow:hidden">' +
+                    '<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;' + headerStyle + '">' +
+                        '<span style="font-weight:600;font-size:13px">' + Components.escapeHtml(rel.version) + '</span>' +
+                        badge +
+                        '<span style="margin-left:auto;font-size:11px;opacity:0.7">' + Components.escapeHtml(rel.date || '') + '</span>' +
+                    '</div>' +
+                    '<div style="padding:10px 14px;background:var(--bg-card)">' +
+                        '<div style="font-size:13px;font-weight:500;margin-bottom:6px;color:var(--text-primary)">' + Components.escapeHtml(rel.title || '') + '</div>' +
+                        '<ul style="list-style:disc;padding-left:18px;margin:0">' + changesHtml + '</ul>' +
+                    '</div>' +
+                '</div>';
+            }).join('') +
+        '</div>';
     }
 
     function destroy() {
