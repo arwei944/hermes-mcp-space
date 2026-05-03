@@ -237,7 +237,7 @@ def build_full_html():
 
     logger.info(f"Auto-discovered {len(page_files)} page files: {[f.split('/')[-1] for f in page_files]}")
 
-    # Pre-generate changelog from git tags (only works in dev, not Docker)
+    # Pre-generate changelog from git tags or changelog.json
     _changelog_json = "[]"
     try:
         import subprocess as _sp
@@ -260,9 +260,17 @@ def build_full_html():
             _changelog_entries.append({"version": _tag, "date": _date, "title": _title, "changes": _changes if _changes else [_msg]})
         if _changelog_entries:
             _changelog_json = json.dumps(_changelog_entries, ensure_ascii=False)
-            logger.info(f"Pre-generated changelog: {len(_changelog_entries)} versions")
+            logger.info(f"Pre-generated changelog from git: {len(_changelog_entries)} versions")
     except Exception as _e:
-        logger.debug(f"Changelog pre-generation skipped: {_e}")
+        logger.debug(f"Git changelog failed, trying JSON file: {_e}")
+        # Fallback: read from pre-generated JSON file
+        try:
+            _cl_path = Path(__file__).resolve().parent / "frontend" / "data" / "changelog.json"
+            if _cl_path.exists():
+                _changelog_json = _cl_path.read_text(encoding='utf-8')
+                logger.info(f"Loaded changelog from JSON file: {_cl_path.name}")
+        except Exception as _e2:
+            logger.debug(f"Changelog JSON fallback also failed: {_e2}")
 
     # In build_full_html mode, all JS is inlined into a single <script> tag.
     # Strategy: transform ES module syntax to plain JS, with each file wrapped
