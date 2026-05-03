@@ -659,6 +659,49 @@ def _patched_create_app(blocks, **kwargs):
     except Exception as e:
         logger.warning(f"Failed to add error tracker middleware: {e}")
 
+    # ── Ops Protocol: 启动运维上报客户端 ──
+    try:
+        from ops_agent import OpsClient
+        ops_client = OpsClient(
+            server="https://arwei944-ops-center.hf.space",
+            project_id="hermes-mcp-space",
+            project_name="Hermes Agent MCP Space",
+            project_url="https://arwei944-hermes-mcp-space.hf.space",
+            project_type="hf_docker",
+            version=APP_VERSION,
+            environment="production",
+            heartbeat_interval=120,
+        )
+        ops_client.add_business_collector(lambda: {
+            "mcp_tools_count": len(TOOL_DEFINITIONS) if 'TOOL_DEFINITIONS' in dir() else 0,
+        })
+        ops_client.start()
+        try:
+            import importlib.metadata as _im
+            deps = []
+            for pkg in ["gradio", "fastapi", "uvicorn", "httpx", "pydantic"]:
+                try:
+                    deps.append({"name": pkg, "version": _im.version(pkg)})
+                except Exception:
+                    pass
+        except Exception:
+            deps = []
+        ops_client.snapshot(
+            config={"port": 7860, "log_level": LOG_LEVEL, "ssr_mode": False},
+            dependencies=deps,
+            endpoints=[
+                {"path": "/api/meta", "method": "GET", "description": "版本和元数据"},
+                {"path": "/api/mcp/tools", "method": "GET", "description": "MCP工具列表"},
+                {"path": "/api/chat", "method": "POST", "description": "聊天接口"},
+            ],
+            features=["mcp_server", "web_search", "knowledge_base", "agent_management", "session_management"],
+            metadata={"build_time": BUILD_TIME, "app_version": APP_VERSION},
+        )
+        ops_client.emit_event("deploy", level="info", message=f"Hermes v{APP_VERSION} started", data={"version": APP_VERSION})
+        logger.info("Ops Protocol client started")
+    except Exception as e:
+        logger.warning(f"Ops Protocol init failed: {e}")
+
     return app
 
 App.create_app = staticmethod(_patched_create_app)
