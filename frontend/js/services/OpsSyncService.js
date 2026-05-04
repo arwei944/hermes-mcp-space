@@ -74,7 +74,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '指标同步失败:', err.message);
         }
         if (_active) {
-            _timers.metrics = setInterval(_syncMetrics, 5000);
+            _timers.metrics = setInterval(_syncMetrics, (typeof AppConfig !== 'undefined' && AppConfig.OPS_METRICS_INTERVAL) || 5000);
         }
     }
 
@@ -94,7 +94,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', 'MCP健康同步失败:', err.message);
         }
         if (_active) {
-            _timers.mcpHealth = setInterval(_syncMcpHealth, 30000);
+            _timers.mcpHealth = setInterval(_syncMcpHealth, (typeof AppConfig !== 'undefined' && AppConfig.OPS_MCP_HEALTH_INTERVAL) || 30000);
         }
     }
 
@@ -108,7 +108,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '定时任务同步失败:', err.message);
         }
         if (_active) {
-            _timers.cron = setInterval(_syncCronMonitor, 30000);
+            _timers.cron = setInterval(_syncCronMonitor, (typeof AppConfig !== 'undefined' && AppConfig.OPS_CRON_INTERVAL) || 30000);
         }
     }
 
@@ -131,7 +131,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '告警同步失败:', err.message);
         }
         if (_active) {
-            _timers.alerts = setInterval(_syncAlerts, 30000);
+            _timers.alerts = setInterval(_syncAlerts, (typeof AppConfig !== 'undefined' && AppConfig.OPS_ALERTS_INTERVAL) || 30000);
         }
     }
 
@@ -147,7 +147,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '前端错误同步失败:', err.message);
         }
         if (_active) {
-            _timers.frontendErrors = setInterval(_syncFrontendErrors, 10000);
+            _timers.frontendErrors = setInterval(_syncFrontendErrors, (typeof AppConfig !== 'undefined' && AppConfig.OPS_FRONTEND_ERRORS_INTERVAL) || 10000);
         }
     }
 
@@ -162,7 +162,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', 'API错误同步失败:', err.message);
         }
         if (_active) {
-            _timers.apiErrors = setInterval(_syncApiErrors, 10000);
+            _timers.apiErrors = setInterval(_syncApiErrors, (typeof AppConfig !== 'undefined' && AppConfig.OPS_API_ERRORS_INTERVAL) || 10000);
         }
     }
 
@@ -186,7 +186,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '事件同步失败:', err.message);
         }
         if (_active) {
-            _timers.events = setInterval(_syncRecentEvents, 10000);
+            _timers.events = setInterval(_syncRecentEvents, (typeof AppConfig !== 'undefined' && AppConfig.OPS_EVENTS_INTERVAL) || 10000);
         }
     }
 
@@ -210,7 +210,7 @@ const OpsSyncService = (() => {
             if (typeof Logger !== 'undefined') Logger.warn('[OpsSync]', '评估数据同步失败:', err.message);
         }
         if (_active) {
-            _timers.eval = setInterval(_syncEvalData, 30000);
+            _timers.eval = setInterval(_syncEvalData, (typeof AppConfig !== 'undefined' && AppConfig.OPS_EVAL_INTERVAL) || 30000);
         }
     }
 

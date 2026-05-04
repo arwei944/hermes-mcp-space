@@ -12,7 +12,7 @@ const _Toast = {
         this.container = document.getElementById('toastContainer');
     },
 
-    show(message, type = 'info', duration = 3500) {
+    show(message, type = 'info', duration = (typeof AppConfig !== 'undefined' && AppConfig.TOAST_DURATION) || 3500) {
         if (!this.container) this.init();
 
         const iconMap = { success: 'check', error: 'x', warning: 'alertTriangle', info: 'info' };
@@ -23,7 +23,7 @@ const _Toast = {
         toast.innerHTML = `
             <span class="toast-icon">${iconHtml}</span>
             <span class="toast-message">${Components.escapeHtml(message)}</span>
-            <button class="toast-close" onclick="this.parentElement.classList.add('toast-out');setTimeout(()=>this.parentElement.remove(),200)">
+            <button class="toast-close" onclick="this.parentElement.classList.add('toast-out');setTimeout(()=>this.parentElement.remove(),(typeof AppConfig !== 'undefined' && AppConfig.TOAST_ANIMATION) || 200)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         `;
@@ -33,7 +33,7 @@ const _Toast = {
         if (duration > 0) {
             setTimeout(() => {
                 toast.classList.add('toast-out');
-                setTimeout(() => toast.remove(), 200);
+                setTimeout(() => toast.remove(), (typeof AppConfig !== 'undefined' && AppConfig.TOAST_ANIMATION) || 200);
             }, duration);
         }
 

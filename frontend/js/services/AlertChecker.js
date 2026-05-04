@@ -49,7 +49,7 @@ const AlertChecker = (() => {
         }
         // fallback: 使用默认规则
         _rules = _defaultRules.map(function(r) {
-            return Object.assign({}, r, { enabled: true, name: r.type, cooldown: 300 });
+            return Object.assign({}, r, { enabled: true, name: r.type, cooldown: (typeof AppConfig !== 'undefined' && AppConfig.ALERT_COOLDOWN) || 300 });
         });
         return _rules;
     }
@@ -84,7 +84,7 @@ const AlertChecker = (() => {
         if (typeof Logger !== 'undefined') Logger.info('[AlertChecker]', '启动前端告警检查');
         // 启动时加载规则
         loadRules().then(function() {
-            _timer = setInterval(check, 10000);
+            _timer = setInterval(check, (typeof AppConfig !== 'undefined' && AppConfig.ALERT_CHECK_INTERVAL) || 10000);
         });
     }
 
@@ -121,7 +121,7 @@ const AlertChecker = (() => {
             // 冷却时间检查
             if (rule.lastTriggered) {
                 var elapsed = now - new Date(rule.lastTriggered).getTime();
-                if (elapsed < (rule.cooldown || 300) * 1000) return;
+                if (elapsed < ((rule.cooldown || (typeof AppConfig !== 'undefined' && AppConfig.ALERT_COOLDOWN) || 300)) * 1000) return;
             }
 
             var triggered = false;

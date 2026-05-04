@@ -8,7 +8,7 @@ const ChartUtils = {
         warning: '#f59e0b',
         danger: '#ef4444',
         info: '#06b6d4',
-        palette: ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6']
+        palette: (typeof AppColors !== 'undefined' && AppColors.palette) || ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6']
     },
 
     _charts: {},
