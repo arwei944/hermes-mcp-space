@@ -2,6 +2,17 @@
 # Regenerate with: python3 scripts/gen_changelog.py
 CHANGELOG_FALLBACK=[
   {
+    "version": "v15.4.0",
+    "date": "2026-05-05 06:30",
+    "title": "feat: v15.4.0 — Agent 自由学习模式 (权限全开 + 审核自动通过)",
+    "changes": [
+      "feat: general 角色升级为完全权限 — 所有工具标签、所有高风险工具、所有规则分类读写、数据删除权限全部开放",
+      "feat: 写入审核改为自动批准 — Agent 创建/更新规则、知识、经验、记忆后立即生效，不再等待人工审核",
+      "feat: Agent 可以自由使用 shell_execute、github_operations、db_query 等全部工具来积累知识",
+      "Version bump: 15.3.1 -> 15.4.0 (minor - 自由学习模式)"
+    ]
+  },
+  {
     "version": "v15.3.1",
     "date": "2026-05-05 06:00",
     "title": "fix: v15.3.1 - 紧急修复 3 个 bug (agent_id 崩溃 + DB 表缺失 + 参数名不匹配)",
