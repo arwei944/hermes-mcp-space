@@ -2172,3 +2172,60 @@ textarea {
 .mp-tool-card code {
     font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
 }
+
+/* ==========================================
+   v13.2.0: Navigation Enhancements
+   ========================================== */
+
+/* Nav badge (for ops center alert count) */
+.nav-badge {
+    display: none;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+.nav-badge.visible {
+    display: flex;
+}
+
+/* Navigation Tooltip */
+.nav-item[data-tooltip] {
+    position: relative;
+}
+.nav-item[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 10px;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    font-size: 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 200;
+}
+.nav-item[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
+/* Hide tooltips on mobile */
+@media (max-width: 768px) {
+    .nav-item[data-tooltip]::after {
+        display: none;
+    }
+}

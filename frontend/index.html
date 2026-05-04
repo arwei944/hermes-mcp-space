@@ -52,65 +52,77 @@
         <input type="text" id="globalSearch" placeholder="搜索...  ⌘K">
     </div>
 
-    <nav class="sidebar-nav">
+        <nav class="sidebar-nav">
         <div class="nav-section">
             <div class="nav-section-title">概览</div>
-            <a class="nav-item active" data-page="dashboard" href="#dashboard">
+            <a class="nav-item active" data-page="dashboard" href="#dashboard" data-tooltip="系统运行状态总览">
                 <span class="nav-icon" data-icon="chart"></span>
                 <span>仪表盘</span>
             </a>
-            <a class="nav-item" data-page="knowledge" href="#knowledge">
-                <span class="nav-icon" data-icon="knowledge"></span>
+            <a class="nav-item" data-page="knowledge" href="#knowledge" data-tooltip="管理 AI 的知识、规则和经验">
+                <span class="nav-icon" data-icon="bookOpen"></span>
                 <span>知识库</span>
             </a>
         </div>
 
         <div class="nav-section">
-            <div class="nav-section-title">管理</div>
+            <div class="nav-section-title">对话</div>
             <a class="nav-item" data-page="sessions" href="#sessions">
                 <span class="nav-icon" data-icon="messageCircle"></span>
-                <span>会话</span>
+                <span>会话管理</span>
             </a>
-            <a class="nav-item" data-page="marketplace" href="#marketplace">
-                <span class="nav-icon" data-icon="store"></span>
-                <span>扩展管理</span>
-            </a>
-            <a class="nav-item" data-page="memory" href="#memory">
-                <span class="nav-icon" data-icon="book"></span>
-                <span>记忆管理</span>
+            <a class="nav-item" data-page="chat" href="#chat">
+                <span class="nav-icon" data-icon="messageSquare"></span>
+                <span>对话</span>
             </a>
         </div>
 
         <div class="nav-section">
-            <div class="nav-section-title">自动化</div>
-            <a class="nav-item" data-page="cron" href="#cron">
+            <div class="nav-section-title">能力</div>
+            <a class="nav-item" data-page="marketplace" href="#marketplace" data-tooltip="浏览和安装 MCP 服务、技能和插件">
+                <span class="nav-icon" data-icon="store"></span>
+                <span>功能商店</span>
+            </a>
+            <a class="nav-item" data-page="agents" href="#agents" data-tooltip="管理 AI 助手的配置和状态">
+                <span class="nav-icon" data-icon="bot"></span>
+                <span>AI 助手</span>
+            </a>
+            <a class="nav-item" data-page="agents_behavior" href="#agents_behavior" data-tooltip="定义 AI 助手的性格和行为方式">
+                <span class="nav-icon" data-icon="smile"></span>
+                <span>性格设置</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">数据</div>
+            <a class="nav-item" data-page="memory" href="#memory" data-tooltip="查看和管理 AI 的长期记忆">
+                <span class="nav-icon" data-icon="brain"></span>
+                <span>记忆管理</span>
+            </a>
+            <a class="nav-item" data-page="cron" href="#cron" data-tooltip="设置自动执行的计划任务">
                 <span class="nav-icon" data-icon="clock"></span>
                 <span>定时任务</span>
             </a>
-            <a class="nav-item" data-page="agents" href="#agents">
-                <span class="nav-icon" data-icon="bot"></span>
-                <span>子 Agent</span>
-            </a>
-            <a class="nav-item" data-page="agents_behavior" href="#agents_behavior">
-                <span class="nav-icon" data-icon="ghost"></span>
-                <span>行为管理</span>
-            </a>
         </div>
 
         <div class="nav-section">
-            <div class="nav-section-title">系统</div>
-            <a class="nav-item" data-page="ops_center" href="#ops_center">
+            <div class="nav-section-title">运维</div>
+            <a class="nav-item" data-page="ops_center" href="#ops_center" data-tooltip="实时监控运行状态和资源使用">
                 <span class="nav-icon" data-icon="activity"></span>
                 <span>运维中心</span>
-                <span class="nav-badge" id="opsCenterBadge" style="display:none;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:600;align-items:center;justify-content:center;padding:0 5px;position:absolute;top:6px;right:6px"></span>
+                <span class="nav-badge" id="opsCenterBadge"></span>
             </a>
             <a class="nav-item" data-page="logs" href="#logs">
                 <span class="nav-icon" data-icon="fileText"></span>
                 <span>操作日志</span>
             </a>
-            <a class="nav-item" data-page="sync" href="#sync">
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">系统</div>
+            <a class="nav-item" data-page="sync" href="#sync" data-tooltip="数据备份与恢复管理">
                 <span class="nav-icon" data-icon="refreshCw"></span>
-                <span>数据同步</span>
+                <span>备份恢复</span>
             </a>
             <a class="nav-item" data-page="config" href="#config">
                 <span class="nav-icon" data-icon="settings"></span>
@@ -120,10 +132,17 @@
                 <span class="nav-icon" data-icon="trash"></span>
                 <span>回收站</span>
             </a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">工具</div>
             <a class="nav-item" data-page="screenshot" href="#screenshot">
                 <span class="nav-icon" data-icon="camera"></span>
                 <span>截图工具</span>
             </a>
+        </div>
+
+        <div class="nav-section" style="margin-top:auto">
             <a class="nav-item" onclick="window.open('/docs','_blank')" style="cursor:pointer">
                 <span class="nav-icon" data-icon="book"></span>
                 <span>API 文档</span>
