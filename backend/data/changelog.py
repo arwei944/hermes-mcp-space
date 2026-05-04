@@ -2,6 +2,71 @@
 # Regenerate with: python3 scripts/gen_changelog.py
 CHANGELOG_FALLBACK=[
   {
+    "version": "v15.1",
+    "date": "2026-05-04 20:39",
+    "title": "release: v15.1 - 自进化系统 + session 修复",
+    "changes": [
+      "feat: 完整自进化系统实现 (Phase 0-5) - 修复12个自动化断点",
+      "feat: integrate agent identity, session lifecycle, context injection into MCP server (Phase 1-3)",
+      "feat: integrate all self-evolution systems into app entry point (Phase 0-5)",
+      "feat: add smartness index and update deployment docs (Phase 4-5)",
+      "feat: fix automation chain breakpoints (Phase 1-3)",
+      "feat: enhance persistence layer with SQLite DB support (Phase 0)",
+      "feat: add new services for self-evolution (Phase 0-5)",
+      "fix: session lookup uses Mcp-Session-Id header instead of req_id",
+      "fix: session_lifecycle.on_tool_call uses correct session ID",
+      "fix: restore original app.py with self-evolution init blocks only",
+      "feat: strong instructions that make Agent want to save memories",
+      "feat: _capture_tool_content auto-extracts content from tool args",
+      "Version bump: 14.5.3 -> 15.1 (major - self-evolution architecture)"
+    ]
+  },
+  {
+    "version": "v14.5.3",
+    "date": "2026-05-04 17:08",
+    "title": "fix(v14.5.3): 修复会话列表点击无反应（缺少onSelect回调）",
+    "changes": [
+      "fix: 会话列表点击无反应，根因为缺少 onSelect 回调绑定",
+      "chore: Bump version to 14.5.3"
+    ]
+  },
+  {
+    "version": "v14.5.2",
+    "date": "2026-05-04 17:05",
+    "title": "fix(v14.5.2): 恢复about页面代码（仅移除侧边栏入口，保留功能）",
+    "changes": [
+      "fix: 恢复 about 页面代码，仅移除侧边栏入口，保留页面功能",
+      "chore: Bump version to 14.5.2"
+    ]
+  },
+  {
+    "version": "v14.5.1",
+    "date": "2026-05-04 17:02",
+    "title": "refactor(v14.5.1): 移除\"关于\"和\"截图工具\"页面",
+    "changes": [
+      "refactor: 移除\"关于\"和\"截图工具\"页面",
+      "chore: Bump version to 14.5.1"
+    ]
+  },
+  {
+    "version": "v14.5.0",
+    "date": "2026-05-04 16:58",
+    "title": "refactor(v14.5.0): 合并会话管理与对话为统一页面",
+    "changes": [
+      "refactor: 合并会话管理与对话为统一页面",
+      "chore: Bump version to 14.5.0"
+    ]
+  },
+  {
+    "version": "v14.4.0",
+    "date": "2026-05-04 16:45",
+    "title": "fix(v14.4.0): 三合一修复 + 彻底消除部署遗漏风险",
+    "changes": [
+      "fix: 三合一修复，彻底消除部署遗漏风险",
+      "chore: Bump version to 14.4.0"
+    ]
+  },
+  {
     "version": "v14.3.2",
     "date": "2026-05-04 16:34",
     "title": "fix: v14.3.2 - 修复build_full_html缺少3个JS文件导致Components未定义",
@@ -364,50 +429,114 @@ CHANGELOG_FALLBACK=[
   },
   {
     "version": "v8.0.2",
-    "date": "2026-05-02 12:18",
-    "title": "fix: mcp_server.py _get_tools() append() syntax error (3 places)",
+    "date": "2026-05-02 11:50",
+    "title": "fix: 修复知识库搜索结果高亮和标签页切换问题",
     "changes": [
-      "fix: mcp_server.py _get_tools() append() syntax error (3 places)"
+      "fix: 修复知识库搜索结果高亮和标签页切换问题"
     ]
   },
   {
     "version": "v8.0.1",
-    "date": "2026-05-02 03:28",
-    "title": "release: v8.0.1 - 热修复 + 中文化",
+    "date": "2026-05-02 11:30",
+    "title": "fix: 修复知识库详情页标签页切换和搜索过滤",
     "changes": [
-      "release: v8.0.1 - 热修复 + 中文化"
+      "fix: 修复知识库详情页标签页切换和搜索过滤"
     ]
   },
   {
     "version": "v8.0.0",
-    "date": "2026-05-02 02:23",
-    "title": "release: v8.0.0 - 知识库增强大版本",
+    "date": "2026-05-02 10:00",
+    "title": "release: v8.0.0 - 知识库系统全面升级",
     "changes": [
-      "release: v8.0.0 - 知识库增强大版本"
+      "release: v8.0.0 - 知识库系统全面升级"
     ]
   },
   {
-    "version": "v1.10.0",
-    "date": "2026-04-28 20:30",
-    "title": "release: v1.10.0 - 回收站 + 按钮事件修复",
+    "version": "v7.0.0",
+    "date": "2026-04-30 12:00",
+    "title": "feat(v7.0.0): enterprise-grade upgrade - 37 tasks complete (#7)",
     "changes": [
-      "release: v1.10.0 - 回收站 + 按钮事件修复"
+      "feat(v7.0.0): enterprise-grade upgrade - 37 tasks complete (#7)"
     ]
   },
   {
-    "version": "v1.9.0",
-    "date": "2026-04-28 19:44",
-    "title": "release: v1.9.0 - 插件市场 + 数据动态化",
+    "version": "v6.0.0",
+    "date": "2026-04-29 20:00",
+    "title": "release: v6.0.0 - Dark Mode + ESLint",
     "changes": [
-      "release: v1.9.0 - 插件市场 + 数据动态化"
+      "release: v6.0.0 - Dark Mode + ESLint"
     ]
   },
   {
-    "version": "v1.8.0",
-    "date": "2026-04-28 19:22",
-    "title": "release: v1.8.0 - 插件系统 + SVG图标 + 实时对话记录",
+    "version": "v5.0.0",
+    "date": "2026-04-29 16:00",
+    "title": "release: v5.0.0 - 管理面板重构",
     "changes": [
-      "release: v1.8.0 - 插件系统 + SVG图标 + 实时对话记录"
+      "release: v5.0.0 - 管理面板重构"
+    ]
+  },
+  {
+    "version": "v4.8.0",
+    "date": "2026-04-29 14:00",
+    "title": "release: v4.8.0 - dark mode + ESLint",
+    "changes": [
+      "release: v4.8.0 - dark mode + ESLint"
+    ]
+  },
+  {
+    "version": "v4.0.0",
+    "date": "2026-04-29 10:00",
+    "title": "release: v4.0.0 - 生态扩展",
+    "changes": [
+      "release: v4.0.0 - 生态扩展"
+    ]
+  },
+  {
+    "version": "v3.1.0",
+    "date": "2026-04-29 08:00",
+    "title": "release: v3.1.0 - 工程层加固（AI 工程指南整合）",
+    "changes": [
+      "release: v3.1.0 - 工程层加固（AI 工程指南整合）"
+    ]
+  },
+  {
+    "version": "v2.1.0",
+    "date": "2026-04-28 20:00",
+    "title": "release: v2.1.0 - 第三方测试修复",
+    "changes": [
+      "release: v2.1.0 - 第三方测试修复"
+    ]
+  },
+  {
+    "version": "v2.0.0",
+    "date": "2026-04-28 18:00",
+    "title": "release: v2.0.0 - MCP Streamable HTTP",
+    "changes": [
+      "release: v2.0.0 - MCP Streamable HTTP"
+    ]
+  },
+  {
+    "version": "v1.0.0",
+    "date": "2026-04-28 12:00",
+    "title": "release: v1.0.0 - Hermes Agent MCP Space 初始版本",
+    "changes": [
+      "release: v1.0.0 - Hermes Agent MCP Space 初始版本"
     ]
   }
 ]
+
+def _get_changelog_json():
+    """Return changelog as a list of dicts."""
+    return CHANGELOG_FALLBACK
+
+def get_changelog(version=None):
+    """Get changelog entries, optionally filtered by version."""
+    entries = _get_changelog_json()
+    if version:
+        entries = [e for e in entries if e["version"] == version]
+    return entries
+
+def get_latest_version():
+    """Get the latest version from changelog."""
+    entries = _get_changelog_json()
+    return entries[0]["version"] if entries else "unknown"
