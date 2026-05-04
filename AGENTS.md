@@ -1,7 +1,7 @@
 # Hermes Agent MCP Space — 项目行为指令
 
 > 本文件定义 AI Agent 在本项目中的行为规范，所有 Agent 必须遵守。
-> 最后更新: 2026-05-03 | 版本: 12.0.0
+> 最后更新: 2026-05-04 | 版本: 15.2.0
 
 ---
 
@@ -103,7 +103,7 @@ Markdown 编写规范：
 - 所有文本使用中文
 
 ### 2.4 版本管理
-- 版本号格式: `主版本.次版本.修订号` (如 7.0.0)
+- 版本号格式: `主版本.次版本.修订号` (如 15.2.0)
 - 版本号在 `backend/version.py` 中管理
 - 每次功能更新必须递增版本号
 
@@ -140,7 +140,7 @@ Markdown 编写规范：
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `APP_VERSION` | 应用版本 | 7.0.0 |
+| `APP_VERSION` | 应用版本 | 15.2.0 |
 | `AUTH_TOKEN` | API 认证 token（空=关闭） | "" |
 | `RATE_LIMIT_ENABLED` | 速率限制开关 | false |
 | `RATE_LIMIT_PER_MINUTE` | 每分钟请求数 | 60 |
@@ -208,3 +208,67 @@ git clone https://github.com/arwei944/hermes-mcp-space.git /data/user/work/repo
 2. 检查 `curl https://arwei944-hermes-mcp-space.hf.space/api/status`
 3. 确认 `build_error` 为空
 4. 前端 Ctrl+Shift+R 强刷验证
+
+---
+
+## 8. 🆕 对话上传规范（v15.2.0 新增）
+
+### 8.1 自动捕获（后端保障）
+
+Hermes MCP 中间件管道已集成 `ConversationCaptureMiddleware`，**所有 MCP 工具调用会自动捕获并写入 Hermes 会话**，无需 Agent 主动操作。
+
+捕获内容包括：
+- 工具名称
+- 调用参数（截取前 300 字符）
+- 返回结果（截取前 500 字符）
+- 执行耗时
+- 错误信息（如有）
+
+### 8.2 主动上传（Prompt 保障）
+
+除自动捕获外，Agent 在以下场景应**主动上传对话摘要**：
+
+1. **完成一个完整任务后**：调用 `log_conversation` 记录任务摘要
+2. **用户明确要求时**：调用 `create_session` + `add_message` 记录完整对话
+3. **发现重要信息时**：调用 `memory_create` 或 `knowledge_create` 记录
+
+### 8.3 上传格式
+
+```python
+# 对话摘要上传
+log_conversation(
+    role="assistant",
+    content="## 任务摘要\n完成了 XXX 任务\n\n## 关键步骤\n1. ...\n2. ...\n\n## 结论\n..."
+)
+
+# 完整对话上传
+create_session(title="任务描述")
+add_message(session_id="sess_xxx", role="user", content="用户原始输入")
+add_message(session_id="sess_xxx", role="assistant", content="完整回复（含思考过程）")
+```
+
+---
+
+## 9. 🆕 行为约束规范（v15.2.0 新增）
+
+### 9.1 工具调用规范
+
+1. **写操作前确认**：调用 `create`/`update`/`delete` 类工具前，必须先确认用户意图
+2. **连续失败停止**：同一工具连续失败 3 次必须停止重试并报告用户
+3. **删除操作二次确认**：涉及数据删除的操作（`delete_session`、`memory_forget`、`knowledge_delete`）必须二次确认
+4. **规则遵守**：遵守所有 `scope='tool_guard'` 的活跃规则（由中间件自动执行）
+
+### 9.2 输出规范
+
+1. **默认 Markdown**：所有输出使用 Markdown 格式
+2. **数据对比用表格**：涉及版本对比、数据对比时必须使用表格
+3. **操作结果三要素**：状态 + 详情 + 后续建议
+4. **错误友好提示**：用通俗语言解释错误，附带解决建议
+
+### 9.3 不确定时主动询问
+
+以下场景必须使用 AskUserQuestion 工具主动询问：
+- 用户指令有歧义
+- 存在多种实现方案
+- 操作可能造成不可逆影响
+- 缺少关键决策信息
