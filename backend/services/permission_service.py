@@ -64,6 +64,10 @@ ROLE_PERMISSIONS = {
         "allowed_high_risk_tools": {
             "web_search",
             "document_parse",
+            "rule_create", "rule_update",
+            "knowledge_create", "knowledge_update",
+            "memory_create", "memory_forget",
+            "experience_create", "experience_update",
         },
         "denied_tools": {
             "shell_execute", "safe_shell_execute",
