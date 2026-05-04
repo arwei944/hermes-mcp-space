@@ -48,7 +48,7 @@ const SessionsPage = (() => {
         }
 
         container.innerHTML = _modules.page.buildLayout('chat');
-        _modules.sessionList.render('#sessions-sidebar', sessions, allTags, currentId);
+        _modules.sessionList.render('#sessions-sidebar', sessions, allTags, currentId, function(id) { _modules.sessionDetail.selectSession(id); });
         _modules.chatView.render('#sessions-main', sessions, currentId, messages);
         _modules.sessionDetail.bindGlobalEvents();
     }
