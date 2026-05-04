@@ -190,6 +190,23 @@ class ErrorTrackerMiddleware(BaseHTTPMiddleware):
             # 持久化
             _append_jsonl(record)
 
+            # Auto-submit API errors as experiences
+            try:
+                from backend.services.review_service import ReviewService
+                svc = ReviewService()
+                svc.submit_review(
+                    target_type="experience",
+                    action="create",
+                    title=f"API Error: {request.url}",
+                    content=f"Path: {request.url}\nMethod: {request.method}\nStatus: {record.get('status_code', 500)}\nError: {str(exc)[:500]}",
+                    category="error_pattern",
+                    confidence=0.6,
+                    priority="normal",
+                    reason="Auto-captured from ErrorTracker middleware",
+                )
+            except Exception:
+                pass
+
             # 发送 SSE 事件
             try:
                 from backend.routers.events import emit_event

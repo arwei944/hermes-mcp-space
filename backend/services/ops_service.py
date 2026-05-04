@@ -558,6 +558,17 @@ def check_alerts() -> List[Dict[str, Any]]:
         except Exception as e:
             logger.warning(f"发送告警 SSE 事件失败: {e}")
 
+        # Auto-send notification on alert
+        try:
+            from backend.mcp.tools.system.send_notification import handle as notify_handle
+            notify_handle({
+                "title": f"Alert: {alert.get('rule_name', 'Unknown')}",
+                "message": f"{alert.get('message', '')}\nSeverity: {alert.get('type', 'unknown')}",
+                "level": alert.get("type", "warning"),
+            })
+        except Exception:
+            pass
+
     # 保存更新后的规则（更新 last_triggered）
     if triggered:
         _save_alert_rules(rules)

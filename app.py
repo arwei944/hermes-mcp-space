@@ -646,6 +646,26 @@ def _patched_create_app(blocks, **kwargs):
                 "schedule": "0 2 * * *",
                 "command": "curl -s -X POST http://localhost:7860/api/knowledge/auto-learn",
             },
+            {
+                "name": "refresh_mcp",
+                "schedule": "*/10 * * * *",
+                "command": "curl -s -X POST http://localhost:7860/api/mcp/refresh",
+            },
+            {
+                "name": "trash_cleanup",
+                "schedule": "0 4 * * 0",
+                "command": "curl -s -X POST http://localhost:7860/api/trash/auto-cleanup",
+            },
+            {
+                "name": "compat_sync",
+                "schedule": "0 4 * * *",
+                "command": "curl -s -X POST http://localhost:7860/api/compat/auto-sync",
+            },
+            {
+                "name": "weekly_skill_eval",
+                "schedule": "0 5 * * 0",
+                "command": "curl -s -X POST http://localhost:7860/api/skills/auto-eval-optimize",
+            },
         ]
 
         existing_jobs = {j.get("name") for j in cron_service.list_cron_jobs()}
@@ -657,6 +677,22 @@ def _patched_create_app(blocks, **kwargs):
         logger.info(f"Evolution cron jobs registered ({len(evolution_jobs)} total)")
     except Exception as e:
         logger.warning(f"Failed to register evolution cron jobs: {e}")
+
+    # Auto-install recommended plugins on startup
+    try:
+        from backend.services.plugin_service import PluginService
+        plugin_svc = PluginService()
+        plugin_index_path = Path(get_hermes_home()) / "data" / "plugin_index.json"
+        if plugin_index_path.exists():
+            import json
+            with open(plugin_index_path) as f:
+                index = json.load(f)
+            for plugin in index.get("plugins", []):
+                if plugin.get("auto_install") and not plugin_svc.is_installed(plugin["name"]):
+                    plugin_svc.install_plugin(plugin["name"])
+                    logger.info(f"Auto-installed plugin: {plugin['name']}")
+    except Exception as e:
+        logger.warning(f"Plugin auto-install failed: {e}")
 
     # Initialize persistence manager (data backup/restore)
     try:

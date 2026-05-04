@@ -430,6 +430,17 @@ async def add_session_message(session_id: str, body: Dict[str, str]) -> Dict[str
     session = hermes_service.get_session(session_id)
     if session:
         result["session"] = session
+
+    # Auto-compress long sessions
+    try:
+        from backend.services.session_service import SessionService
+        msgs = SessionService().get_session_messages(session_id)
+        if len(msgs) > 50:
+            from backend.mcp.tools.session.compress import handle as compress_handle
+            compress_handle({"session_id": session_id})
+    except Exception:
+        pass
+
     return result
 
 
