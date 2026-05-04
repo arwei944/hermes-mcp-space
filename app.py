@@ -557,7 +557,9 @@ def _patched_create_app(blocks, **kwargs):
         from backend.routers import (
             sessions, tools, skills, memory, cron, agents, mcp, config_api,
             dashboard, logs, events, plugins, trash, evals, stats, knowledge,
-            screenshot, persistence, version, ops, frontend_errors
+            screenshot, persistence, version, ops, frontend_errors,
+            rules, knowledge_items, experiences, memories as memories_router_mod, reviews,
+            search as search_router
         )
         app.include_router(sessions.router)
         app.include_router(tools.router)
@@ -575,6 +577,12 @@ def _patched_create_app(blocks, **kwargs):
         app.include_router(evals.router, prefix="/api", tags=["evals"])
         app.include_router(stats.router, prefix="/api", tags=["stats"])
         app.include_router(knowledge.router)
+        app.include_router(rules.router)
+        app.include_router(knowledge_items.router)
+        app.include_router(experiences.router)
+        app.include_router(memories_router_mod.router)
+        app.include_router(reviews.router)
+        app.include_router(search_router.router)
         app.include_router(screenshot.router)
         app.include_router(persistence.router)
         app.include_router(version.router)
