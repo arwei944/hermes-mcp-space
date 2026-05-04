@@ -9,6 +9,7 @@ CHANGELOG_FALLBACK=[
       "fix: _call_tool 函数签名缺少 agent_id 参数，导致 mcp_hermes 全部 105 个工具崩溃 (P0)",
       "fix: 知识库 DB 表缺失 — get_knowledge_db() 现在自动检查并初始化 schema，不再依赖启动时单次调用 (P0)",
       "fix: search_sessions 参数名 keyword 改为 query，兼容旧参数名 (P1)",
+      "fix: general 角色缺少 system 标签权限，导致基础工具 (get_system_status 等) 被拒绝访问 (P1)",
       "Version bump: 15.3 -> 15.3.1 (patch - hotfix)"
     ]
   },

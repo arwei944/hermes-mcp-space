@@ -60,7 +60,7 @@ ROLE_PERMISSIONS = {
     },
     "general": {
         "label": "通用助手",
-        "allowed_tool_tags": {"knowledge", "memory", "session", "feedback", "skill", "file", "compat"},
+        "allowed_tool_tags": {"knowledge", "memory", "session", "feedback", "skill", "file", "system", "compat"},
         "allowed_high_risk_tools": {
             "web_search",
             "document_parse",
@@ -72,6 +72,7 @@ ROLE_PERMISSIONS = {
             "email_operations",
             "batch_operations",
             "delegate_task",
+            "data_analyze", "data_visualize",
         },
         "allowed_rule_categories": {"safety", "behavior", "output_control", "general", "priority"},
         "writable_rule_categories": {"general", "output_control"},
