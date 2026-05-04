@@ -19,11 +19,9 @@ const MemoryPage = (() => {
         const container = document.getElementById('contentBody');
         container.innerHTML = Components.createLoading();
 
-        const [memoryData, userData, statsData] = await Promise.all([
-            API.memory.getMemory().catch(() => ''),
-            API.memory.getUser().catch(() => ''),
-            API.memory.stats().catch(() => null),
-        ]);
+        const memoryData = await API.memory.getMemory().catch(() => '');
+        const userData = memoryData;
+        const statsData = memoryData;
 
         const memoryContent = typeof memoryData === 'string' ? memoryData : memoryData.memory || '';
         const userContent = typeof userData === 'string' ? userData : userData.user || '';

@@ -232,9 +232,7 @@ const KnowledgePageLayout = (() => {
             if (_refreshTimer) return;
             _refreshTimer = setTimeout(function () {
                 _refreshTimer = null;
-                if (_activeTab === 'overview') {
-                    OverviewTab.loadOverviewData().catch(function () {});
-                }
+                loadTab(_activeTab).catch(function () {});
             }, 500);
         }
     }
