@@ -270,41 +270,50 @@ def build_full_html():
             all_css += f"/* === {css_path} === */\n{css_content}\n\n"
     logger.info(f"Total CSS loaded: {len(all_css)} bytes")
 
-    # 自动扫描 JS 文件（支持子目录结构：优先 register.js，否则 *.js）
-    core_js = ["js/core/Logger.js", "js/core/Store.js", "js/core/Bus.js",
-               "js/core/ErrorHandler.js", "js/core/APIClient.js", "js/core/constants.js",
-               "js/core/Router.js", "js/core/init.js", "js/constants/config.js", "js/constants/colors.js", "js/api.js"]
-    # Components V2 目录结构：按依赖顺序加载子模块
-    components_dir = frontend_dir / "js" / "components"
-    components_register = components_dir / "register.js"
-    if components_register.exists():
-        # register.js 存在时，按 register.js 中的顺序加载（register.js 本身只是注释说明）
-        # 实际加载顺序：icons → utils → feedback → layout → form → data-display → index
-        component_files = [
-            "js/components/icons.js",
-            "js/components/utils.js",
-            "js/components/feedback.js",
-            "js/components/layout.js",
-            "js/components/form.js",
-            "js/components/data-display.js",
-            "js/components/onboarding.js",
-            "js/components/index.js",
-        ]
-        core_js.extend(component_files)
-    else:
-        # 回退：扫描 components 目录下所有 .js 文件
-        for jsf in sorted(components_dir.glob("*.js")):
-            core_js.append(f"js/components/{jsf.name}")
-    # V2 Services
-    services_dir = frontend_dir / "js" / "services"
-    if services_dir.exists():
-        for jsf in sorted(services_dir.glob("*.js")):
-            core_js.append(f"js/services/{jsf.name}")
-    # Utility files (SSEManager, confirm-dialog, charts, etc.)
-    utils_dir = frontend_dir / "js" / "utils"
-    if utils_dir.exists():
-        for jsf in sorted(utils_dir.glob("*.js")):
-            core_js.append(f"js/utils/{jsf.name}")
+    # === 自动扫描 JS 文件（零硬编码，新增文件自动纳入构建） ===
+    # 加载顺序: core → constants → api → components → services → utils → pages → app
+    # 每个目录内按文件名排序，确保确定性
+    js_base = frontend_dir / "js"
+
+    def _scan_dir(rel_dir, exclude=None):
+        """扫描目录下所有 .js 文件，返回相对路径列表（按文件名排序）"""
+        exclude = exclude or set()
+        d = js_base / rel_dir
+        if not d.exists():
+            return []
+        result = []
+        for jsf in sorted(d.glob("*.js")):
+            if jsf.name in exclude:
+                continue
+            result.append(f"js/{rel_dir}/{jsf.name}")
+        return result
+
+    # 1. Core 模块（按固定依赖顺序）
+    core_order = ["Logger.js", "Store.js", "Bus.js", "ErrorHandler.js",
+                  "APIClient.js", "constants.js", "Router.js", "init.js"]
+    core_js = [f"js/core/{f}" for f in core_order]
+    # core 目录下可能还有其他文件，也一并加入
+    for extra in _scan_dir("core", exclude=set(core_order)):
+        if extra not in core_js:
+            core_js.append(extra)
+
+    # 2. Constants（AppConfig, AppColors 等）
+    core_js.extend(_scan_dir("constants"))
+
+    # 3. API 层
+    core_js.append("js/api.js")
+
+    # 4. Components（index.js 必须最后加载）
+    comp_all = _scan_dir("components")
+    comp_index = [f for f in comp_all if f.endswith("/index.js")]
+    comp_rest = [f for f in comp_all if not f.endswith("/index.js")]
+    core_js.extend(comp_rest + comp_index)
+
+    # 5. Services
+    core_js.extend(_scan_dir("services"))
+
+    # 6. Utilities
+    core_js.extend(_scan_dir("utils"))
     pages_dir = frontend_dir / "js" / "pages"
     page_files = []
     for item in sorted(pages_dir.iterdir()):

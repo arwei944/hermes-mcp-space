@@ -1,60 +1,349 @@
-# -*- coding: utf-8 -*-
-# Auto-generated changelog data. Do not edit manually.
-
-CHANGELOG_FALLBACK = [
+# Auto-generated changelog data
+# Regenerate with: python3 scripts/gen_changelog.py
+CHANGELOG_FALLBACK=[
+  {
+    "version": "v14.3.2",
+    "date": "2026-05-04 16:34",
+    "title": "fix: v14.3.2 - 修复build_full_html缺少3个JS文件导致Components未定义",
+    "changes": [
+      "根因: app.py的build_full_html()内联JS时，硬编码的文件列表缺少:",
+      "1. js/constants/config.js - AppConfig定义",
+      "2. js/constants/colors.js - AppColors定义",
+      "3. js/components/onboarding.js - _Onboarding定义",
+      "components/index.js引用了_Onboarding但该文件未被内联，",
+      "导致try-catch捕获ReferenceError后Components对象未被赋值，",
+      "后续app.js使用Components.Toast时崩溃。",
+      "修复: 在app.py的core_js和component_files列表中补全这3个文件。"
+    ]
+  },
+  {
+    "version": "v14.3.1",
+    "date": "2026-05-04 16:14",
+    "title": "fix: v14.3.1 - 修复Service Worker缓存未更新导致页面崩溃+图标缺失",
+    "changes": [
+      "修复内容:",
+      "1. SW缓存版本 hermes-v8 → hermes-v9 (根因: v14.1-v14.3均未更新缓存版本)",
+      "2. 添加缺失的 fileText 图标定义 (操作日志菜单)",
+      "3. SW STATIC_ASSETS 添加 config.js 和 colors.js",
+      "4. 修复脚本加载顺序: config.js/colors.js 移到 feedback.js 之前"
+    ]
+  },
+  {
+    "version": "v14.3.0",
+    "date": "2026-05-04 15:57",
+    "title": "refactor(v14.3.0): P2/P3 hardcoded improvements",
+    "changes": [
+      "feat: About page links dynamic from /api/meta (with fallback)",
+      "feat: Z-Index CSS variable system (--z-sticky/dropdown/modal/overlay/toast)",
+      "refactor: 3 files use var(--z-overlay) instead of hardcoded 9999",
+      "fix: Unify localStorage key naming (hermes_onboarding_done -> hermes-onboarding-done)",
+      "feat: Service Worker self-healing cache (auto-cache uncached GET requests)",
+      "chore: Bump version to 14.3.0"
+    ]
+  },
+  {
+    "version": "v14.2.0",
+    "date": "2026-05-04 15:51",
+    "title": "refactor(v14.2.0): centralized config, colors from CSS vars",
+    "changes": [
+      "feat: Create AppConfig constants (API/SSE/OpsSync/UI/Data limits)",
+      "feat: Create AppColors utility (reads CSS variables, theme-aware)",
+      "refactor: charts.js palette uses AppColors (theme联动)",
+      "refactor: OpsSyncService intervals use AppConfig (8 replacements)",
+      "refactor: AlertChecker intervals use AppConfig (3 replacements)",
+      "refactor: feedback.js durations use AppConfig (3 replacements)",
+      "chore: Bump version to 14.2.0"
+    ]
+  },
+  {
+    "version": "v14.1.0",
+    "date": "2026-05-04 15:44",
+    "title": "refactor(v14.1.0): eliminate hardcoded API paths and dynamic alert thresholds",
+    "changes": [
+      "refactor: Add API.ops/dashboard/reviews/mcpServers namespaces (31 methods)",
+      "refactor: Unify OpsSyncService to use API.ops.* (15 path replacements)",
+      "refactor: Unify ErrorHandler/Logger error reporting to API.ops.reportFrontendError",
+      "refactor: Unify MCPOperations/ReviewTab/Dashboard/ErrorTraceTab to API.* methods",
+      "fix: Remove duplicate Base URL detection in APIClient.js",
+      "feat: AlertChecker.loadRules() - dynamic thresholds from /api/ops/alerts/rules",
+      "feat: AlertChecker.updateRules() - runtime threshold updates",
+      "chore: Bump version to 14.1.0"
+    ]
+  },
+  {
+    "version": "v14.0.1",
+    "date": "2026-05-04 15:32",
+    "title": "hotfix(v14.0.1): fix app crash and missing icons",
+    "changes": [
+      "fix: Add missing ops-center/register.js script tag (app crash root cause)",
+      "fix: Add 4 missing icon definitions (bookOpen, messageSquare, smile, sparkles)",
+      "chore: Bump version to 14.0.1"
+    ]
+  },
+  {
+    "version": "v14.0.0",
+    "date": "2026-05-04 15:10",
+    "title": "feat(v14.0.0): engineering infrastructure upgrade",
+    "changes": [
+      "feat: Add GitHub Actions CI/CD (lint + version-check + HF deploy)",
+      "feat: Strengthen ESLint rules (no-unused-vars, no-undef, no-eval as error)",
+      "feat: Add lint/lint:fix scripts to package.json",
+      "chore: Bump version to 14.0.0"
+    ]
+  },
+  {
+    "version": "v13.4.0",
+    "date": "2026-05-04 15:06",
+    "title": "refactor(v13.4.0): code quality governance",
+    "changes": [
+      "fix: Service Worker cache list updated to match actual modular file structure (v7->v8)",
+      "refactor: Unify Tab component usage in knowledge page (Components.createTabs)",
+      "feat: Enhance createTabs API with data-action delegation, icons, badges support",
+      "refactor: Replace createLoading with createSkeleton in 4 pages (memory/cron/logs/knowledge)",
+      "style: Extract all remaining inline styles from index.html to CSS classes",
+      "verify: Event listener leak audit passed (all setInterval properly cleaned in destroy)",
+      "chore: Bump version to 13.4.0"
+    ]
+  },
+  {
+    "version": "v13.3.0",
+    "date": "2026-05-04 14:46",
+    "title": "feat(v13.3.0): user experience optimization",
+    "changes": [
+      "feat: Add onboarding component (4-step first-visit guide)",
+      "feat: Add stat card descriptions on dashboard (user-friendly explanations)",
+      "fix: Replace raw JS errors with friendly Chinese error messages",
+      "style: Increase base font size 13px -> 14px for better readability",
+      "style: Increase nav section title 11px -> 12px",
+      "style: Add fadeIn/fadeOut/scaleIn animations for onboarding",
+      "chore: Bump version to 13.3.0"
+    ]
+  },
+  {
+    "version": "v13.2.0",
+    "date": "2026-05-04 14:31",
+    "title": "feat(v13.2.0): navigation restructuring and UX improvements",
+    "changes": [
+      "refactor: Reorganize sidebar from 4 groups to 7 (概览/对话/能力/数据/运维/系统/工具)",
+      "feat: Rename menus to user-friendly names (扩展管理->功能商店, 子Agent->AI助手, etc.)",
+      "feat: Add tooltip hints for 9 navigation items",
+      "feat: Move API文档 and 关于 to sidebar bottom",
+      "feat: Expand search map with new menu names (backward compatible)",
+      "style: Extract opsCenterBadge inline styles to CSS class",
+      "style: Add nav-badge and tooltip CSS with mobile responsive",
+      "chore: Bump version to 13.2.0"
+    ]
+  },
+  {
+    "version": "v13.1.0",
+    "date": "2026-05-04 14:23",
+    "title": "fix(v13.1.0): P0 critical fixes and security hardening",
+    "changes": [
+      "fix: OpsSyncService route guard condition (ops_dashboard->ops_center)",
+      "fix: Register about/chat/logs pages in App.routes (5 dead pages resolved)",
+      "fix: Global search dead route mappings (ops_dashboard/ops_alerts->ops_center)",
+      "fix: Remove duplicate ErrorHandler registration (initErrorBoundary removed)",
+      "security: Add DOMPurify sanitization to renderMarkdown (XSS prevention)",
+      "refactor: Unify _escapeHtml to Components.escapeHtml (DRY principle)",
+      "fix: Store middleware interface mismatch in init.js",
+      "feat: Add sidebar entries for logs and about pages",
+      "chore: Bump version to 13.1.0"
+    ]
+  },
+  {
+    "version": "v13.0.0",
+    "date": "2026-05-04 13:17",
+    "title": "feat(v13.0.0): architecture unification and final release",
+    "changes": [
+      "Frontend improvements:",
+      "Memory API deduplication: 3 parallel calls merged into 1",
+      "Knowledge SSE: all tabs now refresh on SSE events (not just overview)",
+      "Architecture:",
+      "118 MCP tools total (12 new in Phase 3-5)",
+      "13 cron jobs for full automation",
+      "Event bus for inter-module communication",
+      "Audit middleware for operation tracking",
+      "Complete evolution closed-loop: extract→review→resolve→rule→skill→optimize",
+      "Version bump: 12.7.0 -> 13.0.0 (major - architecture milestone)"
+    ]
+  },
+  {
+    "version": "v12.7.0",
+    "date": "2026-05-04 13:13",
+    "title": "feat(v12.7.0): Phase 3 - external service integration (DB, GitHub, Email)",
+    "changes": [
+      "New MCP tools (4):",
+      "db_query: execute SQL queries with read-only safety mode",
+      "db_manage_connections: manage DB connection configs (list/add/remove/test)",
+      "github_operations: GitHub operations via gh CLI (search repos/code, list/create issues)",
+      "email_operations: email send via SMTP, config management",
+      "New services (3):",
+      "DbPoolService: connection config management",
+      "GithubClient: gh CLI wrapper",
+      "EmailClient: SMTP client",
+      "Zero external dependencies - all stdlib (sqlite3, subprocess, smtplib)",
+      "Version bump: 12.6.0 -> 12.7.0"
+    ]
+  },
+  {
+    "version": "v12.6.0",
+    "date": "2026-05-04 12:56",
+    "title": "feat(v12.6.0): comprehensive ops automation",
+    "changes": [
+      "Ops automation:",
+      "Session auto-compress: auto-compress sessions with 50+ messages",
+      "ErrorTracker → experience: API errors auto-submitted as experiences",
+      "Ops alert → notification: alerts auto-send webhook notifications",
+      "New cron jobs:",
+      "refresh_mcp: */10 * * * * (every 10 min)",
+      "trash_cleanup: 0 4 * * 0 (weekly Sunday 4am)",
+      "compat_sync: 0 4 * * * (daily 4am)",
+      "weekly_skill_eval: 0 5 * * 0 (weekly Sunday 5am)",
+      "Plugin auto-install: auto-install plugins marked auto_install on startup",
+      "Version bump: 12.5.0 -> 12.6.0"
+    ]
+  },
+  {
+    "version": "v12.5.0",
+    "date": "2026-05-04 12:51",
+    "title": "feat(v12.5.0): chain-trigger evolution loop (extract→review→resolve→rule→skill)",
+    "changes": [
+      "New services:",
+      "EvolutionChain: post-review chain (auto_resolve → experience_to_rule)",
+      "DailyEvolution: daily tasks (cleanup + update + skill creation)",
+      "ExtractScheduler: hourly knowledge extraction from recent sessions",
+      "New endpoints:",
+      "POST /api/knowledge/auto-chain: trigger evolution chain",
+      "POST /api/knowledge/auto-extract: trigger knowledge extraction",
+      "Cron jobs registered on startup:",
+      "auto_chain: */30 * * * * (every 30 min)",
+      "knowledge_extract: 0 * * * * (hourly)",
+      "daily_evolution: 0 3 * * * (daily 3am)",
+      "full_learning: 0 2 * * * (daily 2am)",
+      "Event-driven: review.approved triggers evolution_chain automatically",
+      "Policy sync: configure_review_policy updates cron schedule in real-time",
+      "Version bump: 12.4.0 -> 12.5.0"
+    ]
+  },
+  {
+    "version": "v12.4.0",
+    "date": "2026-05-04 12:42",
+    "title": "feat(v12.4.0): bridge review-policy to cron, register AutoLearnMiddleware, implement EventBus",
+    "changes": [
+      "New services:",
+      "ReviewScheduler: auto-create/update cron job from review_policy.json on startup",
+      "EventBus: thread-safe in-process pub/sub for inter-module communication",
+      "New endpoints:",
+      "POST /api/reviews/auto-review: called by cron scheduler for auto-review",
+      "Middleware:",
+      "Registered AutoLearnMiddleware in MCP pipeline for automatic incremental learning",
+      "Events:",
+      "review.approved / review.rejected events emitted after review actions",
+      "Version bump: 12.3.0 -> 12.4.0"
+    ]
+  },
+  {
+    "version": "v12.3.0",
+    "date": "2026-05-04 12:30",
+    "title": "fix(v12.3.0): fix frontend data rendering issues (Knowledge/Memory/SearchBar/Marketplace)",
+    "changes": [
+      "Fix Knowledge tabs data unwrapping: backend returns {success,data}, frontend extracts .data",
+      "Fix OverviewTab stats unwrapping for all 5 stat endpoints",
+      "Fix SearchBar: use .data instead of .results",
+      "Fix Memory sessions: handle array response",
+      "Fix Marketplace: API.request -> API.get",
+      "Fix main.py: add 8 missing router registrations",
+      "Version bump: 12.2.0 -> 12.3.0"
+    ]
+  },
+  {
+    "version": "v12.2.0",
+    "date": "2026-05-04 02:58",
+    "title": "feat(v12.2.0): Phase 2 - intelligent evolution closed-loop tools",
+    "changes": [
+      "New tools (7):",
+      "Knowledge evolution:",
+      "auto_resolve_experience: auto-check unresolved experiences against knowledge/rules, resolve covered ones",
+      "experience_to_rule: convert high-frequency experiences into rules via review pipeline",
+      "auto_cleanup_knowledge: detect duplicates, outdated, low-confidence entries; merge or remove",
+      "knowledge_auto_update: analyze knowledge freshness and usage patterns, generate update suggestions",
+      "Skill evolution:",
+      "evaluate_skill: heuristic skill quality evaluation (quality_score, completeness, usage_hint)",
+      "auto_create_skill_from_pattern: analyze session tool-call patterns, auto-create skills from repeated sequences",
+      "auto_optimize_skill: auto-improve skill content structure and quality based on evaluation",
+      "Version bump: 12.1.0 -> 12.2.0 (minor - 7 new tools, +1993 lines)"
+    ]
+  },
+  {
+    "version": "v12.1.0",
+    "date": "2026-05-04 02:33",
+    "title": "feat(v12.1.0): auto-init knowledge DB + Phase 1 auto-review tools",
+    "changes": [
+      "New features:",
+      "Add init_knowledge_db() call on app startup to auto-create tables",
+      "Add auto_review tool: smart auto-review with confidence scoring, risk detection, and configurable strategies (conservative/balanced/aggressive)",
+      "Add batch_review tool: bulk approve/reject/smart-review pending items",
+      "Add configure_review_policy tool: persistent review policy configuration with get/set/reset actions",
+      "Version bump: 12.0.0 -> 12.1.0 (minor - new features)"
+    ]
+  },
   {
     "version": "v12.0.0",
     "date": "2026-05-03 00:18",
-    "title": "发布: v12.0.0 - 统一运维中心 + 全链路可观测",
+    "title": "release: v12.0.0 - Unified Ops Center + full observability",
     "changes": [
-      "统一运维中心（8 个标签页）: 实时总览、构建部署、资源监控、代码质量、错误追踪、告警管理、事件日志、关于系统",
-      "前端错误上报: sendBeacon + ErrorHandler + Logger",
-      "API 错误追踪: ErrorTrackerMiddleware（X-Trace-Id）",
-      "构建验证: _validate_build + 构建缓存 + 自动回滚",
-      "CI 部署验证: 状态检查 + 页面大小检查",
-      "AI 代码质量面板: 集成 evals API",
-      "7 个新 OpsSyncService 通道（前端错误、API 错误、事件、评估等）",
-      "4 个独立页面合并为 1 个统一运维中心"
+      "v12.0.0 Changes:",
+      "Unified Ops Center (8 tabs): Overview, Pipeline, Resource, Quality, Errors, Alerts, Logs, About",
+      "Frontend error reporting via sendBeacon (ErrorHandler + Logger)",
+      "API error tracking via ErrorTrackerMiddleware (X-Trace-Id)",
+      "Build validation (_validate_build) + build cache + auto-rollback",
+      "CI deploy verification (status + page size check)",
+      "AI Code Quality panel (evals API integration)",
+      "7 new OpsSyncService channels (frontend errors, API errors, events, evals)",
+      "Replaced 4 separate pages with 1 unified ops_center",
+      "Version bump: 11.0.0 -> 12.0.0"
     ]
   },
   {
     "version": "v11.0.0",
     "date": "2026-05-02 23:20",
-    "title": "发布: v11.0.0 - 构建系统重构 + 运维韧性增强",
+    "title": "release: v11.0.0 - Build system overhaul + ops resilience",
     "changes": [
-      "build_full_html 完全重写: 逐文件转换 + try-catch 隔离",
-      "build_full_html: 所有 CSS 文件内联（主样式 + 深色主题 + 知识库）",
-      "build_full_html: js/utils/ 目录纳入构建（SSEManager、确认弹窗等）",
-      "应用韧性: load_file() 永不抛异常，build_full_html 有降级方案",
-      "CI 优化: 部署仅需 lint 检查（打破 503 死循环）",
-      "/api/status: 暴露 build_error 便于远程诊断",
-      "错误提示: 显示实际错误信息而非通用文本"
+      "v11.0.0 Changes:",
+      "build_full_html: Complete rewrite with per-file transform + try-catch isolation",
+      "build_full_html: All CSS files inlined (style + dark-theme + knowledge)",
+      "build_full_html: js/utils/ directory included (SSEManager, confirm-dialog, etc.)",
+      "App resilience: load_file() never throws, build_full_html has fallback",
+      "CI: Deploy only needs lint (broke 503 death loop)",
+      "/api/status: Exposes build_error for remote diagnosis",
+      "Error toast: Shows actual error message instead of generic text",
+      "Version bump: 10.0.0 -> 11.0.0"
     ]
   },
   {
     "version": "v10.0.0",
     "date": "2026-05-02 21:12",
-    "title": "发布: v10.0.0 - V2 前端架构全面升级",
+    "title": "release: v10.0.0 - V2 Frontend Architecture",
     "changes": [
-      "重大版本: V2 前端架构全面升级",
-      "架构变更:",
-      "8 个核心模块（Store/Bus/Router/ErrorHandler/APIClient/Logger/Constants/Init）",
-      "3 个服务模块（OpsSyncService/AlertChecker/AlertNotifier）",
-      "8 个组件模块（icons/utils/feedback/layout/form/data-display/index/register）",
-      "93 个页面模块文件，覆盖 16 个页面目录",
-      "35 个 CSS 设计令牌（5 大类）",
-      "Store 驱动的响应式数据流（运维页面）",
-      "Router 集成路由守卫、历史记录和 Bus 事件",
-      "质量保障:",
-      "94 个单元测试（68 核心 + 26 服务）全部通过",
-      "ESLint 10.x flat config（0 错误）",
-      "CI/CD 流水线: lint + 前端测试 + 后端测试 + HF 部署",
-      "迁移:",
-      "全部 16 个页面从单文件迁移到模块化目录结构",
-      "保留零构建架构（纯 Vanilla JS + IIFE）",
-      "所有页面入口使用 ErrorHandler.wrap() 包裹",
-      "data-action 事件委托替代内联 onclick",
-      "Dynamic import() 懒加载子模块"
+      "Major release: Complete V2 frontend architecture overhaul",
+      "Architecture Changes:",
+      "8 core modules (Store/Bus/Router/ErrorHandler/APIClient/Logger/Constants/Init)",
+      "3 service modules (OpsSyncService/AlertChecker/AlertNotifier)",
+      "8 component modules (icons/utils/feedback/layout/form/data-display/index/register)",
+      "93 page module files across 16 page directories",
+      "35 CSS Design Tokens (5 categories)",
+      "Store-driven reactive data flow for ops pages",
+      "Router with guards, history, and Bus integration",
+      "Quality:",
+      "94 unit tests (68 core + 26 service) all passing",
+      "ESLint 10.x with flat config (0 errors)",
+      "CI/CD pipeline with lint + frontend tests + backend tests + HF deploy",
+      "Migration:",
+      "All 16 pages migrated from single-file to modular directory structure",
+      "Zero-build architecture preserved (pure Vanilla JS + IIFE)",
+      "ErrorHandler.wrap() on all page entries",
+      "data-action event delegation replacing inline onclick",
+      "Dynamic import() lazy loading for sub-modules"
     ]
   },
   {
@@ -119,183 +408,6 @@ CHANGELOG_FALLBACK = [
     "title": "release: v1.8.0 - 插件系统 + SVG图标 + 实时对话记录",
     "changes": [
       "release: v1.8.0 - 插件系统 + SVG图标 + 实时对话记录"
-    ]
-  },
-  {
-    "version": "v1.7.0",
-    "date": "2026-04-28 18:41",
-    "title": "feat: 会话模块合并 + 实时数据记录",
-    "changes": [
-      "会话模块合并:",
-      "会话管理 + 会话对话合并为一个「会话」模块",
-      "左侧会话列表 + 右侧对话区（类似聊天应用）",
-      "搜索/状态筛选/创建/删除/压缩全部保留",
-      "移除独立的「会话对话」页面",
-      "实时数据记录:",
-      "add_log() 自动将操作记录到最近活跃会话",
-      "MCP 调用 → 自动写入系统消息到会话",
-      "系统操作 → 自动写入系统消息到会话",
-      "消息格式: [MCP] MCP 调用: read_memory — ...",
-      "仪表盘最近会话自动显示实时数据",
-      "侧边栏:",
-      "12 个导航项 → 11 个（合并后减少一个）"
-    ]
-  },
-  {
-    "version": "v1.6.0",
-    "date": "2026-04-28 17:56",
-    "title": "feat: 配置版本管理 + 关于页面 + 系统配置重构",
-    "changes": [
-      "系统配置重构:",
-      "移除工具/记忆/MCP 设置（归入各自模块页面）",
-      "新增数据管理（会话保留天数/日志条数/导出格式）",
-      "新增通知设置（SSE推送/操作通知/Agent通知）",
-      "新增安全设置（API密钥/外部访问）",
-      "新增高级设置（请求超时/最大并发）",
-      "每次保存自动记录版本快照",
-      "支持回滚到任意历史版本",
-      "关于页面:",
-      "项目信息（版本/运行时间/MCP工具数/API端点数）",
-      "技术栈展示（后端/前端/协议/部署）",
-      "版本变更记录（v1.0.0 ~ v1.6.0 共 7 个版本）",
-      "GitHub/HuggingFace 链接",
-      "后端 API:",
-      "GET /api/config/versions: 获取版本历史",
-      "POST /api/config/rollback/{index}: 回滚到指定版本",
-      "PUT /api/config: 保存时自动创建版本快照",
-      "配置版本持久化到 data/config_versions.json"
-    ]
-  },
-  {
-    "version": "v1.5.0",
-    "date": "2026-04-28 17:43",
-    "title": "feat: 前端全面管理权限 - 所有页面完整 CRUD",
-    "changes": [
-      "chat.js (会话对话):",
-      "新建会话按钮 + 弹窗表单",
-      "发送消息输入框（Enter 发送）",
-      "删除会话按钮",
-      "乐观更新 UI + 自动滚动",
-      "sessions.js (会话管理):",
-      "新建会话按钮",
-      "状态筛选（活跃/完成）",
-      "标题列显示",
-      "移除 mock 数据",
-      "tools.js (工具管理):",
-      "每个工具卡片添加启用/禁用开关",
-      "详情按钮",
-      "点击卡片查看详情",
-      "memory.js (记忆管理):",
-      "导出按钮（下载 .md 文件）",
-      "重置按钮（恢复默认模板）",
-      "logs.js (操作日志):",
-      "搜索框（按操作/详情/目标搜索）",
-      "自动刷新开关（5秒间隔）",
-      "关键词过滤",
-      "后端:",
-      "POST /api/sessions/{id}/messages: 添加消息到会话",
-      "API.sessions.create() + API.sessions.addMessage()"
-    ]
-  },
-  {
-    "version": "v1.4.0",
-    "date": "2026-04-28 17:35",
-    "title": "feat: MCP 工具从 16 个扩展到 24 个，全面管理能力",
-    "changes": [
-      "新增 8 个 MCP 工具:",
-      "update_skill: 更新技能内容",
-      "delete_skill: 删除技能",
-      "create_session: 创建会话",
-      "add_message: 向会话添加消息",
-      "delete_cron_job: 删除定时任务",
-      "get_logs: 查看操作日志（支持来源过滤）",
-      "get_config: 获取系统配置（敏感信息脱敏）",
-      "update_config: 更新系统配置",
-      "所有 MCP 调用自动记录到操作日志:",
-      "来源标记为 'mcp'",
-      "HF 前端操作日志页面可实时查看",
-      "SSE 事件实时推送",
-      "Trae 可通过 MCP 完整管理:",
-      "会话: 创建/查看/搜索/删除/添加消息",
-      "技能: 创建/查看/更新/删除",
-      "记忆: 读取/写入",
-      "定时任务: 创建/查看/删除",
-      "配置: 查看/更新",
-      "日志: 查看",
-      "系统: 状态/仪表盘"
-    ]
-  },
-  {
-    "version": "v1.3.0",
-    "date": "2026-04-28 17:01",
-    "title": "feat: 数据真实化 - JSON 持久化 + 操作日志自动记录",
-    "changes": [
-      "会话数据真实化:",
-      "新增 JSON 文件持久化（data/sessions.json）",
-      "create_session: 创建会话并保存",
-      "add_session_message: 向会话添加消息",
-      "delete_session: 删除会话及其消息",
-      "list_sessions: 优先 SQLite → JSON → 空列表（不再返回 demo）",
-      "POST /api/sessions: 新增创建会话路由",
-      "操作日志自动记录:",
-      "EventEmitMiddleware 同时写入操作日志",
-      "所有写操作（PUT/POST/DELETE）自动记录",
-      "中文操作描述（更新记忆/创建技能/删除会话等）",
-      "日志页面现在有真实数据",
-      "记忆/技能/配置:",
-      "之前已支持真实文件读写（MEMORY.md/USER.md/技能文件）",
-      "Trae 通过 MCP 调用即可真正管理数据"
-    ]
-  },
-  {
-    "version": "v1.2.0",
-    "date": "2026-04-28 16:41",
-    "title": "feat: 仪表盘数据可视化 + API 文档",
-    "changes": [
-      "仪表盘新增 5 种 SVG 图表（纯前端，零依赖）:",
-      "环形图: 会话来源分布（Trae/Web/CLI/API）",
-      "柱状图: 模型使用频率",
-      "折线图: 7 天会话趋势（渐变填充）",
-      "仪表盘: 内存/CPU/活跃会话（圆环进度条）",
-      "所有图表自适应深色模式",
-      "API 文档:",
-      "/docs: Swagger UI（交互式 API 测试）",
-      "/redoc: ReDoc（阅读友好文档）",
-      "/openapi.json: OpenAPI 3.0 规范",
-      "自动发现 99 个端点",
-      "侧边栏添加「API 文档」链接（新窗口打开）"
-    ]
-  },
-  {
-    "version": "v1.1.0",
-    "date": "2026-04-28 16:06",
-    "title": "feat: MCP 工具增强（10→16）+ 深色模式",
-    "changes": [
-      "MCP 新增 6 个工具：",
-      "search_sessions: 搜索会话（按标题/模型/ID 模糊匹配）",
-      "delete_session: 删除会话",
-      "create_skill: 创建新技能",
-      "write_user_profile: 写入用户画像",
-      "list_cron_jobs: 列出定时任务",
-      "create_cron_job: 创建定时任务",
-      "深色模式：",
-      "CSS 变量覆盖 [data-theme=dark]",
-      "自动跟随系统主题偏好",
-      "localStorage 持久化用户选择",
-      "右下角切换按钮（🌙/☀️）",
-      "Apple 深色风格配色"
-    ]
-  },
-  {
-    "version": "v1.0.0",
-    "date": "2026-04-28 12:04",
-    "title": "feat: Hermes Agent MCP Space - 管理面板 + MCP服务 + 魔搭部署",
-    "changes": [
-      "FastAPI 后端：28个REST API端点（会话/工具/技能/记忆/定时任务/子Agent/配置/MCP）",
-      "Obsidian风格前端：暗色主题SPA管理面板（9个页面）",
-      "MCP Server：24个工具暴露给Trae等MCP客户端（stdio+SSE双传输）",
-      "Gradio SDK入口：一键部署到魔搭社区",
-      "优雅降级：Hermes未安装时自动使用模拟数据"
     ]
   }
 ]

@@ -53,7 +53,7 @@ const _Onboarding = (() => {
         if (_overlay) _overlay.remove();
         _overlay = document.createElement('div');
         _overlay.id = 'onboarding-overlay';
-        _overlay.style.cssText = 'position:fixed;inset:0;z-index:var(--z-overlay);background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease';
+        _overlay.style.cssText = 'position:fixed;inset:0;z-index:var(--z-overlay);background:rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease';
         document.body.appendChild(_overlay);
         _overlay.addEventListener('click', (e) => {
             if (e.target === _overlay) _close();
