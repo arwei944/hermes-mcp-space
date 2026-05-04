@@ -7,12 +7,11 @@
     'use strict';
 
     // 1. 注册中间件（Logger 中间件在 afterSet 中打印变更）
-    Store.use({
-        afterSet(path, value, oldValue) {
-            if (Store.get('app.debugMode')) {
-                console.log('%c[Store] ' + path, 'color: #0071e3; font-weight: bold', { from: oldValue, to: value });
-            }
+    Store.use(function({ action, path, value, oldValue }) {
+        if (action === 'set' && Store.get('app.debugMode')) {
+            console.log('%c[Store] ' + path, 'color: #0071e3; font-weight: bold', { from: oldValue, to: value });
         }
+        return { value, cancelled: false };
     });
 
     // 2. 定义状态域

@@ -19,6 +19,9 @@ const App = (() => {
         screenshot: ScreenshotPage,
         sync: SyncPage,
         ops_center: OpsCenterPage,
+        about: AboutPage,
+        chat: ChatPage,
+        logs: LogsPage,
     };
 
     const pageTitles = {
@@ -35,14 +38,15 @@ const App = (() => {
         screenshot: '截图工具',
         sync: '数据同步',
         ops_center: '运维中心',
+        about: '关于',
+        chat: '对话',
+        logs: '操作日志',
     };
 
     let _currentPage = null;
 
     function init() {
         // 全局错误边界 - 增强版
-        initErrorBoundary();
-
         Components.Toast.init();
         Components.Modal.init();
         bindGlobalEvents();
@@ -58,7 +62,7 @@ const App = (() => {
         // 路由守卫：运维页面时启动同步和告警检查
         if (typeof Router !== 'undefined') {
             Router.guard(function(to) {
-                if (to === 'ops_dashboard' || to === 'ops_alerts') {
+                if (to === 'ops_center') {
                     if (typeof OpsSyncService !== 'undefined') OpsSyncService.start();
                     if (typeof AlertChecker !== 'undefined') AlertChecker.start();
                 } else {
@@ -346,12 +350,15 @@ const App = (() => {
             配置: 'config',
             设置: 'config',
             config: 'config',
-            运维: 'ops_dashboard',
-            监控: 'ops_dashboard',
-            ops: 'ops_dashboard',
-            告警: 'ops_alerts',
-            报警: 'ops_alerts',
-            alert: 'ops_alerts',
+            运维: 'ops_center',
+            监控: 'ops_center',
+            ops: 'ops_center',
+            告警: 'ops_center',
+            报警: 'ops_center',
+            alert: 'ops_center',
+            关于: 'about',
+            帮助: 'about',
+            操作日志: 'logs',
         };
         for (const [keyword, page] of Object.entries(searchMap)) {
             if (keyword.includes(term) || term.includes(keyword)) {
@@ -374,31 +381,6 @@ const App = (() => {
     }
 
     // --- 全局错误边界 ---
-
-    function initErrorBoundary() {
-        // 捕获同步 JS 错误，显示用户友好的 toast 提示
-        window.onerror = function (message, source, lineno, colno, error) {
-            console.error('[Hermes Error]', { message, source, lineno, colno, error });
-            // 显示用户友好的错误提示
-            const container = document.getElementById('app') || document.body;
-            const toast = document.createElement('div');
-            toast.className = 'error-toast';
-            toast.style.cssText =
-                'position:fixed;top:20px;right:20px;z-index:10000;padding:12px 20px;' +
-                'background:#fee2e2;color:#991b1b;border-radius:8px;' +
-                'box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:14px;max-width:400px;';
-            toast.textContent = '操作出错: ' + message;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 5000);
-            return true; // 阻止默认错误处理
-        };
-
-        // 捕获未处理的 Promise rejection
-        window.addEventListener('unhandledrejection', function (event) {
-            console.error('[Hermes Promise Error]', event.reason);
-            event.preventDefault();
-        });
-    }
 
     document.addEventListener('DOMContentLoaded', init);
 

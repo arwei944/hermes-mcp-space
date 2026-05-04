@@ -99,7 +99,7 @@ const ErrorHandler = (() => {
 ">
     <div style="font-size: 48px; margin-bottom: 16px;">&#x26A0;&#xFE0F;</div>
     <h3 style="margin: 0 0 8px; font-size: 18px; color: #1d1d1f;">组件渲染出错</h3>
-    <p style="margin: 0 0 20px; font-size: 14px; color: #86868b; max-width: 400px; word-break: break-word;">${_escapeHtml(msg)}</p>
+    <p style="margin: 0 0 20px; font-size: 14px; color: #86868b; max-width: 400px; word-break: break-word;">${Components.escapeHtml(msg)}</p>
     <button onclick="location.reload()" style="
         padding: 8px 20px; border: 1px solid #ff3b30; border-radius: 8px;
         background: transparent; color: #ff3b30; font-size: 14px; cursor: pointer;
@@ -108,13 +108,6 @@ const ErrorHandler = (() => {
         重新加载
     </button>
 </div>`;
-    }
-
-    /** 简单 HTML 转义 */
-    function _escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
     }
 
     /**

@@ -22,7 +22,7 @@ const _Toast = {
         toast.className = `toast toast-${type}`;
         toast.innerHTML = `
             <span class="toast-icon">${iconHtml}</span>
-            <span class="toast-message">${this._escapeHtml(message)}</span>
+            <span class="toast-message">${Components.escapeHtml(message)}</span>
             <button class="toast-close" onclick="this.parentElement.classList.add('toast-out');setTimeout(()=>this.parentElement.remove(),200)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
@@ -51,12 +51,6 @@ const _Toast = {
     },
     info(msg, duration) {
         return this.show(msg, 'info', duration);
-    },
-
-    _escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
     },
 };
 

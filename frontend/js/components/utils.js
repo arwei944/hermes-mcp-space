@@ -61,7 +61,16 @@ function _debounce(fn, delay = 300) {
 function _renderMarkdown(text) {
     if (typeof marked !== 'undefined') {
         marked.setOptions({ breaks: true, gfm: true });
-        return marked.parse(text || '');
+        const rawHtml = marked.parse(text || '');
+        if (typeof DOMPurify !== 'undefined') {
+            return DOMPurify.sanitize(rawHtml, {
+                ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'code', 'pre', 'ul', 'ol', 'li',
+                               'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'a',
+                               'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'img', 'span', 'div'],
+                ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'class']
+            });
+        }
+        return rawHtml;
     }
     return (text || '').replace(/\n/g, '<br>');
 }

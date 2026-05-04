@@ -12,6 +12,7 @@
     <link rel="preload" href="/js/app.js" as="script">
     <!-- CDN 预连接（可选） -->
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js" defer></script>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/dark-theme.css">
     <link rel="stylesheet" href="/css/knowledge.css">
@@ -103,6 +104,10 @@
                 <span>运维中心</span>
                 <span class="nav-badge" id="opsCenterBadge" style="display:none;min-width:18px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:10px;font-weight:600;align-items:center;justify-content:center;padding:0 5px;position:absolute;top:6px;right:6px"></span>
             </a>
+            <a class="nav-item" data-page="logs" href="#logs">
+                <span class="nav-icon" data-icon="fileText"></span>
+                <span>操作日志</span>
+            </a>
             <a class="nav-item" data-page="sync" href="#sync">
                 <span class="nav-icon" data-icon="refreshCw"></span>
                 <span>数据同步</span>
@@ -123,6 +128,10 @@
                 <span class="nav-icon" data-icon="book"></span>
                 <span>API 文档</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;opacity:0.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+            </a>
+            <a class="nav-item" data-page="about" href="#about">
+                <span class="nav-icon" data-icon="info"></span>
+                <span>关于</span>
             </a>
         </div>
     </nav>
