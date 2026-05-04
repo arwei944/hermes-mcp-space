@@ -71,8 +71,8 @@ export default [
         },
         rules: {
             // 宽松规则 - 适配现有代码风格
-            "no-unused-vars": "off",
-            "no-undef": "off", // IIFE 模块通过 window 挂载，ESLint 无法追踪
+            "no-unused-vars": "warn",
+            "no-undef": "warn", // IIFE 模块通过 window 挂载，ESLint 无法追踪
             "no-redeclare": "off",
             "no-constant-condition": "off",
             "no-empty": "off",
@@ -92,7 +92,10 @@ export default [
             "valid-typeof": "error",
             "no-debugger": "warn",
             "no-alert": "warn",
-            "no-eval": "warn",
+            "no-eval": "error",
+            "no-implied-eval": "error",
+            "no-new-func": "error",
+            "no-script-url": "error",
 
             // 适配现有代码
             "no-useless-assignment": "off",

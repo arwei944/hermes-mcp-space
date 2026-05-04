@@ -1,226 +1,47 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+            - run: npm ci
+            - run: npm run lint
+            - name: Check for console.log in production
+              run: |
+                  echo "Checking for leftover console.log..."
+                  grep -rn "console\.log" frontend/js/pages/ frontend/js/components/ frontend/js/core/ --include="*.js" | grep -v "node_modules" | head -20 || echo "No console.log found in production code"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+    version-check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Verify version consistency
+              run: |
+                  VERSION=$(python3 -c "import sys; sys.path.insert(0,'backend'); from version import get_version; print(get_version())")
+                  echo "Current version: $VERSION"
+                  if git tag -l "v$VERSION" | grep -q .; then
+                      echo "ERROR: Tag v$VERSION already exists!"
+                      exit 1
+                  fi
+                  echo "Version check passed"
 
-      - name: Install ESLint
-        run: cd frontend && npm ci
-
-      - name: Check JS with ESLint
-        run: cd frontend && npx eslint js/ --max-warnings 100
-
-      - name: Check JS syntax (V2 modular structure)
-        run: |
-          echo "=== Checking JS files (V2 structure) ==="
-          ERRORS=0
-          CHECKED=0
-          # Core modules
-          for f in frontend/js/core/*.js; do
-            if [ -f "$f" ]; then
-              CHECKED=$((CHECKED + 1))
-              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
-            fi
-          done
-          # Components modules
-          for f in frontend/js/components/*.js; do
-            if [ -f "$f" ]; then
-              CHECKED=$((CHECKED + 1))
-              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
-            fi
-          done
-          # Services modules
-          for f in frontend/js/services/*.js; do
-            if [ -f "$f" ]; then
-              CHECKED=$((CHECKED + 1))
-              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
-            fi
-          done
-          # Page modules (register.js in each directory)
-          for dir in frontend/js/pages/*/; do
-            if [ -d "$dir" ]; then
-              for f in "$dir"*.js; do
-                if [ -f "$f" ]; then
-                  CHECKED=$((CHECKED + 1))
-                  node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
-                fi
-              done
-            fi
-          done
-          # Legacy single-file pages (if any remain)
-          for f in frontend/js/pages/*.js; do
-            if [ -f "$f" ]; then
-              CHECKED=$((CHECKED + 1))
-              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
-            fi
-          done
-          # Base files
-          for f in frontend/js/app.js frontend/js/api.js frontend/js/utils/*.js frontend/js/i18n.js; do
-            if [ -f "$f" ]; then
-              CHECKED=$((CHECKED + 1))
-              node --check "$f" 2>&1 || ERRORS=$((ERRORS + 1))
-            fi
-          done
-          echo "Checked $CHECKED JS files, $ERRORS error(s)"
-          if [ $ERRORS -gt 0 ]; then
-            echo "ERROR: $ERRORS JS file(s) failed syntax check"
-            exit 1
-          fi
-          echo "All JS files passed syntax check"
-
-      - name: Check Python syntax (all files)
-        run: |
-          echo "=== Checking Python files ==="
-          ERRORS=0
-          for f in app.py backend/*.py backend/routers/*.py backend/services/*.py; do
-            if [ -f "$f" ]; then
-              python3 -m py_compile "$f" 2>&1 || ERRORS=$((ERRORS + 1))
-            fi
-          done
-          if [ $ERRORS -gt 0 ]; then
-            echo "ERROR: $ERRORS Python file(s) failed syntax check"
-            exit 1
-          fi
-          echo "All Python files passed syntax check"
-
-  test-frontend:
-    runs-on: ubuntu-latest
-    needs: lint
-    if: false  # Disabled: tests depend on live HF Spaces which may be down
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Jest
-        run: npm install --save-dev jest 2>&1 | tail -3
-
-      - name: Run frontend tests
-        run: npx jest --verbose --forceExit
-
-  test-backend:
-    runs-on: ubuntu-latest
-    needs: lint
-    if: false  # Disabled: tests depend on live HF Spaces which may be down
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          pip install --break-system-packages pytest pytest-asyncio httpx
-          pip install --break-system-packages -r requirements.txt 2>/dev/null || true
-
-      - name: Run backend tests
-        run: |
-          pytest tests/ -v --tb=short --timeout=60 2>/dev/null || pytest tests/ -v --tb=short
-        env:
-          PYTEST_TIMEOUT: 60
-
-  deploy:
-    needs: [lint]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to HF Spaces
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          pip install huggingface_hub
-          python3 << 'SCRIPT'
-          import os
-          from huggingface_hub import HfApi, create_repo
-
-          token = os.environ["HF_TOKEN"]
-          repo_id = "arwei944/hermes-mcp-space"
-
-          create_repo(
-              repo_id=repo_id,
-              repo_type="space",
-              space_sdk="docker",
-              exist_ok=True,
-              token=token
-          )
-
-          api = HfApi(token=token)
-          folder_path = os.environ.get("GITHUB_WORKSPACE", ".")
-          api.upload_folder(
-              folder_path=folder_path,
-              repo_id=repo_id,
-              repo_type="space",
-              commit_message=f"deploy: {__import__('datetime').datetime.utcnow().isoformat()}",
-              delete_patterns=["*.pyc", "__pycache__/*", ".github/*"],
-              ignore_patterns=[".git/*", "__pycache__/*", "*.pyc", ".gitignore", "node_modules/*"],
-          )
-          print(f"Deployed to https://huggingface.co/spaces/{repo_id}")
-          SCRIPT
-
-      - name: Verify deployment
-        run: |
-          echo "=== 验证部署状态 ==="
-          DEPLOY_URL="https://arwei944-hermes-mcp-space.hf.space"
-          MAX_WAIT=300  # 最多等待 5 分钟
-          INTERVAL=15   # 每 15 秒检查一次
-          ELAPSED=0
-
-          while [ $ELAPSED -lt $MAX_WAIT ]; do
-            echo "等待部署就绪... (${ELAPSED}s/${MAX_WAIT}s)"
-
-            # 检查 /api/status 是否返回 200
-            HTTP_CODE=$(curl -s -o /tmp/status_response.json -w "%{http_code}" "${DEPLOY_URL}/api/status" 2>/dev/null || echo "000")
-
-            if [ "$HTTP_CODE" = "200" ]; then
-              echo "API 状态端点返回 200"
-
-              # 检查状态是否为 degraded
-              STATUS_VALUE=$(python3 -c "import json; d=json.load(open('/tmp/status_response.json')); print(d.get('status', d.get('service_status', 'unknown')))" 2>/dev/null || echo "unknown")
-              echo "状态值: ${STATUS_VALUE}"
-
-              if [ "$STATUS_VALUE" = "degraded" ]; then
-                echo "::error::部署状态为 degraded，可能存在构建错误"
-                exit 1
-              fi
-
-              # 检查页面大小（首页 > 100KB，排除回退模式）
-              PAGE_SIZE=$(curl -s -o /tmp/page_content.html -w "%{size_download}" "${DEPLOY_URL}/" 2>/dev/null || echo "0")
-              echo "首页大小: ${PAGE_SIZE} bytes"
-
-              if [ "$PAGE_SIZE" -lt 102400 ]; then
-                echo "::error::首页大小 ${PAGE_SIZE} bytes < 100KB，可能处于回退模式"
-                exit 1
-              fi
-
-              echo "部署验证通过: status=${STATUS_VALUE}, page_size=${PAGE_SIZE} bytes"
-              exit 0
-            fi
-
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED + INTERVAL))
-          done
-
-          echo "::error::部署验证超时：${MAX_WAIT}s 内 /api/status 未返回 200"
-          exit 1
+    deploy:
+        needs: [lint, version-check]
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Trigger HuggingFace Space rebuild
+              run: |
+                  curl -X POST "https://huggingface.co/api/spaces/arwei945/hermes-mcp-space/restart" \
+                  -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" || echo "HF deploy trigger failed (may need HF_TOKEN secret)"

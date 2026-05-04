@@ -5,6 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "lint": "eslint js/ --max-warnings 50",
+    "lint:fix": "eslint js/ --fix --max-warnings 50",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
