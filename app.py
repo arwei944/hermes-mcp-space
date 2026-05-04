@@ -620,6 +620,44 @@ def _patched_create_app(blocks, **kwargs):
     except Exception as e:
         logger.warning(f"Failed to initialize review scheduler: {e}")
 
+    # Register evolution cron jobs
+    try:
+        from backend.services.cron_service import cron_service
+        import json
+
+        evolution_jobs = [
+            {
+                "name": "auto_chain",
+                "schedule": "*/30 * * * *",
+                "command": "curl -s -X POST http://localhost:7860/api/knowledge/auto-chain",
+            },
+            {
+                "name": "knowledge_extract",
+                "schedule": "0 * * * *",
+                "command": "curl -s -X POST http://localhost:7860/api/knowledge/auto-extract",
+            },
+            {
+                "name": "daily_evolution",
+                "schedule": "0 3 * * *",
+                "command": "curl -s -X POST http://localhost:7860/api/evolution/daily",
+            },
+            {
+                "name": "full_learning",
+                "schedule": "0 2 * * *",
+                "command": "curl -s -X POST http://localhost:7860/api/knowledge/auto-learn",
+            },
+        ]
+
+        existing_jobs = {j.get("name") for j in cron_service.list_cron_jobs()}
+        for job_def in evolution_jobs:
+            if job_def["name"] not in existing_jobs:
+                cron_service.create_cron_job({**job_def, "enabled": True})
+                logger.info(f"Created cron job: {job_def['name']} ({job_def['schedule']})")
+
+        logger.info(f"Evolution cron jobs registered ({len(evolution_jobs)} total)")
+    except Exception as e:
+        logger.warning(f"Failed to register evolution cron jobs: {e}")
+
     # Initialize persistence manager (data backup/restore)
     try:
         from backend.services.persistence_manager import persistence_manager

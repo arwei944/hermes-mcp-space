@@ -361,3 +361,18 @@ async def search_knowledge(q: str = "", type: str = "all"):
                     })
 
     return {"results": results[:50], "total": len(results)}
+
+@router.post("/knowledge/auto-chain", summary="触发进化链")
+async def trigger_auto_chain():
+    """手动触发进化链：审核通过后自动执行 resolve -> rule 转换"""
+    from backend.services.evolution_chain import evolution_chain
+    result = evolution_chain.run_chain()
+    return result
+
+
+@router.post("/knowledge/auto-extract", summary="触发知识提取")
+async def trigger_auto_extract():
+    """手动触发从最近会话中自动提取知识"""
+    from backend.services.extract_scheduler import extract_scheduler
+    result = extract_scheduler.run_extract()
+    return result

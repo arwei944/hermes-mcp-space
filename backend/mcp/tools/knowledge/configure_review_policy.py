@@ -154,6 +154,15 @@ def handle(args: dict) -> dict:
                 )
 
             _save_policy(policy_path, policy)
+
+            # After saving policy, sync cron schedule
+            try:
+                from backend.services.review_scheduler import review_scheduler
+                schedule = policy.get("schedule_cron", "*/30 * * * *")
+                review_scheduler._sync_cron_job(schedule)
+            except Exception as e:
+                pass  # Don't fail policy update if cron sync fails
+
             return success_response(
                 data=policy,
                 message=f"审核策略已更新，变更字段: {', '.join(changed_fields)}",

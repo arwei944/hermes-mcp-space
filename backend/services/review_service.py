@@ -158,6 +158,13 @@ class ReviewService:
         except ImportError:
             pass
 
+        # Trigger evolution chain on review approval
+        try:
+            from backend.services.evolution_chain import evolution_chain
+            evolution_chain.run_chain()
+        except Exception:
+            pass  # Don't block review flow
+
         # 触发 SSE 事件（由路由层处理）
 
         return self.get_review(review_id)
