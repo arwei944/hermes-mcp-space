@@ -29,10 +29,11 @@ const MemoryPage = (() => {
         const userContent = typeof userData === 'string' ? userData : userData.user || '';
 
         const learningsResp = await API.get('/api/knowledge/experiences').catch(() => ({ experiences: [] }));
-        const learnings = learningsResp.experiences || [];
+        const learnings = (learningsResp.data || learningsResp.experiences || []);
 
         const sessionsResp = await API.get('/api/sessions').catch(() => ({ sessions: [] }));
-        const summaries = (sessionsResp.sessions || []).slice(0, 20).map((s) => ({
+        const _sessions = Array.isArray(sessionsResp) ? sessionsResp : (sessionsResp.data || sessionsResp.sessions || []);
+        const summaries = _sessions.slice(0, 20).map((s) => ({
             id: s.id || s.session_id,
             title: s.title,
             messages: s.message_count || 0,

@@ -74,6 +74,14 @@ from backend.routers import (  # noqa: E402
     search,
     context_budget,
     compat,
+    dashboard,
+    events,
+    evals,
+    stats,
+    frontend_errors,
+    screenshot,
+    version,
+    logs,
 )
 
 app.include_router(sessions.router)
@@ -99,6 +107,16 @@ app.include_router(reviews.router)
 app.include_router(search.router)
 app.include_router(context_budget.router)
 app.include_router(compat.router)
+
+# Missing routers (synced from app.py)
+app.include_router(dashboard.router)
+app.include_router(events.router)
+app.include_router(evals.router, prefix="/api", tags=["evals"])
+app.include_router(stats.router, prefix="/api", tags=["stats"])
+app.include_router(frontend_errors.router)
+app.include_router(screenshot.router)
+app.include_router(version.router)
+app.include_router(logs.router)
 
 # ==================== v1 API 版本化路由（与原路由共享实例，向后兼容） ====================
 

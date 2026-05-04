@@ -21,11 +21,11 @@ const OverviewTab = (() => {
             API.get('/api/reviews/stats'),
         ]);
 
-        _rulesStats = rulesStats.status === 'fulfilled' ? (rulesStats.value || {}) : {};
-        _knowledgeStats = knowledgeStats.status === 'fulfilled' ? (knowledgeStats.value || {}) : {};
-        _experiencesStats = experiencesStats.status === 'fulfilled' ? (experiencesStats.value || {}) : {};
-        _memoriesStats = memoriesStats.status === 'fulfilled' ? (memoriesStats.value || {}) : {};
-        _reviewsStats = reviewsStats.status === 'fulfilled' ? (reviewsStats.value || {}) : {};
+        _rulesStats = rulesStats.status === 'fulfilled' ? (rulesStats.value?.data || rulesStats.value || {}) : {};
+        _knowledgeStats = knowledgeStats.status === 'fulfilled' ? (knowledgeStats.value?.data || knowledgeStats.value || {}) : {};
+        _experiencesStats = experiencesStats.status === 'fulfilled' ? (experiencesStats.value?.data || experiencesStats.value || {}) : {};
+        _memoriesStats = memoriesStats.status === 'fulfilled' ? (memoriesStats.value?.data || memoriesStats.value || {}) : {};
+        _reviewsStats = reviewsStats.status === 'fulfilled' ? (reviewsStats.value?.data || reviewsStats.value || {}) : {};
     }
 
     function getStats() {

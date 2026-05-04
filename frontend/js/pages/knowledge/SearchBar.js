@@ -49,7 +49,7 @@ const SearchBar = (() => {
 
         try {
             const result = await API.get('/api/search', { q: _searchTerm, limit: 50 });
-            _searchResults = result || { results: [], total: 0 };
+            _searchResults = result || { data: [], results: [], total: 0 };
             _searchLoading = false;
             _renderSearchResults(contentEl);
         } catch (err) {
@@ -61,7 +61,8 @@ const SearchBar = (() => {
     function _renderSearchResults(contentEl) {
         if (!contentEl) return;
 
-        if (!_searchResults || !_searchResults.results || _searchResults.results.length === 0) {
+        const _results = _searchResults?.data || _searchResults?.results || [];
+        if (!_results || _results.length === 0) {
             contentEl.innerHTML = '<div class="empty-text">无搜索结果: "' + KnowledgeUtils.escapeHtml(_searchTerm) + '"</div>';
             return;
         }
@@ -75,12 +76,12 @@ const SearchBar = (() => {
         };
 
         let html = '<div class="tab-header">';
-        html += '<div class="tab-info">搜索结果：' + (_searchResults.total || _searchResults.results.length) + ' 条结果，关键词: "' + KnowledgeUtils.escapeHtml(_searchTerm) + '"</div>';
+        html += '<div class="tab-info">搜索结果：' + (_searchResults.total || _results.length) + ' 条结果，关键词: "' + KnowledgeUtils.escapeHtml(_searchTerm) + '"</div>';
         html += '<button class="btn-secondary" data-action="clearSearch">清除搜索</button>';
         html += '</div>';
 
         html += '<div class="items-list">';
-        _searchResults.results.forEach(function (r) {
+        _results.forEach(function (r) {
             const rType = r.type || 'unknown';
             const rTitle = r.title || 'Untitled';
             const rSnippet = r.snippet || r.content || r.preview || '';

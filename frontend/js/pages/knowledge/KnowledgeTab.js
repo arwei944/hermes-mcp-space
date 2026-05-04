@@ -24,8 +24,8 @@ const KnowledgeTab = (() => {
             API.get('/api/knowledge/items/stats'),
         ]);
 
-        _data = items.status === 'fulfilled' ? (items.value || []) : [];
-        _stats = stats.status === 'fulfilled' ? (stats.value || {}) : {};
+        _data = items.status === 'fulfilled' ? (items.value?.data || items.value || []) : [];
+        _stats = stats.status === 'fulfilled' ? (stats.value?.data || stats.value || {}) : {};
 
         contentEl.innerHTML = buildContent();
     }

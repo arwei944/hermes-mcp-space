@@ -36,8 +36,8 @@ const MarketplacePage = (() => {
             API.skills.list().catch(() => []),
             API.tools.list().catch(() => []),
             API.tools.toolsets().catch(() => []),
-            API.request('GET', '/api/plugins/market').catch(() => ({})),
-            API.request('GET', '/api/plugins').catch(() => ({})),
+            API.get('/api/plugins/market').catch(() => ({})),
+            API.get('/api/plugins').catch(() => ({})),
         ]);
 
         // 获取 MCP 工具列表
@@ -176,8 +176,8 @@ const MarketplacePage = (() => {
         if (['plugin.installed', 'plugin.uninstalled'].includes(type)) {
             _ensureModules().then(() => {
                 Promise.all([
-                    API.request('GET', '/api/plugins/market').catch(() => ({})),
-                    API.request('GET', '/api/plugins').catch(() => ({})),
+                    API.get('/api/plugins/market').catch(() => ({})),
+                    API.get('/api/plugins').catch(() => ({})),
                 ]).then(([marketData, installedData]) => {
                     _data.market = (typeof marketData === 'object' && marketData.plugins) ? marketData.plugins : [];
                     _data.categories = (typeof marketData === 'object' && marketData.categories) ? marketData.categories : {};
