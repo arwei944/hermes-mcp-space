@@ -273,7 +273,7 @@ def build_full_html():
     # 自动扫描 JS 文件（支持子目录结构：优先 register.js，否则 *.js）
     core_js = ["js/core/Logger.js", "js/core/Store.js", "js/core/Bus.js",
                "js/core/ErrorHandler.js", "js/core/APIClient.js", "js/core/constants.js",
-               "js/core/Router.js", "js/core/init.js", "js/api.js"]
+               "js/core/Router.js", "js/core/init.js", "js/constants/config.js", "js/constants/colors.js", "js/api.js"]
     # Components V2 目录结构：按依赖顺序加载子模块
     components_dir = frontend_dir / "js" / "components"
     components_register = components_dir / "register.js"
@@ -287,6 +287,7 @@ def build_full_html():
             "js/components/layout.js",
             "js/components/form.js",
             "js/components/data-display.js",
+            "js/components/onboarding.js",
             "js/components/index.js",
         ]
         core_js.extend(component_files)
