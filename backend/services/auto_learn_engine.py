@@ -147,9 +147,10 @@ class AutoLearnEngine:
         if not success or not result_summary:
             return None
 
-        # 限制长度，避免存垃圾
-        content = result_summary[:2000].strip()
-        if len(content) < 50:
+        # 清洗 shell 输出格式
+        content = self._clean_shell_output(result_summary, tool_name)
+        content = content[:2000].strip()
+        if len(content) < 30:
             return None
 
         # 生成标题
@@ -332,6 +333,30 @@ class AutoLearnEngine:
         elif tool_name in ("shell_execute", "safe_shell_execute"):
             tags.append("command_output")
         return tags
+
+    def _clean_shell_output(self, text: str, tool_name: str) -> str:
+        """清洗工具返回的格式化文本，提取有价值的内容"""
+        if tool_name in ("shell_execute", "safe_shell_execute"):
+            lines = text.split("\n")
+            cleaned = []
+            in_output = False
+            for line in lines:
+                if line.startswith("--- stdout ---") or line.startswith("--- stderr ---"):
+                    in_output = True
+                    continue
+                if line.startswith("--- ") and in_output:
+                    in_output = False
+                    continue
+                if line.startswith("命令:") or line.startswith("工作目录:") or line.startswith("退出码:"):
+                    continue
+                if in_output or not line.startswith("---"):
+                    cleaned.append(line)
+            return "\n".join(cleaned).strip()
+        elif tool_name == "web_search":
+            lines = text.split("\n")
+            cleaned = [l for l in lines if not l.startswith("=") and not l.startswith("搜索:")]
+            return "\n".join(cleaned).strip()
+        return text
 
     def _classify_error(self, error: str) -> str:
         """分类错误类型"""

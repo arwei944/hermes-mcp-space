@@ -239,15 +239,16 @@ class AutoLearnMiddleware(MiddlewareStep):
         if learner:
             try:
                 # 从工具返回结果中提取摘要
+                # 注意：ctx.result 此时还未被 pipeline 设置，必须用 result 变量
                 result_summary = None
-                if ctx.result:
-                    if isinstance(ctx.result, dict):
-                        # 从 MCP 工具返回的 JSON 中提取 message 或 data
-                        msg = ctx.result.get("message", "")
-                        data = ctx.result.get("data", "")
-                        result_summary = str(msg or data or ctx.result)[:1000]
+                if result:
+                    if isinstance(result, dict):
+                        # 优先取 data（工具实际输出），其次取 message
+                        data = result.get("data", "")
+                        msg = result.get("message", "")
+                        result_summary = str(data if data and str(data) != "None" else msg or result)[:1000]
                     else:
-                        result_summary = str(ctx.result)[:1000]
+                        result_summary = str(result)[:1000]
                 learner.learn_from_tool_call(
                     tool_name=ctx.tool_name,
                     arguments=ctx.arguments,
