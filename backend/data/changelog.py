@@ -2,6 +2,22 @@
 # Regenerate with: python3 scripts/gen_changelog.py
 CHANGELOG_FALLBACK=[
   {
+    "version": "v15.2",
+    "date": "2026-05-04 22:00",
+    "title": "feat: v15.2 - 规则分类体系 + 规则守卫 + Agent 权限系统 (Phase 2)",
+    "changes": [
+      "feat: 扩展规则分类体系 — 8 种精细化分类 (safety/output_control/behavior/workflow/domain/coding/general/priority)，支持向后兼容旧分类名",
+      "feat: context_budget_service 按分类权重精细分配预算 (safety 1.5x, priority 1.3x, behavior 1.2x 等)",
+      "feat: 新增 RuleGuardService — 工具调用前自动检查规则合规性 (safety 硬拦截 + behavior 软警告 + 工具级 scope 精确匹配)",
+      "feat: 新增 RuleGuardMiddleware — 集成到 MCP 中间件管道 (Logging → RuleGuard → ErrorHandling → AutoLearn)",
+      "feat: 新增 PermissionService — 基于角色的 Agent 权限系统 (coder/researcher/general/admin 四种角色)",
+      "feat: 权限控制覆盖工具访问 (标签白名单 + 高风险工具白名单 + 禁止列表)、规则读写权限、数据删除权限",
+      "feat: 新增 check_permission MCP 工具 — Agent 可主动查询自身权限",
+      "feat: Context 新增 agent_id 字段，pipeline.execute 传递 agent_id 到中间件链",
+      "Version bump: 15.1 -> 15.2 (minor - Phase 2 rule guard + permissions)"
+    ]
+  },
+  {
     "version": "v15.1",
     "date": "2026-05-04 20:39",
     "title": "release: v15.1 - 自进化系统 + session 修复",
