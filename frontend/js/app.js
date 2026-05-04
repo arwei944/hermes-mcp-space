@@ -53,6 +53,11 @@ const App = (() => {
         initTheme();
         replaceNavIcons();
 
+        // 新手引导（首次访问）
+        if (typeof Components !== 'undefined' && Components.Onboarding && !Components.Onboarding.isDone()) {
+            setTimeout(() => Components.Onboarding.start(), 800);
+        }
+
         // 初始化 Router 并注册所有路由
         initRouter();
 

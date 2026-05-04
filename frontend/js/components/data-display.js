@@ -5,10 +5,11 @@
 // ==========================================
 // 统计卡片 (Mac 风格)
 // ==========================================
-function _renderStatCard(label, value, change, icon, color) {
+function _renderStatCard(label, value, change, icon, color, desc) {
     // icon 可以是 SVG 字符串或图标名称（自动转换）
     const iconHtml =
         typeof icon === 'string' && icon.length < 20 && !icon.includes('<') ? Components.icon(icon, 18) : icon;
+    const descHtml = desc ? `<div class="stat-desc" style="font-size:11px;color:var(--text-tertiary);margin-top:4px;line-height:1.4">${desc}</div>` : '';
     const changeHtml = change
         ? `<div class="stat-change ${change.startsWith('↑') || change.startsWith('▲') ? 'up' : change.startsWith('↓') ? 'down' : ''}">${change}</div>`
         : '';
@@ -18,6 +19,7 @@ function _renderStatCard(label, value, change, icon, color) {
             <div class="stat-label">${label}</div>
             <div class="stat-value">${value}</div>
             ${changeHtml}
+            ${descHtml}
         </div>
     `;
 }

@@ -215,6 +215,7 @@
 <script src="/js/components/layout.js" defer></script>
 <script src="/js/components/form.js" defer></script>
 <script src="/js/components/data-display.js" defer></script>
+<script src="/js/components/onboarding.js" defer></script>
 <script src="/js/components/index.js" defer></script>
 <!-- V2 Page Modules (register.js entry points) -->
 <script src="/js/pages/dashboard/register.js" defer></script>
@@ -234,26 +235,45 @@
 <script src="/js/pages/sync/register.js" defer></script>
 <script src="/js/app.js" defer></script>
 
-<!-- 全局错误边界：由 V2 ErrorHandler.initGlobal() 接管，此处为降级兜底 -->
+<!-- 全局错误边界：用户友好提示 -->
 <script>
-window.onerror = function(msg, url, line, col, err) {
-    if (typeof Logger !== 'undefined') Logger.error('[Global]', msg, url, line, col);
-    else console.error('[JS Error]', msg, url, line, col, err);
-    var content = document.getElementById('contentBody');
-    if (content && !content.querySelector('.js-error-boundary')) {
-        content.innerHTML = '<div class="js-error-boundary" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center">' +
-            '<div style="font-size:40px;margin-bottom:16px;opacity:0.5">' + (typeof Components !== 'undefined' ? Components.icon('alertTriangle', 40) : '⚠️') + '</div>' +
-            '<div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px">页面加载出错</div>' +
-            '<div style="font-size:13px;color:var(--text-tertiary);max-width:500px;margin-bottom:16px">' + (msg || '未知错误') + '</div>' +
-            '<div style="font-size:11px;color:var(--text-quaternary)">' + (url || '') + ':' + (line || '') + '</div>' +
-            '</div>';
+(function() {
+    function _friendlyError(msg) {
+        const map = {
+            'Failed to fetch': '网络连接失败，请检查网络后重试',
+            'NetworkError': '网络连接失败，请检查网络后重试',
+            'Load failed': '资源加载失败，请刷新页面重试',
+            'Timeout': '请求超时，服务器可能繁忙，请稍后重试',
+            '500': '服务器内部错误，请稍后重试',
+            '502': '服务暂时不可用，请稍后重试',
+            '503': '服务暂时不可用，请稍后重试',
+        };
+        for (const [key, friendly] of Object.entries(map)) {
+            if (msg && msg.includes(key)) return friendly;
+        }
+        return '操作出现问题，请稍后重试';
     }
-    return true;
-};
-window.addEventListener('unhandledrejection', function(e) {
-    if (typeof Logger !== 'undefined') Logger.error('[Promise]', e.reason);
-    else console.error('[Promise Error]', e.reason);
-});
+
+    window.onerror = function(msg, url, line, col, err) {
+        if (typeof Logger !== 'undefined') Logger.error('[Global]', msg, url, line, col);
+        else console.error('[JS Error]', msg, url, line, col, err);
+        var content = document.getElementById('contentBody');
+        if (content && !content.querySelector('.js-error-boundary')) {
+            var friendly = _friendlyError(msg);
+            content.innerHTML = '<div class="js-error-boundary" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center">' +
+                '<div style="font-size:40px;margin-bottom:16px;opacity:0.5">' + (typeof Components !== 'undefined' ? Components.icon('alertTriangle', 40) : '⚠️') + '</div>' +
+                '<div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px">出了点问题</div>' +
+                '<div style="font-size:14px;color:var(--text-secondary);max-width:400px;margin-bottom:16px">' + friendly + '</div>' +
+                '<button class="btn btn-primary" onclick="location.reload()">刷新页面</button>' +
+                '</div>';
+        }
+        return true;
+    };
+    window.addEventListener('unhandledrejection', function(e) {
+        if (typeof Logger !== 'undefined') Logger.error('[Promise]', e.reason);
+        else console.error('[Promise Error]', e.reason);
+    });
+})();
 </script>
 
 <!-- V7-24: Service Worker 注册 -->

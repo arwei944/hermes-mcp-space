@@ -9,12 +9,12 @@ const StatsSection = (() => {
         const s = data.stats || {};
         const sys = data.systemStatus || {};
         return `<div id="dashStats" class="stats">
-            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'chart', 'blue')}
-            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'zap', 'green')}
-            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'messageCircle', 'purple')}
-            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'wrench', 'orange')}
-            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'check', 'green')}
-            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'plug', s.mcpConnected ? 'green' : 'red')}
+            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'chart', 'blue', 'AI 助手执行任务的总次数')}
+            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'zap', 'green', '每次任务的平均响应时间')}
+            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'messageCircle', 'purple', '当前活跃的对话数量')}
+            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'wrench', 'orange', '已安装的功能工具数量')}
+            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'check', 'green', '任务成功完成的比率')}
+            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'plug', s.mcpConnected ? 'green' : 'red', 'AI 模型连接状态')}
         </div>`;
     }
 
@@ -24,12 +24,12 @@ const StatsSection = (() => {
         const el = document.getElementById('dashStats');
         if (!el) return;
         el.innerHTML = `
-            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'chart', 'blue')}
-            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'zap', 'green')}
-            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'messageCircle', 'purple')}
-            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'wrench', 'orange')}
-            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'check', 'green')}
-            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'plug', s.mcpConnected ? 'green' : 'red')}
+            ${Components.renderStatCard('总调用', s.totalToolCalls || 0, `成功率 ${s.successRate || 0}%`, 'chart', 'blue', 'AI 助手执行任务的总次数')}
+            ${Components.renderStatCard('平均延迟', `${s.avgLatency || 0}ms`, '', 'zap', 'green', '每次任务的平均响应时间')}
+            ${Components.renderStatCard('会话数', s.sessions || 0, `${s.activeSessions || 0} 活跃`, 'messageCircle', 'purple', '当前活跃的对话数量')}
+            ${Components.renderStatCard('工具', s.tools || 0, `${s.skills || 0} 技能`, 'wrench', 'orange', '已安装的功能工具数量')}
+            ${Components.renderStatCard('成功率', `${s.successRate || 0}%`, '', 'check', 'green', '任务成功完成的比率')}
+            ${Components.renderStatCard('MCP', s.mcpConnected ? '在线' : '离线', sys.version || '', 'plug', s.mcpConnected ? 'green' : 'red', 'AI 模型连接状态')}
         `;
     }
 

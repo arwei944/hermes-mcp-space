@@ -44,6 +44,9 @@ const Components = {
     badge: _badge,
     renderToolCard: _renderToolCard,
 
+    // 新手引导 (v13.3.0)
+    Onboarding: _Onboarding,
+
     // 工具函数
     escapeHtml: _escapeHtml,
     formatTime: _formatTime,

@@ -17,7 +17,7 @@ import os
 # ============================================
 # 唯一版本号 - 修改这里即可
 # ============================================
-__version__ = os.environ.get("APP_VERSION", "13.2.0")
+__version__ = os.environ.get("APP_VERSION", "13.3.0")
 
 # 版本元信息
 __version_meta__ = {
