@@ -603,6 +603,15 @@ def _patched_create_app(blocks, **kwargs):
 
     logger.info("Custom routes injected into Gradio app")
 
+    # Initialize knowledge database (create tables if not exist)
+    try:
+        from backend.db import get_knowledge_db, init_knowledge_db
+        _db_conn = get_knowledge_db()
+        init_knowledge_db(_db_conn)
+        logger.info("Knowledge database initialized (tables created/verified)")
+    except Exception as e:
+        logger.warning(f"Failed to initialize knowledge database: {e}")
+
     # Initialize persistence manager (data backup/restore)
     try:
         from backend.services.persistence_manager import persistence_manager
