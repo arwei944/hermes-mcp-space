@@ -2,6 +2,20 @@
 # Regenerate with: python3 scripts/gen_changelog.py
 CHANGELOG_FALLBACK=[
   {
+    "version": "v15.3",
+    "date": "2026-05-05 05:30",
+    "title": "feat: v15.3 - DEVPLAN 全量完成 (micro-squad + 双盲评审)",
+    "changes": [
+      "feat: 新增 micro_squad MCP 工具 — 标准化 Sprint 工作流 (THINK→PLAN→BUILD→VERIFY→SHIP)",
+      "feat: micro-squad 支持 6 种命令 (squad/think/plan/build/verify/ship)，可完整 Sprint 或单阶段执行",
+      "feat: 新增 dual_review MCP 工具 — 双盲评审 (两个 Judge Agent 并行审查 + 共识表裁决)",
+      "feat: 双盲评审支持 FIX/TRIAGE/DISMISS 三种裁决，最多 2 轮迭代修复",
+      "feat: DEVPLAN.md v3.1-v4.0 全部 17 项功能实现完成 (完成率 100%)",
+      "release: v15.3 标志 DEVPLAN 路线图全部交付",
+      "Version bump: 15.2 -> 15.3 (minor - DEVPLAN completion)"
+    ]
+  },
+  {
     "version": "v15.2",
     "date": "2026-05-04 22:00",
     "title": "feat: v15.2 - 规则分类体系 + 规则守卫 + Agent 权限系统 (Phase 2)",
