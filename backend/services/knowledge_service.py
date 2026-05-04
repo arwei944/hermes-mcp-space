@@ -255,7 +255,7 @@ class KnowledgeService:
         now = _now()
         self.conn.execute(
             """INSERT INTO knowledge (id, title, content, summary, category, tags,
-               source, source_ref, confidence, references, version, is_active,
+               source, source_ref, confidence, "references", version, is_active,
                view_count, created_at, updated_at, created_by, review_id)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 0, ?, ?, ?, ?)""",
             (kn_id, title, content, summary, category,

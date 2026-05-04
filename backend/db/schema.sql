@@ -3,6 +3,29 @@
 -- 数据库：knowledge.db
 -- ============================================================
 
+-- ==================== 审核队列表 ====================
+CREATE TABLE IF NOT EXISTS reviews (
+    id          TEXT PRIMARY KEY,
+    target_type TEXT NOT NULL,                     -- rule/knowledge/experience/memory
+    target_id   TEXT NOT NULL DEFAULT '',
+    action      TEXT NOT NULL,                     -- create/update/delete/resolve
+    title       TEXT NOT NULL,
+    content     TEXT NOT NULL DEFAULT '',
+    old_content TEXT NOT NULL DEFAULT '',
+    reason      TEXT NOT NULL DEFAULT '',          -- AI 变更理由
+    confidence  REAL NOT NULL DEFAULT 0.8,
+    priority    TEXT NOT NULL DEFAULT 'normal',    -- urgent/normal/low
+    status      TEXT NOT NULL DEFAULT 'pending',   -- pending/approved/rejected/expired
+    reviewed_by TEXT NOT NULL DEFAULT '',
+    reviewed_at TEXT NOT NULL DEFAULT '',
+    review_note TEXT NOT NULL DEFAULT '',
+    created_at  TEXT NOT NULL,
+    expires_at  TEXT NOT NULL DEFAULT '',
+    session_id  TEXT NOT NULL DEFAULT '',
+    tool_call   TEXT NOT NULL DEFAULT '',
+    context     TEXT NOT NULL DEFAULT ''
+);
+
 -- ==================== 规则表 ====================
 CREATE TABLE IF NOT EXISTS rules (
     id          TEXT PRIMARY KEY,
@@ -35,7 +58,7 @@ CREATE TABLE IF NOT EXISTS knowledge (
     source      TEXT NOT NULL DEFAULT 'manual',    -- manual/ai_extracted/web_import/session/imported
     source_ref  TEXT NOT NULL DEFAULT '',
     confidence  REAL NOT NULL DEFAULT 0.8,         -- 0-1
-    references  TEXT NOT NULL DEFAULT '[]',        -- JSON [{type, id, title}]
+    "references" TEXT NOT NULL DEFAULT '[]',        -- JSON [{type, id, title}]
     version     INTEGER NOT NULL DEFAULT 1,
     is_active   INTEGER NOT NULL DEFAULT 1,
     view_count  INTEGER NOT NULL DEFAULT 0,
@@ -93,28 +116,7 @@ CREATE TABLE IF NOT EXISTS memories (
     FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE SET NULL
 );
 
--- ==================== 审核队列表 ====================
-CREATE TABLE IF NOT EXISTS reviews (
-    id          TEXT PRIMARY KEY,
-    target_type TEXT NOT NULL,                     -- rule/knowledge/experience/memory
-    target_id   TEXT NOT NULL DEFAULT '',
-    action      TEXT NOT NULL,                     -- create/update/delete/resolve
-    title       TEXT NOT NULL,
-    content     TEXT NOT NULL DEFAULT '',
-    old_content TEXT NOT NULL DEFAULT '',
-    reason      TEXT NOT NULL DEFAULT '',          -- AI 变更理由
-    confidence  REAL NOT NULL DEFAULT 0.8,
-    priority    TEXT NOT NULL DEFAULT 'normal',    -- urgent/normal/low
-    status      TEXT NOT NULL DEFAULT 'pending',   -- pending/approved/rejected/expired
-    reviewed_by TEXT NOT NULL DEFAULT '',
-    reviewed_at TEXT NOT NULL DEFAULT '',
-    review_note TEXT NOT NULL DEFAULT '',
-    created_at  TEXT NOT NULL,
-    expires_at  TEXT NOT NULL DEFAULT '',
-    session_id  TEXT NOT NULL DEFAULT '',
-    tool_call   TEXT NOT NULL DEFAULT '',
-    context     TEXT NOT NULL DEFAULT ''
-);
+
 
 -- ==================== 上下文预算表（单例） ====================
 CREATE TABLE IF NOT EXISTS context_budget (
