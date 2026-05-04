@@ -71,6 +71,13 @@ class ReviewService:
              session_id, tool_call, context)
         )
         self.conn.commit()
+        # Emit review.rejected event
+        try:
+            from backend.events.bus import bus
+            bus.emit("review.rejected", {"review_id": review_id, "target_type": review["target_type"]})
+        except ImportError:
+            pass
+
         return self.get_review(review_id)
 
     def get_review(self, review_id: str) -> Optional[dict]:
@@ -144,7 +151,15 @@ class ReviewService:
         )
         self.conn.commit()
 
+        # Emit review.approved event
+        try:
+            from backend.events.bus import bus
+            bus.emit("review.approved", {"review_id": review_id, "target_type": review["target_type"]})
+        except ImportError:
+            pass
+
         # 触发 SSE 事件（由路由层处理）
+
         return self.get_review(review_id)
 
     def reject_review(self, review_id: str, reviewed_by: str = "admin",
@@ -159,6 +174,13 @@ class ReviewService:
             (reviewed_by, now, review_note, review_id)
         )
         self.conn.commit()
+        # Emit review.rejected event
+        try:
+            from backend.events.bus import bus
+            bus.emit("review.rejected", {"review_id": review_id, "target_type": review["target_type"]})
+        except ImportError:
+            pass
+
         return self.get_review(review_id)
 
     def modify_and_approve(self, review_id: str, modified_content: str,

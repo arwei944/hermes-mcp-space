@@ -612,6 +612,14 @@ def _patched_create_app(blocks, **kwargs):
     except Exception as e:
         logger.warning(f"Failed to initialize knowledge database: {e}")
 
+    # Initialize review scheduler (bridge policy -> cron)
+    try:
+        from backend.services.review_scheduler import review_scheduler
+        review_scheduler.init()
+        logger.info("Review scheduler initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize review scheduler: {e}")
+
     # Initialize persistence manager (data backup/restore)
     try:
         from backend.services.persistence_manager import persistence_manager

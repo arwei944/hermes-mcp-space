@@ -97,3 +97,20 @@ async def cleanup_expired_reviews():
     svc = ReviewService()
     svc.expire_old_reviews()
     return {"success": True, "message": "过期审核已清理"}
+
+
+@router.post("/auto-review")
+async def auto_review_endpoint():
+    """Auto-review pending items (called by cron scheduler)"""
+    from backend.mcp.tools.knowledge.auto_review import handle as auto_review_handle
+    try:
+        result = auto_review_handle({
+            "strategy": "balanced",
+            "auto_approve_threshold": 0.8,
+            "auto_reject_threshold": 0.3,
+            "dry_run": False,
+            "limit": 50,
+        })
+        return result
+    except Exception as e:
+        return {"success": False, "message": f"Auto-review failed: {e}"}

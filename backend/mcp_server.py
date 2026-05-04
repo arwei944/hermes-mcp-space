@@ -24,6 +24,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 # v9 imports
 from backend.mcp.registry import registry
 from backend.mcp.middleware import (
+    AutoLearnMiddleware,
     MCPMiddlewarePipeline,
     LoggingMiddleware,
     ErrorHandlingMiddleware,
@@ -47,6 +48,7 @@ USE_TOOL_REGISTRY = True  # True=新架构, False=旧架构(应急回退)
 _pipeline = MCPMiddlewarePipeline()
 _pipeline.add(LoggingMiddleware())
 _pipeline.add(ErrorHandlingMiddleware())
+_pipeline.add(AutoLearnMiddleware())
 
 # Auto-discover all tool modules on import
 registry.discover()
