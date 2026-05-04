@@ -10,6 +10,7 @@
 
 更新版本时只需修改此文件的 __version__ 即可，
 配合 release.sh 自动同步到 CHANGELOG 和 Git tag。
+
 """
 
 import os
@@ -17,7 +18,7 @@ import os
 # ============================================
 # 唯一版本号 - 修改这里即可
 # ============================================
-__version__ = os.environ.get("APP_VERSION", "14.5.3")
+__version__ = os.environ.get("APP_VERSION", "15.1")
 
 # 版本元信息
 __version_meta__ = {
