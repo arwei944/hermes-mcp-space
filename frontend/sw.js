@@ -5,7 +5,7 @@
  * V14.3: 添加自愈缓存机制，减少手动维护 CACHE_FILES 的负担
  */
 
-const CACHE_NAME = 'hermes-v8';
+const CACHE_NAME = 'hermes-v9';
 
 // 注意：以下 STATIC_ASSETS 列表需要手动维护，新增页面/模块时需同步更新。
 // v14.3 已添加自愈机制：未在预缓存列表中的资源会在首次请求时自动缓存。
@@ -42,6 +42,8 @@ const STATIC_ASSETS = [
     '/js/components/form.js',
     '/js/components/data-display.js',
     '/js/components/onboarding.js',
+    '/js/constants/config.js',
+    '/js/constants/colors.js',
     '/js/components/index.js',
     // Pages (register.js entry points)
     '/js/pages/dashboard/register.js',
