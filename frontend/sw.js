@@ -1,34 +1,63 @@
 /**
  * Hermes Agent - Service Worker
  * V7-24: PWA 离线缓存支持
+ * V13.4: 更新缓存列表匹配模块化文件结构
  */
 
-const CACHE_NAME = 'hermes-v7';
+const CACHE_NAME = 'hermes-v8';
 const STATIC_ASSETS = [
     '/',
     '/css/style.css',
+    '/css/dark-theme.css',
+    '/css/knowledge.css',
     '/js/app.js',
     '/js/api.js',
-    '/js/components.js',
     '/js/i18n.js',
+    // Core
+    '/js/core/Logger.js',
+    '/js/core/Store.js',
+    '/js/core/Bus.js',
+    '/js/core/ErrorHandler.js',
+    '/js/core/APIClient.js',
+    '/js/core/constants.js',
+    '/js/core/Router.js',
+    '/js/core/init.js',
+    // Services
+    '/js/services/OpsSyncService.js',
+    '/js/services/AlertChecker.js',
+    '/js/services/AlertNotifier.js',
+    // Utilities
     '/js/utils/sse.js',
     '/js/utils/export-progress.js',
     '/js/utils/confirm-dialog.js',
-    '/js/pages/dashboard.js',
-    '/js/pages/knowledge.js',
-    '/js/pages/sessions.js',
-    '/js/pages/chat.js',
-    '/js/pages/memory.js',
-    '/js/pages/cron.js',
-    '/js/pages/agents.js',
-    '/js/pages/agents_behavior.js',
-    '/js/pages/config.js',
-    '/js/pages/about.js',
-    '/js/pages/marketplace.js',
-    '/js/pages/logs.js',
-    '/js/pages/sync.js',
-    '/js/pages/trash.js',
-    '/js/pages/screenshot.js',
+    // Components
+    '/js/components/icons.js',
+    '/js/components/utils.js',
+    '/js/components/feedback.js',
+    '/js/components/layout.js',
+    '/js/components/form.js',
+    '/js/components/data-display.js',
+    '/js/components/onboarding.js',
+    '/js/components/index.js',
+    // Pages (register.js entry points)
+    '/js/pages/dashboard/register.js',
+    '/js/pages/knowledge/register.js',
+    '/js/pages/sessions/register.js',
+    '/js/pages/chat/register.js',
+    '/js/pages/memory/register.js',
+    '/js/pages/cron/register.js',
+    '/js/pages/agents_behavior/register.js',
+    '/js/pages/config/register.js',
+    '/js/pages/about/register.js',
+    '/js/pages/trash/register.js',
+    '/js/pages/agents/register.js',
+    '/js/pages/screenshot/register.js',
+    '/js/pages/marketplace/register.js',
+    '/js/pages/logs/register.js',
+    '/js/pages/sync/register.js',
+    '/js/pages/ops-center/register.js',
+    '/js/pages/ops-dashboard/register.js',
+    '/js/pages/ops-alerts/register.js',
     '/manifest.json',
 ];
 

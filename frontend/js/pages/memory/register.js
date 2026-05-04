@@ -17,7 +17,7 @@ const MemoryPage = (() => {
     async function render() {
         await _ensureModules();
         const container = document.getElementById('contentBody');
-        container.innerHTML = Components.createLoading();
+        container.innerHTML = Components.createSkeleton(5);
 
         const memoryData = await API.memory.getMemory().catch(() => '');
         const userData = memoryData;

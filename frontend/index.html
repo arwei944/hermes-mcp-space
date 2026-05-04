@@ -142,11 +142,11 @@
             </a>
         </div>
 
-        <div class="nav-section" style="margin-top:auto">
-            <a class="nav-item" onclick="window.open('/docs','_blank')" style="cursor:pointer">
+        <div class="nav-section nav-section-footer">
+            <a class="nav-item" onclick="window.open('/docs','_blank')">
                 <span class="nav-icon" data-icon="book"></span>
                 <span>API 文档</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;opacity:0.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-external-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
             </a>
             <a class="nav-item" data-page="about" href="#about">
                 <span class="nav-icon" data-icon="info"></span>
@@ -260,10 +260,10 @@
         var content = document.getElementById('contentBody');
         if (content && !content.querySelector('.js-error-boundary')) {
             var friendly = _friendlyError(msg);
-            content.innerHTML = '<div class="js-error-boundary" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center">' +
-                '<div style="font-size:40px;margin-bottom:16px;opacity:0.5">' + (typeof Components !== 'undefined' ? Components.icon('alertTriangle', 40) : '⚠️') + '</div>' +
-                '<div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px">出了点问题</div>' +
-                '<div style="font-size:14px;color:var(--text-secondary);max-width:400px;margin-bottom:16px">' + friendly + '</div>' +
+            content.innerHTML = '<div class="js-error-boundary">' +
+                '<div class="error-icon">' + (typeof Components !== 'undefined' ? Components.icon('alertTriangle', 40) : '⚠️') + '</div>' +
+                '<div class="error-title">出了点问题</div>' +
+                '<div class="error-desc">' + friendly + '</div>' +
                 '<button class="btn btn-primary" onclick="location.reload()">刷新页面</button>' +
                 '</div>';
         }

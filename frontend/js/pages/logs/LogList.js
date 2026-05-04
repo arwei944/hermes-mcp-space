@@ -23,7 +23,7 @@ const LogList = (() => {
             _autoRefresh = false;
         }
 
-        container.innerHTML = Components.createLoading();
+        container.innerHTML = Components.createSkeleton(6);
 
         try {
             const [logsData, statsData] = await Promise.all([

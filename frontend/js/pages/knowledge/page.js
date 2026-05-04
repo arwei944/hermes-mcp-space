@@ -1,6 +1,7 @@
 /**
  * Knowledge Base Page - Page Skeleton & Tab Switching
  * Manages page layout, tab navigation, and event delegation
+ * V13.4: Unified tab rendering via Components.createTabs()
  */
 
 import KnowledgeUtils from './utils.js';
@@ -31,6 +32,23 @@ const KnowledgePageLayout = (() => {
         document.head.appendChild(link);
     }
 
+    function _buildTabs() {
+        const tabs = [
+            { key: 'overview', label: '概览', icon: Components.icon('chart', 14) },
+            { key: 'rules', label: '规则', icon: Components.icon('shield', 14), badge: '<span id="rulesBadge">-</span>' },
+            { key: 'knowledge', label: '知识', icon: Components.icon('book', 14), badge: '<span id="knowledgeBadge">-</span>' },
+            { key: 'experiences', label: '经验', icon: Components.icon('lightbulb', 14), badge: '<span id="experiencesBadge">-</span>' },
+            { key: 'memories', label: '记忆', icon: Components.icon('brain', 14), badge: '<span id="memoriesBadge">-</span>' },
+            { key: 'reviews', label: '审核', icon: Components.icon('clipboard', 14), badge: '<span id="reviewsBadge">-</span>' },
+        ];
+        return Components.createTabs(tabs, _activeTab, null, {
+            dataAction: true,
+            actionName: 'switchTab',
+            containerClass: 'knowledge-tabs',
+            itemClass: 'tab-btn',
+        });
+    }
+
     function buildPage() {
         const esc = KnowledgeUtils.escapeHtml;
         return `
@@ -48,26 +66,7 @@ const KnowledgePageLayout = (() => {
                         ${Components.icon('refresh', 14)} 重建索引
                     </button>
                 </div>
-                <div class="knowledge-tabs" id="kbTabs">
-                    <button class="tab-btn ${_activeTab === 'overview' ? 'active' : ''}" data-action="switchTab" data-tab="overview">
-                        ${Components.icon('chart', 14)} 概览
-                    </button>
-                    <button class="tab-btn ${_activeTab === 'rules' ? 'active' : ''}" data-action="switchTab" data-tab="rules">
-                        ${Components.icon('shield', 14)} 规则 <span class="tab-badge" id="rulesBadge">-</span>
-                    </button>
-                    <button class="tab-btn ${_activeTab === 'knowledge' ? 'active' : ''}" data-action="switchTab" data-tab="knowledge">
-                        ${Components.icon('book', 14)} 知识 <span class="tab-badge" id="knowledgeBadge">-</span>
-                    </button>
-                    <button class="tab-btn ${_activeTab === 'experiences' ? 'active' : ''}" data-action="switchTab" data-tab="experiences">
-                        ${Components.icon('lightbulb', 14)} 经验 <span class="tab-badge" id="experiencesBadge">-</span>
-                    </button>
-                    <button class="tab-btn ${_activeTab === 'memories' ? 'active' : ''}" data-action="switchTab" data-tab="memories">
-                        ${Components.icon('brain', 14)} 记忆 <span class="tab-badge" id="memoriesBadge">-</span>
-                    </button>
-                    <button class="tab-btn ${_activeTab === 'reviews' ? 'active' : ''}" data-action="switchTab" data-tab="reviews">
-                        ${Components.icon('clipboard', 14)} 审核 <span class="tab-badge" id="reviewsBadge">-</span>
-                    </button>
-                </div>
+                <div id="kbTabs">${_buildTabs()}</div>
                 <div id="kbContent">${Components.createLoading()}</div>
             </div>
         `;
@@ -95,7 +94,7 @@ const KnowledgePageLayout = (() => {
     async function loadTab(tabId) {
         const contentEl = document.getElementById('kbContent');
         if (!contentEl) return;
-        contentEl.innerHTML = Components.createLoading();
+        contentEl.innerHTML = Components.createSkeleton(5);
 
         try {
             switch (tabId) {

@@ -14,7 +14,7 @@ const CronList = (() => {
         const container = document.querySelector(containerSelector);
         if (!container) return;
 
-        container.innerHTML = Components.createLoading();
+        container.innerHTML = Components.createSkeleton(5);
 
         try {
             const data = await API.cron.list();

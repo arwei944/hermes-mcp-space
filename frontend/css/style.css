@@ -2245,3 +2245,42 @@ textarea {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
 }
+
+/* ==========================================
+   v13.4.0: Sidebar & Error Boundary CSS
+   ========================================== */
+.nav-section-footer {
+    margin-top: auto;
+}
+
+.nav-external-icon {
+    margin-left: auto;
+    opacity: 0.5;
+}
+
+/* JS Error Boundary */
+.js-error-boundary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+.js-error-boundary .error-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+.js-error-boundary .error-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.js-error-boundary .error-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 400px;
+    margin-bottom: 16px;
+}

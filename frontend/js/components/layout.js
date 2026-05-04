@@ -43,15 +43,26 @@ function _sectionTitle(title) {
 
 // ==========================================
 // Tab 切换
+// V13.4: 支持 icon / badge / dataAction 选项
 // ==========================================
-function _createTabs(tabs, activeTab, onClickFn) {
+function _createTabs(tabs, activeTab, onClickFn, options) {
+    const opts = options || {};
+    const useDataAction = opts.dataAction || false;
+    const containerClass = opts.containerClass || 'tabs';
+    const itemClass = opts.itemClass || 'tab-item';
+
     const tabsHtml = tabs
         .map((tab) => {
             const isActive = tab.key === activeTab;
-            return `<div class="tab-item ${isActive ? 'active' : ''}" onclick="${onClickFn}('${tab.key}')">${tab.label}</div>`;
+            const iconHtml = tab.icon ? tab.icon + ' ' : '';
+            const badgeHtml = tab.badge ? '<span class="tab-badge">' + tab.badge + '</span>' : '';
+            const clickAttr = useDataAction
+                ? 'data-action="' + (opts.actionName || 'switchTab') + '" data-tab="' + tab.key + '"'
+                : 'onclick="' + onClickFn + "('" + tab.key + "')" + '"';
+            return '<div class="' + itemClass + (isActive ? ' active' : '') + '" ' + clickAttr + '>' + iconHtml + tab.label + badgeHtml + '</div>';
         })
         .join('');
-    return `<div class="tabs">${tabsHtml}</div>`;
+    return '<div class="' + containerClass + '">' + tabsHtml + '</div>';
 }
 
 // ==========================================
