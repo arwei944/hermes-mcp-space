@@ -71,10 +71,10 @@ class ReviewService:
              session_id, tool_call, context)
         )
         self.conn.commit()
-        # Emit review.rejected event
+        # Emit review.created event
         try:
             from backend.events.bus import bus
-            bus.emit("review.rejected", {"review_id": review_id, "target_type": review["target_type"]})
+            bus.emit("review.created", {"review_id": review_id, "target_type": target_type})
         except ImportError:
             pass
 
