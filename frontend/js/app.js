@@ -16,11 +16,9 @@ const App = (() => {
         agents_behavior: AgentsBehaviorPage,
         config: ConfigPage,
         trash: TrashPage,
-        screenshot: ScreenshotPage,
-        sync: SyncPage,
+            sync: SyncPage,
         ops_center: OpsCenterPage,
-        about: AboutPage,
-            logs: LogsPage,
+                logs: LogsPage,
     };
 
     const pageTitles = {
@@ -34,11 +32,9 @@ const App = (() => {
         agents_behavior: '性格设置',
         config: '系统配置',
         trash: '回收站',
-        screenshot: '截图工具',
-        sync: '备份恢复',
+            sync: '备份恢复',
         ops_center: '运维中心',
-        about: '关于',
-            logs: '操作日志',
+                logs: '操作日志',
     };
 
     let _currentPage = null;
@@ -339,7 +335,7 @@ const App = (() => {
             配置: 'config', 设置: 'config', config: 'config',
             回收站: 'trash', 删除: 'trash',
             截图: 'screenshot',
-            关于: 'about', 帮助: 'about',
+            帮助: 'about',
         };
         for (const [keyword, page] of Object.entries(searchMap)) {
             if (keyword.includes(term) || term.includes(keyword)) {
