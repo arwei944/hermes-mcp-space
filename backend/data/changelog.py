@@ -2,6 +2,19 @@
 # Regenerate with: python3 scripts/gen_changelog.py
 CHANGELOG_FALLBACK=[
   {
+    "version": "v15.5.0",
+    "date": "2026-05-05 07:30",
+    "title": "feat: v15.5.0 — 自动知识闭环（沉淀+注入+可观测）",
+    "changes": [
+      "feat: AutoLearnEngine — 工具调用后自动沉淀知识/经验/记忆到 DB（取代旧版只写 learnings.md）",
+      "feat: 上下文注入 — 工具调用前自动注入相关经验提醒和知识补充",
+      "feat: tool_call_traces 表 — 记录每次工具调用的规则匹配、上下文注入、自动沉淀情况",
+      "feat: knowledge_utilization_stats 工具 — 查看知识利用率、规则遵守率、沉淀活跃度",
+      "feat: LoggingMiddleware 增强 — 每次工具调用自动写入追踪记录",
+      "Version bump: 15.4.0 -> 15.5.0 (minor - 知识闭环)"
+    ]
+  },
+  {
     "version": "v15.4.0",
     "date": "2026-05-05 06:30",
     "title": "feat: v15.4.0 — Agent 自由学习模式 (权限全开 + 审核自动通过)",

@@ -60,10 +60,43 @@ class LoggingMiddleware(MiddlewareStep):
         try:
             result = await next_fn(next_index)
             logger.info(f"← 工具完成: {ctx.tool_name} ({ctx.duration_ms:.0f}ms)")
+            # 记录工具调用追踪（可观测性）
+            self._record_trace(ctx)
             return result
         except Exception as e:
             logger.error(f"✗ 工具失败: {ctx.tool_name} — {e}")
+            ctx.error = e
+            self._record_trace(ctx)
             raise
+
+    def _record_trace(self, ctx: Context):
+        """记录工具调用追踪到 tool_call_traces 表"""
+        try:
+            import uuid
+            from backend.db import get_knowledge_db
+            conn = get_knowledge_db()
+            trace_id = f"trc_{uuid.uuid4().hex[:12]}"
+            conn.execute(
+                "INSERT INTO tool_call_traces (id, tool_name, arguments, result_success, agent_id, session_id, "
+                "matched_rules, injected_hints, auto_learned, duration_ms, error) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    trace_id,
+                    ctx.tool_name,
+                    json.dumps(ctx.arguments, ensure_ascii=False)[:1000],
+                    1 if ctx.error is None else 0,
+                    ctx.agent_id or "",
+                    ctx.session_id or "",
+                    json.dumps(ctx.metadata.get("matched_rules", [])),
+                    json.dumps(ctx.metadata.get("context_hints", [])),
+                    json.dumps(ctx.metadata.get("auto_learned", [])),
+                    ctx.duration_ms,
+                    str(ctx.error)[:500] if ctx.error else "",
+                ),
+            )
+            conn.commit()
+        except Exception as e:
+            logger.debug(f"追踪记录失败: {e}")
 
 class SessionTrackingMiddleware(MiddlewareStep):
     async def process(self, ctx: Context, next_fn: Callable, next_index: int) -> Context:
@@ -132,29 +165,68 @@ class RuleGuardMiddleware(MiddlewareStep):
             ctx.metadata["rule_warnings"] = warnings
             logger.info(f"⚠️ RuleGuard 警告: {ctx.tool_name} — {len(warnings)} 条")
 
+        # --- Step 3: 注入相关经验和知识提醒 ---
+        context_hints = self._build_context_hints(ctx.tool_name, ctx.arguments)
+        if context_hints:
+            ctx.metadata["context_hints"] = context_hints
+
         result = await next_fn(next_index)
 
-        # 如果有警告，将警告附加到结果中
-        if warnings and isinstance(result, dict) and result.get("success"):
+        # 如果有警告或上下文提示，附加到结果中
+        extras = {}
+        if warnings:
+            extras["_rule_warnings"] = warnings
+        if context_hints:
+            extras["_context_hints"] = context_hints
+        if extras and isinstance(result, dict) and result.get("success"):
             existing_data = result.get("data", {})
             if isinstance(existing_data, dict):
-                existing_data["_rule_warnings"] = warnings
+                existing_data.update(extras)
             else:
-                result["_rule_warnings"] = warnings
+                result.update(extras)
 
         return result
 
+    def _build_context_hints(self, tool_name: str, arguments: dict) -> List[str]:
+        """构建上下文提示：从知识库中查找与当前工具调用相关的经验和知识"""
+        hints = []
+        try:
+            from backend.services.knowledge_service import KnowledgeService
+            ks = KnowledgeService()
+
+            # 1. 查找相关经验（同工具的未解决经验）
+            experiences = ks.list_experiences(limit=50)
+            related_exp = [
+                e for e in experiences
+                if e.get("tool_name") == tool_name and not e.get("is_resolved")
+            ]
+            for exp in related_exp[:3]:
+                hints.append(f"⚠️ 历史经验: {exp.get('title', '')} — {exp.get('content', '')[:100]}")
+
+            # 2. 查找相关知识（基于参数关键词）
+            query_parts = list(arguments.values())[:2]
+            query_text = " ".join(str(v) for v in query_parts if isinstance(v, str))[:50]
+            if query_text and len(query_text) >= 4:
+                knowledge = ks.search_knowledge(query_text, limit=3)
+                for kn in knowledge:
+                    hints.append(f"📚 相关知识: {kn.get('title', '')} — {kn.get('content', '')[:100]}")
+
+        except Exception as e:
+            logger.debug(f"上下文提示构建失败: {e}")
+
+        return hints
+
 class AutoLearnMiddleware(MiddlewareStep):
-    """自动学习中间件 — 成功和失败调用都触发学习"""
+    """自动知识沉淀中间件 — 每次工具调用后自动提炼知识/经验/记忆写入 DB"""
     def __init__(self, auto_learner=None):
         self._auto_learner = auto_learner
     @property
     def auto_learner(self):
         if self._auto_learner == "lazy":
             try:
-                from backend.services.auto_learner import AutoLearner
-                self._auto_learner = AutoLearner()
-                logger.info("AutoLearnMiddleware: auto_learner lazy-initialized")
+                from backend.services.auto_learn_engine import auto_learn_engine
+                self._auto_learner = auto_learn_engine
+                logger.info("AutoLearnMiddleware: auto_learn_engine lazy-initialized")
             except Exception as e:
                 logger.warning(f"AutoLearnMiddleware: failed to init: {e}")
                 self._auto_learner = None
@@ -164,11 +236,27 @@ class AutoLearnMiddleware(MiddlewareStep):
         learner = self.auto_learner
         if learner:
             try:
-                learner.learn_from_tool_call(tool_name=ctx.tool_name, arguments=ctx.arguments,
-                    success=ctx.error is None, error=str(ctx.error) if ctx.error else None,
-                    result_summary=str(ctx.result)[:500] if ctx.result else None)
+                # 从工具返回结果中提取摘要
+                result_summary = None
+                if ctx.result:
+                    if isinstance(ctx.result, dict):
+                        # 从 MCP 工具返回的 JSON 中提取 message 或 data
+                        msg = ctx.result.get("message", "")
+                        data = ctx.result.get("data", "")
+                        result_summary = str(msg or data or ctx.result)[:1000]
+                    else:
+                        result_summary = str(ctx.result)[:1000]
+                learner.learn_from_tool_call(
+                    tool_name=ctx.tool_name,
+                    arguments=ctx.arguments,
+                    success=ctx.error is None,
+                    error=str(ctx.error) if ctx.error else None,
+                    result_summary=result_summary,
+                    agent_id=ctx.agent_id,
+                    session_id=ctx.session_id,
+                )
             except Exception as e:
-                logger.warning(f"自动学习失败: {e}")
+                logger.warning(f"自动沉淀失败: {e}")
         return result
 
 class ErrorHandlingMiddleware(MiddlewareStep):

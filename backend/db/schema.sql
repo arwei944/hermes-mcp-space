@@ -305,3 +305,26 @@ END;
 -- ==================== 初始化上下文预算 ====================
 INSERT OR IGNORE INTO context_budget (id, total_budget, rules_pct, knowledge_pct, experience_pct, memory_pct, session_pct, updated_at)
 VALUES (1, 4000, 15, 25, 15, 20, 25, datetime('now'));
+
+-- ==================== 工具调用追踪表（可观测性） ====================
+CREATE TABLE IF NOT EXISTS tool_call_traces (
+    id                  TEXT PRIMARY KEY,
+    tool_name           TEXT NOT NULL,
+    arguments           TEXT DEFAULT '{}',
+    result_success      INTEGER DEFAULT 0,
+    agent_id            TEXT DEFAULT '',
+    session_id          TEXT DEFAULT '',
+    matched_rules       TEXT DEFAULT '[]',       -- JSON: 匹配到的规则ID列表
+    obeyed_rules        TEXT DEFAULT '[]',        -- JSON: 被遵守的规则ID
+    violated_rules      TEXT DEFAULT '[]',        -- JSON: 被违反的规则ID
+    injected_hints      TEXT DEFAULT '[]',        -- JSON: 注入的上下文提示
+    auto_learned        TEXT DEFAULT '[]',        -- JSON: 自动沉淀的记录 [{type, id}]
+    duration_ms         REAL DEFAULT 0,
+    error               TEXT DEFAULT '',
+    created_at          TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_traces_tool ON tool_call_traces(tool_name);
+CREATE INDEX IF NOT EXISTS idx_traces_agent ON tool_call_traces(agent_id);
+CREATE INDEX IF NOT EXISTS idx_traces_time ON tool_call_traces(created_at);
+CREATE INDEX IF NOT EXISTS idx_traces_success ON tool_call_traces(result_success);
