@@ -3,7 +3,7 @@
  * 首次访问时展示 4 步引导，帮助新用户快速了解产品
  */
 const _Onboarding = (() => {
-    const STORAGE_KEY = 'hermes_onboarding_done';
+    const STORAGE_KEY = 'hermes-onboarding-done';
     const steps = [
         {
             title: '欢迎使用 Hermes',
@@ -53,7 +53,7 @@ const _Onboarding = (() => {
         if (_overlay) _overlay.remove();
         _overlay = document.createElement('div');
         _overlay.id = 'onboarding-overlay';
-        _overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease';
+        _overlay.style.cssText = 'position:fixed;inset:0;z-index:var(--z-overlay);background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease';
         document.body.appendChild(_overlay);
         _overlay.addEventListener('click', (e) => {
             if (e.target === _overlay) _close();

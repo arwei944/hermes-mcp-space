@@ -2,9 +2,13 @@
  * Hermes Agent - Service Worker
  * V7-24: PWA 离线缓存支持
  * V13.4: 更新缓存列表匹配模块化文件结构
+ * V14.3: 添加自愈缓存机制，减少手动维护 CACHE_FILES 的负担
  */
 
 const CACHE_NAME = 'hermes-v8';
+
+// 注意：以下 STATIC_ASSETS 列表需要手动维护，新增页面/模块时需同步更新。
+// v14.3 已添加自愈机制：未在预缓存列表中的资源会在首次请求时自动缓存。
 const STATIC_ASSETS = [
     '/',
     '/css/style.css',
@@ -84,45 +88,20 @@ self.addEventListener('activate', function (event) {
     self.clients.claim();
 });
 
-// 请求拦截：缓存优先策略（API 请求不缓存）
-self.addEventListener('fetch', function (event) {
-    // API 请求不缓存
-    if (event.request.url.includes('/api/')) return;
-
-    // SSE 请求不缓存
-    if (event.request.url.includes('/api/events')) return;
-
+// Self-healing: dynamically cache requested resources
+self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') return;
     event.respondWith(
-        caches.match(event.request).then(function (cached) {
-            if (cached) {
-                // 后台更新缓存
-                fetch(event.request).then(function (response) {
-                    if (response && response.ok) {
-                        caches.open(CACHE_NAME).then(function (cache) {
-                            cache.put(event.request, response);
-                        });
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.match(event.request).then((response) => {
+                if (response) return response;
+                // Not in cache - fetch and cache dynamically
+                return fetch(event.request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200) {
+                        cache.put(event.request, networkResponse.clone());
                     }
-                }).catch(function () {
-                    // 网络不可用时忽略
+                    return networkResponse;
                 });
-                return cached;
-            }
-
-            return fetch(event.request).then(function (response) {
-                if (!response || !response.ok) {
-                    return response;
-                }
-                var clone = response.clone();
-                caches.open(CACHE_NAME).then(function (cache) {
-                    cache.put(event.request, clone);
-                });
-                return response;
-            }).catch(function () {
-                // 离线降级：返回离线提示页面
-                if (event.request.mode === 'navigate') {
-                    return caches.match('/');
-                }
-                return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
             });
         })
     );

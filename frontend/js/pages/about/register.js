@@ -21,6 +21,7 @@ const AboutPage = (() => {
         _modules.versionTab.render('#about-version');
         _modules.changelogTab.render('#about-changelog');
         _modules.techStackTab.render('#about-techstack');
+        _modules.page.initLinks();
     }
 
     function switchTab(tab) {

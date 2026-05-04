@@ -2284,3 +2284,14 @@ textarea {
     max-width: 400px;
     margin-bottom: 16px;
 }
+
+/* ==========================================
+   v14.3.0: Z-Index Layer System
+   ========================================== */
+:root {
+    --z-sticky: 40;
+    --z-dropdown: 50;
+    --z-modal: 100;
+    --z-overlay: 9999;
+    --z-toast: 10000;
+}

@@ -10,7 +10,7 @@ function showExportProgress(message) {
 
     var overlay = document.createElement('div');
     overlay.id = 'export-progress-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:var(--z-overlay);';
     overlay.innerHTML =
         '<div style="background:var(--surface,white);border-radius:12px;padding:24px 32px;min-width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">' +
             '<div style="margin-bottom:12px;font-size:14px;color:var(--text-secondary,#666);">' + (message || '正在导出...') + '</div>' +

@@ -10,7 +10,7 @@ function showConfirmDialog(title, message, onConfirm) {
 
     var overlay = document.createElement('div');
     overlay.id = 'confirm-dialog-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:var(--z-overlay);';
     overlay.innerHTML =
         '<div style="background:var(--surface,white);border-radius:12px;padding:24px;min-width:360px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">' +
             '<h3 style="margin:0 0 12px;font-size:16px;color:var(--text-primary,#111);">' + title + '</h3>' +
