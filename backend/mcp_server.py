@@ -50,18 +50,39 @@ def _build_agent_instructions(agent_id: str, client_info: dict) -> str:
             role_info = AGENT_ROLES.get(role, AGENT_ROLES.get("general", {}))
             role_label = role_info.get("label", "通用助手")
     except Exception: pass
-    instructions = f"你是 Hermes AI 助手（角色：{role_label}，ID：{agent_id}）。\n\n"
-    instructions += "## 重要行为指引\n"
-    instructions += "1. 每次完成一次有意义的对话后，请调用 `submit_conversation` 工具提交对话记录。\n"
-    instructions += "2. 遇到错误或异常时，请调用 `add_learning` 记录经验。\n"
-    instructions += "3. 如果发现用户有明确的偏好表达，请调用 `memory_create` 记忆。\n"
-    instructions += "4. 你可以从知识库中搜索相关信息来辅助回答。\n"
+
+    instructions = f"""你是 Hermes AI 助手（角色：{role_label}，ID：{agent_id}）。
+
+## 🧠 记忆系统（必须遵守）
+
+你拥有一个持久化记忆系统，所有通过此 MCP 提供的工具（submit_conversation、add_learning、memory_create 等）都会将数据持久化存储。
+**这意味着：你调用这些工具保存的信息，在下次对话中依然可用。如果你不保存，下次对话你将忘记一切。**
+
+### 每次对话结束时，你必须执行以下操作：
+
+1. **调用 `submit_conversation`** — 将本次对话的完整内容（用户说了什么、你回答了什么）提交保存。
+   - 格式：`{{"messages": [{{"role": "user", "content": "用户的问题"}}, {{"role": "assistant", "content": "你的回答"}}]}}`
+   - 这是你保留记忆的唯一方式，不提交 = 下次忘记
+
+2. **如果用户表达了偏好**（比如"我喜欢X"、"以后都按Y格式"）→ 调用 `memory_create` 保存
+
+3. **如果你犯了错误并修正了** → 调用 `add_learning` 记录经验，避免下次重犯
+
+4. **如果用户对你的回答表示满意或不满** → 调用 `submit_feedback` 记录反馈
+
+### 为什么必须这样做？
+- 你的记忆不会自动保存，只有通过工具调用才能持久化
+- 不保存 = 每次对话都是全新开始，你无法积累经验
+- 保存了 = 你会越来越了解用户，犯错越来越少，服务越来越好
+
+"""
+
     try:
         from backend.services.context_budget_service import ContextBudgetService
         ctx_svc = ContextBudgetService()
         context = ctx_svc.build_context(agent_id=agent_id, max_tokens=2000)
         if context and context.strip():
-            instructions += "\n## 当前知识上下文\n以下是系统为你准备的相关知识：\n\n" + context + "\n"
+            instructions += "\n## 📚 当前知识上下文\n以下是系统为你积累的知识和经验，请在回答时参考：\n\n" + context + "\n"
     except Exception as e:
         logger.debug(f"Failed to build context: {e}")
     return instructions
@@ -82,6 +103,57 @@ def _summarize_tool_args(tool_name: str, args: Dict[str, Any], max_len: int = 20
     parts = [f"{k}={str(v)[:60]}" for k, v in list(args.items())[:4]]
     result = ", ".join(parts)
     return result[:max_len] + "..." if len(result) > max_len else result
+
+def _capture_tool_content(tool_name: str, arguments: Dict[str, Any], result_text: str, session_id: str, agent_id: str):
+    """从工具调用参数中自动提取有价值的内容，作为对话数据的保底捕获"""
+    content_to_save = None
+    role = "assistant"
+
+    # 这些工具的参数本身包含对话内容
+    content_tools = {
+        "add_message": arguments.get("content", ""),
+        "submit_conversation": None,  # 已经有自己的存储逻辑，跳过
+        "memory_create": arguments.get("content", arguments.get("text", "")),
+        "add_learning": arguments.get("content", arguments.get("text", "")),
+        "knowledge_create": arguments.get("content", arguments.get("text", "")),
+        "experience_create": arguments.get("content", arguments.get("text", "")),
+    }
+
+    if tool_name in content_tools and content_tools[tool_name] is not None:
+        content_to_save = content_tools[tool_name]
+        if tool_name == "add_message":
+            role = arguments.get("role", "assistant")
+
+    # shell_execute 的 command 也值得记录
+    elif tool_name == "shell_execute":
+        cmd = arguments.get("command", "")
+        if cmd and len(cmd) > 5:
+            content_to_save = f"[执行命令] {cmd}"
+
+    # web_search 的 query 值得记录
+    elif tool_name == "web_search":
+        query = arguments.get("query", "")
+        if query:
+            content_to_save = f"[搜索] {query}"
+
+    # web_fetch 的 url 值得记录
+    elif tool_name == "web_fetch":
+        url = arguments.get("url", "")
+        if url:
+            content_to_save = f"[访问] {url}"
+
+    if not content_to_save or not isinstance(content_to_save, str) or len(content_to_save.strip()) < 3:
+        return
+
+    try:
+        from backend.services.hermes_service import hermes_service as _hs
+        _hs.add_session_message(
+            session_id=session_id, role=role, content=str(content_to_save)[:2000],
+            metadata={"tool": tool_name, "auto_captured": True, "agent_id": agent_id}
+        )
+        logger.debug(f"Auto-captured content from {tool_name}: {len(content_to_save)} chars")
+    except Exception as e:
+        logger.debug(f"Failed to auto-capture content: {e}")
 
 def _get_tools():
     tools = registry.get_tools()
@@ -159,7 +231,9 @@ async def mcp_endpoint(request: Request):
     elif method == "tools/list": return JSONResponse(content=_jsonrpc_response(req_id, {"tools": _get_tools()}))
     elif method == "tools/call":
         tool_name, arguments = params.get("name", ""), params.get("arguments", {})
-        session_info = _sessions.get(req_id, {}) if req_id else {}
+        # 从 HTTP header 获取 session ID（MCP 协议标准方式）
+        mcp_session_id = request.headers.get("mcp-session-id", "")
+        session_info = _sessions.get(mcp_session_id, {})
         agent_id = session_info.get("agent_id", "unknown")
         hermes_session_id = session_info.get("hermes_session_id", "solo_realtime")
         try:
@@ -170,7 +244,7 @@ async def mcp_endpoint(request: Request):
             except Exception: pass
             try:
                 from backend.services.session_lifecycle import session_lifecycle
-                session_lifecycle.on_tool_call(req_id)
+                session_lifecycle.on_tool_call(mcp_session_id)
             except Exception: pass
             try:
                 from backend.routers.logs import add_log
@@ -184,6 +258,10 @@ async def mcp_endpoint(request: Request):
                 result_text = await _call_tool(tool_name, arguments)
                 latency = int((time.time() - start) * 1000)
                 eval_service.record_tool_call(tool_name, arguments, True, latency, "", "mcp", agent_id, hermes_session_id)
+                # 参数捕获保底：自动从工具调用中提取对话内容存入会话
+                try:
+                    _capture_tool_content(tool_name, arguments, result_text, hermes_session_id, agent_id)
+                except Exception: pass
                 try:
                     from backend.services.auto_learner import run_incremental_learning
                     run_incremental_learning(tool_name, True)
