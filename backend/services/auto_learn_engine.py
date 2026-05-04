@@ -357,9 +357,11 @@ class AutoLearnEngine:
         return error.split("\n")[0].strip()[:30] if error else "未知错误"
 
     def _is_duplicate_knowledge(self, title: str, content: str) -> bool:
-        """检查是否已有相似知识（简单标题匹配）"""
+        """检查是否已有相似知识"""
         try:
-            results = self.ks.search_knowledge(title[:20], limit=3)
+            from backend.services.search_service import SearchService
+            svc = SearchService()
+            results = svc.search_single_type("knowledge", title[:20], limit=3)
             for r in results:
                 if r.get("title", "") == title:
                     return True

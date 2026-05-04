@@ -207,7 +207,9 @@ class RuleGuardMiddleware(MiddlewareStep):
             query_parts = list(arguments.values())[:2]
             query_text = " ".join(str(v) for v in query_parts if isinstance(v, str))[:50]
             if query_text and len(query_text) >= 4:
-                knowledge = ks.search_knowledge(query_text, limit=3)
+                from backend.services.search_service import SearchService
+                search_svc = SearchService()
+                knowledge = search_svc.search_single_type("knowledge", query_text, limit=3)
                 for kn in knowledge:
                     hints.append(f"📚 相关知识: {kn.get('title', '')} — {kn.get('content', '')[:100]}")
 
