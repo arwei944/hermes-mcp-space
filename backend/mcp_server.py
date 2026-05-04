@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from backend.mcp.registry import registry
 from backend.mcp.middleware import (
     AutoLearnMiddleware, MCPMiddlewarePipeline, LoggingMiddleware, ErrorHandlingMiddleware,
+    RuleGuardMiddleware,
 )
 
 logger = logging.getLogger("hermes-mcp")
@@ -28,6 +29,7 @@ USE_TOOL_REGISTRY = True
 
 _pipeline = MCPMiddlewarePipeline()
 _pipeline.add(LoggingMiddleware())
+_pipeline.add(RuleGuardMiddleware())
 _pipeline.add(ErrorHandlingMiddleware())
 _pipeline.add(AutoLearnMiddleware(auto_learner="lazy"))
 registry.discover()
@@ -183,7 +185,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
         except ValueError: raise
         except Exception as e: raise ValueError(f"调用外部工具 '{name}' 失败: {e}")
     try:
-        result = await _pipeline.execute(tool_name=name, arguments=arguments, registry=registry)
+        result = await _pipeline.execute(tool_name=name, arguments=arguments, registry=registry, agent_id=agent_id)
         if isinstance(result, dict): return json.dumps(result, ensure_ascii=False, indent=2)
         return str(result) if result is not None else ""
     except ValueError: raise
