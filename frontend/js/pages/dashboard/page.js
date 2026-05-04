@@ -28,11 +28,11 @@ const DashboardPageLayout = (() => {
         try {
             const [dashData, activity, trend, ranking, errors, heatmap] = await Promise.all([
                 API.system.dashboard(),
-                API.get('/api/dashboard/activity'),
-                API.get('/api/dashboard/trend?days=7'),
-                API.get('/api/dashboard/ranking'),
-                API.get('/api/dashboard/errors'),
-                API.get('/api/dashboard/heatmap'),
+                API.dashboard.activity(),
+                API.dashboard.trend({ days: 7 }),
+                API.dashboard.ranking(),
+                API.dashboard.errors(),
+                API.dashboard.heatmap(),
             ]);
             _data = dashData;
             _activity = activity || [];
@@ -66,7 +66,7 @@ const DashboardPageLayout = (() => {
             try {
                 const [dashData, activity] = await Promise.all([
                     API.system.dashboard(),
-                    API.get('/api/dashboard/activity?limit=30'),
+                    API.dashboard.activity({ limit: 30 }),
                 ]);
                 _data = dashData;
                 _activity = activity || [];
@@ -92,7 +92,7 @@ const DashboardPageLayout = (() => {
 
     function onSSEEvent(type, data) {
         if (type === 'mcp.tool_call' || type === 'mcp.tool_complete') {
-            API.get('/api/dashboard/activity?limit=30')
+            API.dashboard.activity({ limit: 30 })
                 .then((activity) => {
                     _activity = activity || [];
                     updateActivityFeed();

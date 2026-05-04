@@ -39,14 +39,21 @@ const ErrorHandler = (() => {
         if (!_flushTimer) _flushTimer = setInterval(_flushReports, FLUSH_INTERVAL);
     }
 
+    // v14.1: 上报路径统一由 API 层管理
+    var _reportEndpoint = '/api/ops/frontend-errors';
+
     function _flushReports() {
         if (_reportQueue.length === 0) return;
         var payload = _reportQueue.splice(0, MAX_QUEUE)[0];
         try {
             if (navigator && navigator.sendBeacon) {
-                navigator.sendBeacon('/api/ops/frontend-errors', JSON.stringify(payload));
+                // sendBeacon 是同步 API，只能用原始路径
+                navigator.sendBeacon(_reportEndpoint, JSON.stringify(payload));
+            } else if (typeof API !== 'undefined' && API.ops) {
+                // 优先使用 API 层上报
+                API.ops.reportFrontendError(payload).catch(function() {});
             } else if (typeof fetch !== 'undefined') {
-                fetch('/api/ops/frontend-errors', {
+                fetch(_reportEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),

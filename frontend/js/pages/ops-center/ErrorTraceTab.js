@@ -173,9 +173,9 @@ var OpsErrorTraceTab = (() => {
 
     function _loadErrors() {
         Promise.all([
-            API.get('/api/ops/frontend-errors', { limit: 50 }).catch(function() { return []; }),
-            API.get('/api/ops/api-errors', { limit: 50 }).catch(function() { return []; }),
-            API.get('/api/ops/frontend-errors/stats').catch(function() { return null; }),
+            API.ops.frontendErrors({ limit: 50 }).catch(function() { return []; }),
+            API.ops.apiErrors({ limit: 50 }).catch(function() { return []; }),
+            API.ops.frontendErrorsStats().catch(function() { return null; }),
         ]).then(function(results) {
             if (_destroyed) return;
             _frontendErrors = results[0] || [];

@@ -1,6 +1,9 @@
 /**
  * 告警管理页面 - 共享常量
  * 告警类型配置、级别颜色等
+ *
+ * v14.1: defaultThreshold 值应与 AlertChecker._defaultRules 保持同步。
+ *       修改阈值时请同时更新 AlertChecker.js 中的 _defaultRules。
  */
 
 const ALERT_TYPES = {

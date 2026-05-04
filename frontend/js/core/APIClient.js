@@ -29,21 +29,22 @@
                 build_version: (typeof window !== 'undefined' && window.__BUILD_VERSION__) ? window.__BUILD_VERSION__ : 'unknown',
             };
             if (navigator && navigator.sendBeacon) {
-                navigator.sendBeacon('/api/ops/frontend-errors', JSON.stringify(payload));
+                var _endpoint = '/api/ops/frontend-errors';
+                navigator.sendBeacon(_endpoint, JSON.stringify(payload));
             }
         } catch (_) { /* ignore */ }
     }
 
-    function detectBaseUrl() {
-        const { hostname } = window.location;
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://localhost:3000';
-        }
+    // v14.1: api.js 是规范的 API 层，此处简化为相对路径
+    // 所有请求走同源，BASE_URL 由 api.js 统一管理
+    function _getBaseUrl() {
+        // 优先使用 api.js 的 BASE_URL（如果已加载）
+        if (typeof API !== 'undefined' && API.BASE_URL) return API.BASE_URL;
         return '';
     }
 
     const client = {
-        baseUrl: detectBaseUrl(),
+        baseUrl: _getBaseUrl(),
         defaultHeaders: { 'Content-Type': 'application/json' },
         defaultTimeout: DEFAULT_TIMEOUT,
 

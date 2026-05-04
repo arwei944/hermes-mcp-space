@@ -65,7 +65,7 @@ const MCPOperations = (() => {
     async function testConnection() {
         Components.Toast.info('正在测试 MCP 连接...');
         try {
-            const baseUrl = window.location.origin;
+            const baseUrl = (typeof API !== 'undefined' && API.BASE_URL) ? API.BASE_URL : window.location.origin;
             const resp = await fetch(`${baseUrl}/mcp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -120,12 +120,11 @@ const MCPOperations = (() => {
             const ports = document.getElementById('mcpCustomPorts')?.value.trim() || '';
             const customUrl = document.getElementById('mcpCustomUrl')?.value.trim() || '';
             const hfUser = document.getElementById('mcpHFUser')?.value.trim() || '';
-            const params = new URLSearchParams();
-            if (ports) params.set('ports', ports);
-            if (customUrl) params.set('custom_url', customUrl);
-            if (hfUser) params.set('hf_user', hfUser);
-            const query = params.toString() ? `?${params.toString()}` : '';
-            const resp = await API.get(`/api/mcp/discover${query}`);
+            const params = {};
+            if (ports) params.ports = ports;
+            if (customUrl) params.custom_url = customUrl;
+            if (hfUser) params.hf_user = hfUser;
+            const resp = await API.mcpServers.discover(params);
             _discoveredServers = resp.discovered || [];
             Components.Toast.success(`扫描完成，发现 ${_discoveredServers.length} 个 MCP 服务`);
         } catch (err) {
@@ -138,11 +137,7 @@ const MCPOperations = (() => {
 
     async function addDiscoveredServer(name, url) {
         try {
-            await API.request('/api/mcp/servers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, url, prefix: '' }),
-            });
+            await API.mcpServers.add({ name, url, prefix: '' });
             Components.Toast.success(`已添加 ${name}`);
             await _reloadServers();
         } catch (err) {
@@ -158,7 +153,7 @@ const MCPOperations = (() => {
             return;
         }
         try {
-            const resp = await API.post('/api/mcp/discover/add', { servers: newServers });
+            const resp = await API.mcpServers.addDiscovered(newServers);
             Components.Toast.success(`已添加 ${resp.added}/${resp.total} 个服务`);
             await _reloadServers();
         } catch (err) {
@@ -176,11 +171,7 @@ const MCPOperations = (() => {
         }
         Components.Toast.info('正在连接...');
         try {
-            const resp = await API.request('/api/mcp/servers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, url, prefix }),
-            });
+            const resp = await API.mcpServers.add({ name, url, prefix });
             Components.Toast.success(resp.message || '添加成功');
             await _reloadServers();
         } catch (err) {
@@ -197,7 +188,7 @@ const MCPOperations = (() => {
         });
         if (!ok) return;
         try {
-            await API.request(`/api/mcp/servers/${encodeURIComponent(name)}`, { method: 'DELETE' });
+            await API.mcpServers.remove(name);
             Components.Toast.success(`已移除 ${name}`);
             await _reloadServers();
         } catch (err) {
@@ -208,7 +199,7 @@ const MCPOperations = (() => {
     async function refreshMCPServer(name) {
         Components.Toast.info('正在刷新...');
         try {
-            await API.request(`/api/mcp/servers/${encodeURIComponent(name)}/refresh`, { method: 'POST' });
+            await API.mcpServers.refresh(name);
             Components.Toast.success(`${name} 已刷新`);
             await _reloadServers();
         } catch (err) {
@@ -217,7 +208,7 @@ const MCPOperations = (() => {
     }
 
     async function _reloadServers() {
-        _mcpServers = await API.request('/api/mcp/servers').catch(() => []);
+        _mcpServers = await API.mcpServers.list().catch(() => []);
         if (_onReload) _onReload();
     }
 

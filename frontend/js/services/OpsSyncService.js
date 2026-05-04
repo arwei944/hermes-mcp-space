@@ -60,7 +60,7 @@ const OpsSyncService = (() => {
 
     async function _syncMetrics() {
         try {
-            const data = await API.get('/api/ops/metrics');
+            const data = await API.ops.metrics();
             if (window.Store) {
                 Store.batch(function() {
                     Store.set('ops.metrics', data);
@@ -80,7 +80,7 @@ const OpsSyncService = (() => {
 
     async function _syncMcpHealth() {
         try {
-            var data = await API.get('/api/ops/mcp-health');
+            var data = await API.ops.mcpHealth();
             if (window.Store) {
                 Store.set('ops.mcpHealth', data);
             }
@@ -100,7 +100,7 @@ const OpsSyncService = (() => {
 
     async function _syncCronMonitor() {
         try {
-            var data = await API.get('/api/ops/cron');
+            var data = await API.ops.cron();
             if (window.Store) {
                 Store.set('ops.cronMonitor', data);
             }
@@ -115,8 +115,8 @@ const OpsSyncService = (() => {
     async function _syncAlerts() {
         try {
             var results = await Promise.all([
-                API.get('/api/ops/alerts/rules'),
-                API.get('/api/ops/alerts/history?limit=50'),
+                API.ops.alertRules(),
+                API.ops.alertHistory({ limit: 50 }),
             ]);
             var rules = results[0];
             var history = results[1];
@@ -137,7 +137,7 @@ const OpsSyncService = (() => {
 
     async function _syncFrontendErrors() {
         try {
-            var data = await API.get('/api/ops/frontend-errors?limit=50');
+            var data = await API.ops.frontendErrors({ limit: 50 });
             if (window.Store) {
                 Store.set('ops.frontendErrors', data || []);
                 // 更新最近错误列表（合并前端+API错误）
@@ -153,7 +153,7 @@ const OpsSyncService = (() => {
 
     async function _syncApiErrors() {
         try {
-            var data = await API.get('/api/ops/api-errors?limit=50');
+            var data = await API.ops.apiErrors({ limit: 50 });
             if (window.Store) {
                 Store.set('ops.apiErrors', data || []);
                 _updateRecentErrors();
@@ -178,7 +178,7 @@ const OpsSyncService = (() => {
 
     async function _syncRecentEvents() {
         try {
-            var data = await API.get('/api/events/history?limit=30');
+            var data = await API.ops.recentEvents({ limit: 30 });
             if (window.Store) {
                 Store.set('ops.recentEvents', data || []);
             }
@@ -193,10 +193,10 @@ const OpsSyncService = (() => {
     async function _syncEvalData() {
         try {
             var results = await Promise.all([
-                API.get('/api/evals/summary'),
-                API.get('/api/evals/tools'),
-                API.get('/api/evals/errors'),
-                API.get('/api/evals/trend?days=7'),
+                API.ops.evalSummary(),
+                API.ops.evalTools(),
+                API.ops.evalErrors(),
+                API.ops.evalTrend({ days: 7 }),
             ]);
             if (window.Store) {
                 Store.batch(function() {

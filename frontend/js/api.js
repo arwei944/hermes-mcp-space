@@ -363,6 +363,137 @@ const API = (() => {
     };
 
     // ==========================================
+    // 运维数据 API（v14.1: 统一 ops 路径）
+    // ==========================================
+    const ops = {
+        /** 系统指标（CPU/内存/磁盘） */
+        metrics() {
+            return get('/api/ops/metrics');
+        },
+        /** MCP 健康状态 */
+        mcpHealth() {
+            return get('/api/ops/mcp-health');
+        },
+        /** 定时任务监控 */
+        cron() {
+            return get('/api/ops/cron');
+        },
+        /** 告警规则列表 */
+        alertRules() {
+            return get('/api/ops/alerts/rules');
+        },
+        /** 告警历史 */
+        alertHistory(params) {
+            return get('/api/ops/alerts/history', params);
+        },
+        /** 前端错误列表 */
+        frontendErrors(params) {
+            return get('/api/ops/frontend-errors', params);
+        },
+        /** 前端错误统计 */
+        frontendErrorsStats() {
+            return get('/api/ops/frontend-errors/stats');
+        },
+        /** 上报前端错误 */
+        reportFrontendError(data) {
+            return post('/api/ops/frontend-errors', data);
+        },
+        /** API 错误列表 */
+        apiErrors(params) {
+            return get('/api/ops/api-errors', params);
+        },
+        /** 事件历史 */
+        recentEvents(params) {
+            return get('/api/events/history', params);
+        },
+        /** 评估汇总 */
+        evalSummary() {
+            return get('/api/evals/summary');
+        },
+        /** 评估工具 */
+        evalTools() {
+            return get('/api/evals/tools');
+        },
+        /** 评估错误 */
+        evalErrors() {
+            return get('/api/evals/errors');
+        },
+        /** 评估趋势 */
+        evalTrend(params) {
+            return get('/api/evals/trend', params);
+        },
+    };
+
+    // ==========================================
+    // 仪表盘 API（v14.1: 统一 dashboard 路径）
+    // ==========================================
+    const dashboard = {
+        activity(params) {
+            return get('/api/dashboard/activity', params);
+        },
+        trend(params) {
+            return get('/api/dashboard/trend', params);
+        },
+        ranking() {
+            return get('/api/dashboard/ranking');
+        },
+        errors() {
+            return get('/api/dashboard/errors');
+        },
+        heatmap() {
+            return get('/api/dashboard/heatmap');
+        },
+    };
+
+    // ==========================================
+    // 知识库审核 API（v14.1: 统一 reviews 路径）
+    // ==========================================
+    const reviews = {
+        list(params) {
+            return get('/api/reviews', params);
+        },
+        stats() {
+            return get('/api/reviews/stats');
+        },
+        approve(id) {
+            return put(`/api/reviews/${id}/approve`);
+        },
+        reject(id, data) {
+            return put(`/api/reviews/${id}/reject`, data || {});
+        },
+        batchApprove(ids) {
+            return post('/api/reviews/batch/approve', { ids });
+        },
+        batchReject(ids) {
+            return post('/api/reviews/batch/reject', { ids });
+        },
+    };
+
+    // ==========================================
+    // MCP 服务器管理 API（v14.1: 统一 mcp 路径）
+    // ==========================================
+    const mcpServers = {
+        list() {
+            return get('/api/mcp/servers');
+        },
+        add(data) {
+            return post('/api/mcp/servers', data);
+        },
+        remove(name) {
+            return del(`/api/mcp/servers/${encodeURIComponent(name)}`);
+        },
+        refresh(name) {
+            return post(`/api/mcp/servers/${encodeURIComponent(name)}/refresh`);
+        },
+        discover(params) {
+            return get('/api/mcp/discover', params);
+        },
+        addDiscovered(servers) {
+            return post('/api/mcp/discover/add', { servers });
+        },
+    };
+
+    // ==========================================
     // 热更新检查
     // ==========================================
     let _currentServerVersion = null;
@@ -410,8 +541,12 @@ const API = (() => {
         cron,
         agents,
         mcp,
+        mcpServers,
         config,
         system,
+        ops,
+        dashboard,
+        reviews,
         meta: _getMeta,
         BASE_URL,
         checkForUpdate,

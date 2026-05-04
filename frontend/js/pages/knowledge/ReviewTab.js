@@ -29,8 +29,8 @@ const ReviewTab = (() => {
 
     async function load(contentEl) {
         const [items, stats] = await Promise.allSettled([
-            API.get('/api/reviews', { status: 'pending', limit: 50 }),
-            API.get('/api/reviews/stats'),
+            API.reviews.list({ status: 'pending', limit: 50 }),
+            API.reviews.stats(),
         ]);
 
         _data = items.status === 'fulfilled' ? (items.value?.data || items.value || []) : [];
@@ -132,7 +132,7 @@ const ReviewTab = (() => {
     // Review actions
     async function approveReview(id) {
         try {
-            await API.put('/api/reviews/' + id + '/approve');
+            await API.reviews.approve(id);
             KnowledgeUtils.showToast('审核已通过', 'success');
             return true;
         } catch (err) {
@@ -143,7 +143,7 @@ const ReviewTab = (() => {
 
     async function rejectReview(id) {
         try {
-            await API.put('/api/reviews/' + id + '/reject', {});
+            await API.reviews.reject(id);
             KnowledgeUtils.showToast('审核已拒绝', 'success');
             return true;
         } catch (err) {
@@ -182,7 +182,7 @@ const ReviewTab = (() => {
 
     async function _doBatchApprove(ids) {
         try {
-            await API.post('/api/reviews/batch/approve', { ids: ids });
+            await API.reviews.batchApprove(ids);
             KnowledgeUtils.showToast(ids.length + ' 条审核已通过', 'success');
             _selectedReviews.clear();
             return true;
@@ -222,7 +222,7 @@ const ReviewTab = (() => {
 
     async function _doBatchReject(ids) {
         try {
-            await API.post('/api/reviews/batch/reject', { ids: ids });
+            await API.reviews.batchReject(ids);
             KnowledgeUtils.showToast(ids.length + ' 条审核已拒绝', 'success');
             _selectedReviews.clear();
             return true;
