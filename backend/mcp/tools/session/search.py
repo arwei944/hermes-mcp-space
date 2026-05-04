@@ -12,10 +12,10 @@ def register(reg):
         schema={
             "type": "object",
             "properties": {
-                "keyword": {"type": "string", "description": "搜索关键词"},
+                "query": {"type": "string", "description": "搜索关键词"},
                 "limit": {"type": "integer", "default": 10, "description": "返回的最大数量"}
             },
-            "required": ["keyword"]
+            "required": ["query"]
         },
         handler=handle,
         tags=["session"],
@@ -27,7 +27,10 @@ def handle(args: dict) -> dict:
     from backend.services.hermes_service import hermes_service
 
     try:
-        keyword = args["keyword"].lower()
+        # 兼容旧参数名 keyword
+        keyword = (args.get("query") or args.get("keyword") or "").lower()
+        if not keyword:
+            return error_response("缺少搜索关键词 (query)")
         limit = args.get("limit", 10)
         sessions = hermes_service.list_sessions()
         matched = [
@@ -40,7 +43,7 @@ def handle(args: dict) -> dict:
         if not result:
             return success_response(
                 data={"matched": [], "total": 0},
-                message=f"没有找到包含 '{args['keyword']}' 的会话",
+                message=f"没有找到包含 '{keyword}' 的会话",
             )
         lines = []
         for s in result:

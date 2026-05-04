@@ -2,6 +2,17 @@
 # Regenerate with: python3 scripts/gen_changelog.py
 CHANGELOG_FALLBACK=[
   {
+    "version": "v15.3.1",
+    "date": "2026-05-05 06:00",
+    "title": "fix: v15.3.1 - 紧急修复 3 个 bug (agent_id 崩溃 + DB 表缺失 + 参数名不匹配)",
+    "changes": [
+      "fix: _call_tool 函数签名缺少 agent_id 参数，导致 mcp_hermes 全部 105 个工具崩溃 (P0)",
+      "fix: 知识库 DB 表缺失 — get_knowledge_db() 现在自动检查并初始化 schema，不再依赖启动时单次调用 (P0)",
+      "fix: search_sessions 参数名 keyword 改为 query，兼容旧参数名 (P1)",
+      "Version bump: 15.3 -> 15.3.1 (patch - hotfix)"
+    ]
+  },
+  {
     "version": "v15.3",
     "date": "2026-05-05 05:30",
     "title": "feat: v15.3 - DEVPLAN 全量完成 (micro-squad + 双盲评审)",

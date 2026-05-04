@@ -171,7 +171,7 @@ def _get_tools():
     except Exception as e: logger.warning(f"加载外部 MCP 工具失败: {e}")
     return tools
 
-async def _call_tool(name: str, arguments: Dict[str, Any]) -> str:
+async def _call_tool(name: str, arguments: Dict[str, Any], agent_id: str = None) -> str:
     from backend.services.mcp_client_service import mcp_client_service
     if mcp_client_service.is_external_tool(name):
         try:
@@ -257,7 +257,7 @@ async def mcp_endpoint(request: Request):
             from backend.services import eval_service
             start = time.time()
             try:
-                result_text = await _call_tool(tool_name, arguments)
+                result_text = await _call_tool(tool_name, arguments, agent_id=agent_id)
                 latency = int((time.time() - start) * 1000)
                 eval_service.record_tool_call(tool_name, arguments, True, latency, "", "mcp", agent_id, hermes_session_id)
                 # 参数捕获保底：自动从工具调用中提取对话内容存入会话
