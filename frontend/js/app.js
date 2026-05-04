@@ -20,8 +20,7 @@ const App = (() => {
         sync: SyncPage,
         ops_center: OpsCenterPage,
         about: AboutPage,
-        chat: ChatPage,
-        logs: LogsPage,
+            logs: LogsPage,
     };
 
     const pageTitles = {
@@ -39,8 +38,7 @@ const App = (() => {
         sync: '备份恢复',
         ops_center: '运维中心',
         about: '关于',
-        chat: '对话',
-        logs: '操作日志',
+            logs: '操作日志',
     };
 
     let _currentPage = null;
@@ -326,7 +324,7 @@ const App = (() => {
             仪表盘: 'dashboard', 统计: 'dashboard', 概览: 'dashboard', 总览: 'dashboard',
             知识库: 'knowledge', 知识: 'knowledge', 规则: 'knowledge',
             会话: 'sessions', 会话管理: 'sessions', 历史: 'sessions', 聊天记录: 'sessions',
-            对话: 'chat', 聊天: 'chat',
+            对话: 'sessions', 聊天: 'sessions',
             功能商店: 'marketplace', 扩展管理: 'marketplace', 扩展: 'marketplace',
             工具: 'marketplace', 函数: 'marketplace', 技能: 'marketplace', skill: 'marketplace',
             mcp: 'marketplace', 服务: 'marketplace', 插件: 'marketplace',

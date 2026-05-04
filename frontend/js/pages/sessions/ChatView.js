@@ -56,7 +56,13 @@ const ChatView = (() => {
             summaryHtml = '<div class="session-summary-card" style="margin:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);overflow:hidden"><div class="summary-header" data-action="toggleSummary" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none"><span style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px">' + Components.icon('clipboard', 13) + ' 会话摘要</span><span class="summary-chevron" style="font-size:10px;color:var(--text-tertiary);transition:transform .2s">' + Components.icon('chevronDown', 12) + '</span></div><div class="summary-content" style="padding:0 12px 10px;font-size:12px;color:var(--text-secondary);line-height:1.6;display:none">' + Components.renderMarkdown(cs.summary) + '</div></div>';
         }
         var toolCardsHtml = Object.keys(_toolCards).map(function (k) { return buildToolCard(k, _toolCards[k]); }).join('');
-        return '<div class="chat-messages" id="chatMessages">' + summaryHtml + toolCardsHtml + messages.map(buildMessageItem).join('') + buildTypingIndicator() + '</div>';
+        var inputBarHtml = _currentId
+            ? '<div class="chat-input-bar" id="chatInputBar" style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--bg)">' +
+                '<input type="text" class="form-input" id="chatInput" placeholder="输入消息..." style="flex:1" data-action="messageInput">' +
+                '<button type="button" class="btn btn-primary" data-action="sendMessage" style="padding:8px 16px">发送</button>' +
+              '</div>'
+            : '';
+        return '<div class="chat-messages" id="chatMessages">' + summaryHtml + toolCardsHtml + messages.map(buildMessageItem).join('') + buildTypingIndicator() + '</div>' + inputBarHtml;
     }
 
     function buildSessionHeader(cs) {
@@ -156,8 +162,24 @@ const ChatView = (() => {
             if (!btn) return;
             if (btn.dataset.action === 'toggleToolCard') { var r = btn.querySelector('.tool-card-result'); if (r) r.style.display = r.style.display === 'none' ? 'block' : 'none'; }
             if (btn.dataset.action === 'toggleSummary') toggleSummary();
+            if (btn.dataset.action === 'sendMessage') sendMessage();
         });
         container.addEventListener('dblclick', function (e) { var t = e.target.closest('.session-title'); if (t) document.dispatchEvent(new CustomEvent('sessions:editTitle', { detail: { id: t.dataset.id } })); });
+        container.addEventListener('keydown', function (e) { var target = e.target.closest('[data-action="messageInput"]'); if (target && e.key === 'Enter') { e.preventDefault(); sendMessage(); } });
+    }
+
+    async function sendMessage() {
+        var input = document.getElementById('chatInput');
+        if (!input || !_currentId) return;
+        var content = input.value.trim();
+        if (!content) return;
+        input.value = '';
+        var msg = { role: 'user', content: content, timestamp: new Date().toISOString() };
+        _messages.push(msg);
+        appendMessage(msg);
+        scrollToBottom();
+        try { await API.sessions.addMessage(_currentId, 'user', content); }
+        catch (err) { Components.Toast.error('发送失败: ' + err.message); }
     }
 
     function destroy() { _sessions = []; _currentId = null; _messages = []; _toolCards = {}; _isTyping = false; _userScrolledUp = false; _sseConnected = false; }
