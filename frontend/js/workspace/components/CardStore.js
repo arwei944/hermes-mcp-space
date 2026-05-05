@@ -53,14 +53,19 @@ const CardStore = (() => {
             <div class="ws-store__category">
                 <div class="ws-store__category-title">${CATEGORY_LABELS[cat] || cat}</div>
                 <div class="ws-store__grid">
-                    ${widgets.map(w => `
+                    ${widgets.map(w => {
+                        var iconHtml = w.icon || '';
+                        if (iconHtml && iconHtml.length < 30 && typeof Components !== 'undefined' && Components.icon) {
+                            iconHtml = Components.icon(iconHtml, 24);
+                        }
+                        return `
                         <div class="ws-store__item" data-action="add-widget" data-widget="${w.name}"
                              title="${w.description}">
-                            <div class="ws-store__item-icon">${w.icon}</div>
+                            <div class="ws-store__item-icon">${iconHtml}</div>
                             <div class="ws-store__item-name">${w.label}</div>
                             <div class="ws-store__item-desc">${w.description}</div>
-                        </div>
-                    `).join('')}
+                        </div>`;
+                    }).join('')}
                 </div>
             </div>
         `).join('');
