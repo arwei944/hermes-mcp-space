@@ -55,7 +55,7 @@ const RulesEntryWidget = (() => {
     WidgetRegistry.register('rules-entry', {
         type: 'entry',
         label: '规则入口',
-        icon: '📏',
+        icon: 'ruler',
         description: '规则快速入口，显示规则总数',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
