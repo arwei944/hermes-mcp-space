@@ -492,7 +492,7 @@
     WidgetRegistry.register('trash-card', {
       type: 'function',
       label: '回收站',
-      icon: '\uD83D\uDDD1\uFE0F',
+      icon: 'trash',
       defaultSize: { w: 2, h: 1 },
       category: 'functions',
       mount: mount
@@ -500,7 +500,7 @@
     WidgetRegistry.register('trash-entry', {
       type: 'entry',
       label: '回收站入口',
-      icon: '\uD83D\uDDD1\uFE0F',
+      icon: 'trash',
       defaultSize: { w: 1, h: 1 },
       category: 'entries',
       mount: mountEntry
