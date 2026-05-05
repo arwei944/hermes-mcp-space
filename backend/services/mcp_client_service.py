@@ -172,18 +172,32 @@ class MCPClientService:
         }
         self._save_config()
 
-        # 自环检测
+        # 自环检测：直接获取自身工具，无需网络请求
         if _is_self_url(url):
-            self._servers[name]["status"] = "self_reference"
-            self._servers[name]["error"] = "URL 指向自身，跳过工具发现"
-            self._servers[name]["last_check"] = datetime.now().isoformat()
-            logger.info(f"MCP 服务器 '{name}' 指向自身，跳过工具发现")
-            return {
-                "success": True,
-                "message": f"服务器 '{name}' 已添加（指向自身，无需发现工具）",
-                "server": name,
-                "tools_count": 0,
-            }
+            try:
+                from backend.services.hermes_service import hermes_service
+                self_tools = hermes_service.get_mcp_tools()
+                self._servers[name]["tools"] = self_tools
+                self._servers[name]["status"] = "self_reference"
+                self._servers[name]["last_check"] = datetime.now().isoformat()
+                self._rebuild_tools_cache()
+                logger.info(f"MCP 服务器 '{name}' 指向自身，已加载 {len(self_tools)} 个本地工具")
+                return {
+                    "success": True,
+                    "message": f"服务器 '{name}' 已添加（自身服务，{len(self_tools)} 个工具）",
+                    "server": name,
+                    "tools_count": len(self_tools),
+                }
+            except Exception as e:
+                self._servers[name]["status"] = "error"
+                self._servers[name]["error"] = f"加载自身工具失败: {e}"
+                self._servers[name]["last_check"] = datetime.now().isoformat()
+                return {
+                    "success": True,
+                    "message": f"服务器 '{name}' 已添加，但加载工具失败: {e}",
+                    "server": name,
+                    "tools_count": 0,
+                }
 
         # 异步发现工具
         tools_count = await self._discover_tools(name)
@@ -201,7 +215,16 @@ class MCPClientService:
 
         info = self._servers[name]
         if _is_self_url(info["url"]):
-            return {"success": True, "message": "指向自身，无需刷新", "tools_count": len(info.get("tools", []))}
+            # 自环：直接重新加载自身工具
+            try:
+                from backend.services.hermes_service import hermes_service
+                self_tools = hermes_service.get_mcp_tools()
+                info["tools"] = self_tools
+                info["last_check"] = datetime.now().isoformat()
+                self._rebuild_tools_cache()
+                return {"success": True, "message": f"已刷新自身工具，{len(self_tools)} 个", "tools_count": len(self_tools)}
+            except Exception as e:
+                return {"success": False, "message": f"刷新自身工具失败: {e}", "tools_count": len(info.get("tools", []))}
 
         count = await self._discover_tools(name)
         return {"success": True, "message": f"刷新完成，{count} 个工具", "tools_count": count}
