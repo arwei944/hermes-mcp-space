@@ -1120,7 +1120,7 @@ var KnowledgeCard = (() => {
     WidgetRegistry.register('knowledge-card', {
         type: 'data',
         label: '知识库',
-        icon: '📖',
+        icon: 'bookOpen',
         description: '知识库管理，支持查看/创建/编辑/删除知识条目',
         defaultSize: { w: 2, h: 1 },
         category: 'data',
@@ -1130,7 +1130,7 @@ var KnowledgeCard = (() => {
     WidgetRegistry.register('knowledge-entry', {
         type: 'entry',
         label: '知识库入口',
-        icon: '📖',
+        icon: 'bookOpen',
         description: '知识库快速入口',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
