@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes 前端改版 — 布局方案对比</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#2a2a3a;
+  --text:#e8e8f0;--text2:#8888a0;--accent:#6c5ce7;--accent2:#a29bfe;
+  --green:#00b894;--orange:#fdcb6e;--red:#ff7675;--blue:#74b9ff;
+}
+html{font-size:14px}
+body{font-family:'Noto Sans SC','Outfit',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+
+/* ===== 顶部方案切换栏 ===== */
+.scheme-bar{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;background:rgba(10,10,15,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.scheme-bar .label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-right:12px;font-weight:500}
+.scheme-btn{padding:8px 20px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;transition:all .25s;font-family:inherit}
+.scheme-btn:hover{border-color:var(--accent);color:var(--text)}
+.scheme-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.scheme-btn .tag{display:block;font-size:10px;opacity:.6;margin-top:2px}
+
+/* ===== 方案容器 ===== */
+.scheme{display:none;height:100vh;padding-top:56px}
+.scheme.active{display:flex}
+
+/* ===== 方案 A：Command Center ===== */
+.scheme-a{flex-direction:column}
+.a-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--surface)}
+.a-agent{display:flex;align-items:center;gap:14px}
+.a-avatar{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#e17055);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff}
+.a-agent-info h2{font-size:16px;font-weight:600;font-family:'Outfit',sans-serif}
+.a-agent-info span{font-size:11px;color:var(--text2)}
+.a-status-pills{display:flex;gap:8px}
+.a-pill{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500}
+.a-pill.green{background:rgba(0,184,148,.12);color:var(--green)}
+.a-pill.blue{background:rgba(116,185,255,.12);color:var(--blue)}
+.a-pill.orange{background:rgba(253,203,110,.12);color:var(--orange)}
+
+.a-body{display:flex;flex:1;overflow:hidden}
+.a-sidebar{width:220px;border-right:1px solid var(--border);padding:16px 0;overflow-y:auto}
+.a-nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:all .2s;color:var(--text2);font-size:13px}
+.a-nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.a-nav-item.active{color:var(--accent2);background:rgba(108,92,231,.08);border-right:2px solid var(--accent)}
+.a-nav-item .icon{width:18px;text-align:center;font-size:15px}
+.a-nav-section{padding:8px 20px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);opacity:.5;margin-top:12px}
+
+.a-main{flex:1;padding:24px 28px;overflow-y:auto}
+.a-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.a-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;transition:all .3s}
+.a-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.a-card .num{font-size:28px;font-weight:700;font-family:'Outfit',sans-serif}
+.a-card .label{font-size:11px;color:var(--text2);margin-top:4px}
+.a-card .change{font-size:11px;margin-top:6px}
+.a-card .change.up{color:var(--green)}
+.a-card .change.down{color:var(--red)}
+
+.a-section{margin-bottom:20px}
+.a-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.a-section-header h3{font-size:14px;font-weight:600}
+.a-section-header a{font-size:11px;color:var(--accent2);text-decoration:none}
+
+.a-table{width:100%;border-collapse:collapse;font-size:12px}
+.a-table th{text-align:left;padding:8px 12px;color:var(--text2);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.a-table td{padding:10px 12px;border-bottom:1px solid rgba(42,42,58,.5)}
+.a-table tr:hover td{background:rgba(255,255,255,.02)}
+.a-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+.a-badge.safety{background:rgba(255,118,117,.12);color:var(--red)}
+.a-badge.tech{background:rgba(116,185,255,.12);color:var(--blue)}
+.a-badge.general{background:rgba(0,184,148,.12);color:var(--green)}
+.a-badge.shared{background:rgba(162,155,254,.12);color:var(--accent2)}
+
+/* ===== 方案 B：Workspace ===== */
+.scheme-b{flex-direction:row}
+.b-sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.b-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:10px}
+.b-logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6c5ce7,#00cec9);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+.b-logo span{font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;letter-spacing:-.5px}
+
+.b-agent-card{margin:0 12px 12px;padding:14px;background:var(--surface2);border-radius:12px;border:1px solid var(--border);cursor:pointer;transition:all .2s}
+.b-agent-card:hover,.b-agent-card.active{border-color:var(--accent)}
+.b-agent-card.active{background:rgba(108,92,231,.06)}
+.b-agent-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.b-agent-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+.b-agent-header span{font-size:13px;font-weight:600}
+.b-agent-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.b-agent-stat{text-align:center}
+.b-agent-stat .val{font-size:16px;font-weight:700;font-family:'Outfit',sans-serif}
+.b-agent-stat .lbl{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+
+.b-nav{padding:8px 0;flex:1}
+.b-nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;transition:all .2s;color:var(--text2);font-size:13px}
+.b-nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.b-nav-item.active{color:var(--accent2);background:rgba(108,92,231,.08)}
+.b-nav-item .icon{width:18px;text-align:center;font-size:14px}
+.b-nav-label{padding:12px 20px 6px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);opacity:.4}
+
+.b-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.b-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border)}
+.b-topbar h2{font-size:15px;font-weight:600}
+.b-topbar-actions{display:flex;gap:8px}
+.b-btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .2s}
+.b-btn:hover{border-color:var(--accent);color:var(--text)}
+.b-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.b-content{flex:1;padding:24px;overflow-y:auto}
+.b-knowledge-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
+.b-knowledge-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;transition:all .3s}
+.b-knowledge-card:hover{border-color:var(--accent)}
+.b-knowledge-card .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.b-knowledge-card .header h4{font-size:13px;font-weight:600}
+.b-knowledge-card .count{font-size:20px;font-weight:700;font-family:'Outfit',sans-serif;color:var(--accent2)}
+.b-knowledge-card .desc{font-size:11px;color:var(--text2);line-height:1.5}
+.b-knowledge-card .tags{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+.b-knowledge-card .tags span{padding:2px 8px;border-radius:4px;font-size:10px;background:rgba(255,255,255,.05);color:var(--text2)}
+
+.b-list{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.b-list-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(42,42,58,.5);transition:all .2s;cursor:pointer}
+.b-list-item:hover{background:rgba(255,255,255,.02)}
+.b-list-item:last-child{border-bottom:none}
+.b-list-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.b-list-icon.rule{background:rgba(255,118,117,.1);color:var(--red)}
+.b-list-icon.knowledge{background:rgba(116,185,255,.1);color:var(--blue)}
+.b-list-icon.exp{background:rgba(253,203,110,.1);color:var(--orange)}
+.b-list-info{flex:1;min-width:0}
+.b-list-info h5{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-list-info p{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.b-list-meta{text-align:right;flex-shrink:0}
+.b-list-meta .time{font-size:10px;color:var(--text2)}
+.b-list-meta .owner{font-size:10px;margin-top:2px}
+
+/* ===== 方案 C：Dashboard ===== */
+.scheme-c{flex-direction:column}
+.c-header{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border);background:var(--surface)}
+.c-agent-switch{display:flex;align-items:center;gap:12px}
+.c-agent-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#00cec9,#6c5ce7);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;cursor:pointer}
+.c-agent-name{font-size:14px;font-weight:600}
+.c-agent-role{font-size:11px;color:var(--text2)}
+.c-tabs{display:flex;gap:4px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.c-tab{padding:12px 18px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:inherit;background:none;border-top:none;border-left:none;border-right:none}
+.c-tab:hover{color:var(--text)}
+.c-tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+
+.c-body{flex:1;padding:24px 32px;overflow-y:auto}
+.c-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.c-metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.c-metric .val{font-size:24px;font-weight:700;font-family:'Outfit',sans-serif}
+.c-metric .lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.c-metric:nth-child(1) .val{color:var(--accent2)}
+.c-metric:nth-child(2) .val{color:var(--green)}
+.c-metric:nth-child(3) .val{color:var(--blue)}
+.c-metric:nth-child(4) .val{color:var(--orange)}
+.c-metric:nth-child(5) .val{color:var(--red)}
+
+.c-panels{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.c-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.c-panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.c-panel-header h3{font-size:13px;font-weight:600}
+.c-panel-header a{font-size:11px;color:var(--accent2);text-decoration:none}
+.c-panel-body{padding:12px 16px}
+
+.c-activity-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,42,58,.3)}
+.c-activity-item:last-child{border-bottom:none}
+.c-activity-dot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.c-activity-dot.green{background:var(--green)}
+.c-activity-dot.blue{background:var(--blue)}
+.c-activity-dot.orange{background:var(--orange)}
+.c-activity-dot.red{background:var(--red)}
+.c-activity-info h5{font-size:12px;font-weight:500}
+.c-activity-info p{font-size:11px;color:var(--text2)}
+.c-activity-time{font-size:10px;color:var(--text2);margin-left:auto;flex-shrink:0;white-space:nowrap}
+
+.c-knowledge-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,42,58,.3)}
+.c-knowledge-item:last-child{border-bottom:none}
+.c-knowledge-type{padding:2px 6px;border-radius:3px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;width:36px;text-align:center;flex-shrink:0}
+.c-knowledge-type.rule{background:rgba(255,118,117,.12);color:var(--red)}
+.c-knowledge-type.kn{background:rgba(116,185,255,.12);color:var(--blue)}
+.c-knowledge-type.exp{background:rgba(253,203,110,.12);color:var(--orange)}
+.c-knowledge-type.mem{background:rgba(0,184,148,.12);color:var(--green)}
+.c-knowledge-item h5{font-size:12px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-knowledge-item .owner{font-size:10px;color:var(--text2);flex-shrink:0}
+
+/* ===== 方案描述浮层 ===== */
+.scheme-desc{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(18,18,26,.95);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:12px;padding:14px 24px;display:flex;align-items:center;gap:20px;max-width:700px}
+.scheme-desc h4{font-size:13px;font-weight:600;white-space:nowrap}
+.scheme-desc p{font-size:12px;color:var(--text2);line-height:1.5}
+.scheme-desc .pros{color:var(--green);font-size:11px}
+.scheme-desc .cons{color:var(--orange);font-size:11px}
+
+/* scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text2)}
+</style>
+</head>
+<body>
+
+<!-- 方案切换栏 -->
+<div class="scheme-bar">
+  <span class="label">布局方案</span>
+  <button class="scheme-btn active" onclick="switchScheme('a')">
+    A · Command Center
+    <span class="tag">指挥中心</span>
+  </button>
+  <button class="scheme-btn" onclick="switchScheme('b')">
+    B · Workspace
+    <span class="tag">工作空间</span>
+  </button>
+  <button class="scheme-btn" onclick="switchScheme('c')">
+    C · Dashboard
+    <span class="tag">仪表盘</span>
+  </button>
+</div>
+
+<!-- ===== 方案 A：Command Center ===== -->
+<div class="scheme scheme-a active" id="scheme-a">
+  <div class="a-topbar">
+    <div class="a-agent">
+      <div class="a-avatar">S</div>
+      <div class="a-agent-info">
+        <h2>SOLO Agent</h2>
+        <span>注册于 2026-05-05 · 角色: 开发助手</span>
+      </div>
+    </div>
+    <div class="a-status-pills">
+      <span class="a-pill green">● 在线</span>
+      <span class="a-pill blue">工具 121</span>
+      <span class="a-pill orange">知识 23</span>
+    </div>
+  </div>
+  <div class="a-body">
+    <div class="a-sidebar">
+      <div class="a-nav-section">核心</div>
+      <div class="a-nav-item active"><span class="icon">🏠</span> 工作台</div>
+      <div class="a-nav-item"><span class="icon">💬</span> 对话</div>
+      <div class="a-nav-item"><span class="icon">🧠</span> 知识库</div>
+      <div class="a-nav-item"><span class="icon">🛠️</span> 工具箱</div>
+      <div class="a-nav-section">数据</div>
+      <div class="a-nav-item"><span class="icon">📊</span> 统计分析</div>
+      <div class="a-nav-item"><span class="icon">⏰</span> 定时任务</div>
+      <div class="a-nav-item"><span class="icon">💾</span> 记忆管理</div>
+      <div class="a-nav-section">系统</div>
+      <div class="a-nav-item"><span class="icon">🔌</span> MCP 服务</div>
+      <div class="a-nav-item"><span class="icon">⚙️</span> 系统配置</div>
+      <div class="a-nav-item"><span class="icon">🔄</span> 备份恢复</div>
+    </div>
+    <div class="a-main">
+      <div class="a-cards">
+        <div class="a-card"><div class="num" style="color:var(--accent2)">156</div><div class="label">工具调用次数</div><div class="change up">↑ 12% 今日</div></div>
+        <div class="a-card"><div class="num" style="color:var(--green)">98.2%</div><div class="label">成功率</div><div class="change up">↑ 0.3%</div></div>
+        <div class="a-card"><div class="num" style="color:var(--blue)">23</div><div class="label">知识条目</div><div class="change up">+5 今日</div></div>
+        <div class="a-card"><div class="num" style="color:var(--orange)">3</div><div class="label">待处理经验</div><div class="change down">↓ 2</div></div>
+      </div>
+      <div class="a-section">
+        <div class="a-section-header"><h3>最近知识动态</h3><a>查看全部 →</a></div>
+        <table class="a-table">
+          <thead><tr><th>类型</th><th>标题</th><th>归属</th><th>分类</th><th>时间</th></tr></thead>
+          <tbody>
+            <tr><td><span class="a-badge safety">规则</span></td><td>禁止执行危险 shell 命令</td><td><span class="a-badge shared">共享</span></td><td>safety</td><td>2 分钟前</td></tr>
+            <tr><td><span class="a-badge tech">知识</span></td><td>Hermes 自动知识闭环架构</td><td><span class="a-badge shared">共享</span></td><td>tech</td><td>15 分钟前</td></tr>
+            <tr><td><span class="a-badge general">经验</span></td><td>ctx.result 在中间件链中为 None</td><td>SOLO Agent</td><td>pitfall</td><td>1 小时前</td></tr>
+            <tr><td><span class="a-badge tech">知识</span></td><td>FastAPI 生产环境最佳实践</td><td>Trae Agent</td><td>tech</td><td>3 小时前</td></tr>
+            <tr><td><span class="a-badge general">记忆</span></td><td>用户偏好中文沟通</td><td>SOLO Agent</td><td>preference</td><td>5 小时前</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案 B：Workspace ===== -->
+<div class="scheme scheme-b" id="scheme-b">
+  <div class="b-sidebar">
+    <div class="b-logo">
+      <div class="b-logo-icon">H</div>
+      <span>Hermes</span>
+    </div>
+    <div class="b-agent-card active">
+      <div class="b-agent-header">
+        <div class="b-agent-dot"></div>
+        <span>SOLO Agent</span>
+      </div>
+      <div class="b-agent-stats">
+        <div class="b-agent-stat"><div class="val">23</div><div class="lbl">知识</div></div>
+        <div class="b-agent-stat"><div class="val">5</div><div class="lbl">经验</div></div>
+        <div class="b-agent-stat"><div class="val">98%</div><div class="lbl">成功率</div></div>
+      </div>
+    </div>
+    <div class="b-agent-card">
+      <div class="b-agent-header">
+        <div class="b-agent-dot" style="background:var(--blue)"></div>
+        <span>Trae Agent</span>
+      </div>
+      <div class="b-agent-stats">
+        <div class="b-agent-stat"><div class="val">12</div><div class="lbl">知识</div></div>
+        <div class="b-agent-stat"><div class="val">3</div><div class="lbl">经验</div></div>
+        <div class="b-agent-stat"><div class="val">95%</div><div class="lbl">成功率</div></div>
+      </div>
+    </div>
+    <div class="b-nav">
+      <div class="b-nav-label">当前 Agent</div>
+      <div class="b-nav-item active"><span class="icon">🏠</span> 工作台</div>
+      <div class="b-nav-item"><span class="icon">💬</span> 对话</div>
+      <div class="b-nav-item"><span class="icon">🧠</span> 知识库</div>
+      <div class="b-nav-item"><span class="icon">🛠️</span> 工具箱</div>
+      <div class="b-nav-item"><span class="icon">👤</span> 性格配置</div>
+      <div class="b-nav-label">全局</div>
+      <div class="b-nav-item"><span class="icon">📊</span> 统计分析</div>
+      <div class="b-nav-item"><span class="icon">🔌</span> MCP 服务</div>
+      <div class="b-nav-item"><span class="icon">⚙️</span> 系统设置</div>
+    </div>
+  </div>
+  <div class="b-main">
+    <div class="b-topbar">
+      <h2>🧠 知识库</h2>
+      <div class="b-topbar-actions">
+        <button class="b-btn">🔍 搜索</button>
+        <button class="b-btn">📥 导入</button>
+        <button class="b-btn primary">+ 新建</button>
+      </div>
+    </div>
+    <div class="b-content">
+      <div class="b-knowledge-grid">
+        <div class="b-knowledge-card">
+          <div class="header"><h4>📜 规则</h4><div class="count">8</div></div>
+          <div class="desc">行为约束与安全规则，Agent 工具调用时自动匹配检查</div>
+          <div class="tags"><span>safety × 3</span><span>coding × 2</span><span>workflow × 3</span></div>
+        </div>
+        <div class="b-knowledge-card">
+          <div class="header"><h4>📚 知识</h4><div class="count">23</div></div>
+          <div class="desc">技术知识、架构决策、最佳实践，工具调用后自动沉淀</div>
+          <div class="tags"><span>tech × 15</span><span>project × 5</span><span>general × 3</span></div>
+        </div>
+        <div class="b-knowledge-card">
+          <div class="header"><h4>⚡ 经验</h4><div class="count">5</div></div>
+          <div class="desc">踩坑记录与错误模式，帮助 Agent 避免重复犯错</div>
+          <div class="tags"><span>pitfall × 3</span><span>error × 2</span></div>
+        </div>
+        <div class="b-knowledge-card">
+          <div class="header"><h4>💭 记忆</h4><div class="count">3</div></div>
+          <div class="desc">用户偏好、项目上下文、长期记忆，对话中自动提取</div>
+          <div class="tags"><span>preference × 1</span><span>context × 2</span></div>
+        </div>
+      </div>
+      <div class="b-list">
+        <div class="b-list-item">
+          <div class="b-list-icon rule">📜</div>
+          <div class="b-list-info"><h5>禁止执行危险 shell 命令</h5><p>FORBID: rm -rf /, mkfs, fork bomb</p></div>
+          <div class="b-list-meta"><div class="time">2 分钟前</div><div class="owner" style="color:var(--accent2)">共享</div></div>
+        </div>
+        <div class="b-list-item">
+          <div class="b-list-icon knowledge">📚</div>
+          <div class="b-list-info"><h5>Hermes 自动知识闭环架构设计</h5><p>三层闭环: 被动沉淀 + 主动注入 + 可观测</p></div>
+          <div class="b-list-meta"><div class="time">15 分钟前</div><div class="owner" style="color:var(--accent2)">共享</div></div>
+        </div>
+        <div class="b-list-item">
+          <div class="b-list-icon exp">⚡</div>
+          <div class="b-list-info"><h5>ctx.result 在中间件链中始终为 None</h5><p>pipeline.execute 第 46 行才设置 ctx.result</p></div>
+          <div class="b-list-meta"><div class="time">1 小时前</div><div class="owner">SOLO</div></div>
+        </div>
+        <div class="b-list-item">
+          <div class="b-list-icon knowledge">📚</div>
+          <div class="b-list-info"><h5>FastAPI 生产环境最佳实践</h5><p>Pydantic v2, JWT auth, Docker 部署</p></div>
+          <div class="b-list-meta"><div class="time">3 小时前</div><div class="owner">Trae</div></div>
+        </div>
+        <div class="b-list-item">
+          <div class="b-list-icon exp">⚡</div>
+          <div class="b-list-info"><h5>app.py 漏注册路由导致前端 404</h5><p>新增路由文件必须同时检查 app.py 和 main.py</p></div>
+          <div class="b-list-meta"><div class="time">5 小时前</div><div class="owner">SOLO</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 方案 C：Dashboard ===== -->
+<div class="scheme scheme-c" id="scheme-c">
+  <div class="c-header">
+    <div class="c-agent-switch">
+      <div class="c-agent-avatar">S</div>
+      <div>
+        <div class="c-agent-name">SOLO Agent</div>
+        <div class="c-agent-role">开发助手 · 注册于 2026-05-05</div>
+      </div>
+      <span style="color:var(--text2);font-size:18px;margin:0 4px">▾</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="b-btn">🔍</button>
+      <button class="b-btn">🔔</button>
+      <button class="b-btn">⚙️</button>
+    </div>
+  </div>
+  <div class="c-tabs">
+    <button class="c-tab active">工作台</button>
+    <button class="c-tab">对话</button>
+    <button class="c-tab">知识库</button>
+    <button class="c-tab">工具箱</button>
+    <button class="c-tab">统计分析</button>
+    <button class="c-tab">系统</button>
+  </div>
+  <div class="c-body">
+    <div class="c-grid">
+      <div class="c-metric"><div class="val">156</div><div class="lbl">总调用</div></div>
+      <div class="c-metric"><div class="val">98.2%</div><div class="lbl">成功率</div></div>
+      <div class="c-metric"><div class="val">23</div><div class="lbl">知识</div></div>
+      <div class="c-metric"><div class="val">5</div><div class="lbl">经验</div></div>
+      <div class="c-metric"><div class="val">3</div><div class="lbl">待处理</div></div>
+    </div>
+    <div class="c-panels">
+      <div class="c-panel">
+        <div class="c-panel-header"><h3>最近活动</h3><a>查看全部 →</a></div>
+        <div class="c-panel-body">
+          <div class="c-activity-item">
+            <div class="c-activity-dot green"></div>
+            <div class="c-activity-info"><h5>shell_execute 成功</h5><p>python3 --version && uname -a</p></div>
+            <div class="c-activity-time">2 分钟前</div>
+          </div>
+          <div class="c-activity-item">
+            <div class="c-activity-dot blue"></div>
+            <div class="c-activity-info"><h5>自动沉淀知识</h5><p>Hermes 部署环境与技术栈</p></div>
+            <div class="c-activity-time">5 分钟前</div>
+          </div>
+          <div class="c-activity-item">
+            <div class="c-activity-dot orange"></div>
+            <div class="c-activity-info"><h5>规则匹配</h5><p>安全规则 #3: shell 命令检查通过</p></div>
+            <div class="c-activity-time">8 分钟前</div>
+          </div>
+          <div class="c-activity-item">
+            <div class="c-activity-dot green"></div>
+            <div class="c-activity-info"><h5>web_search 成功</h5><p>Python FastAPI best practices 2026</p></div>
+            <div class="c-activity-time">12 分钟前</div>
+          </div>
+          <div class="c-activity-item">
+            <div class="c-activity-dot red"></div>
+            <div class="c-activity-info"><h5>知识注入</h5><p>⚠️ 历史经验: ctx.result 在中间件链中为 None</p></div>
+            <div class="c-activity-time">15 分钟前</div>
+          </div>
+        </div>
+      </div>
+      <div class="c-panel">
+        <div class="c-panel-header"><h3>知识库速览</h3><a>管理 →</a></div>
+        <div class="c-panel-body">
+          <div class="c-knowledge-item">
+            <span class="c-knowledge-type rule">规则</span>
+            <h5>禁止执行危险 shell 命令</h5>
+            <span class="owner">共享</span>
+          </div>
+          <div class="c-knowledge-item">
+            <span class="c-knowledge-type kn">知识</span>
+            <h5>Hermes 自动知识闭环架构</h5>
+            <span class="owner">共享</span>
+          </div>
+          <div class="c-knowledge-item">
+            <span class="c-knowledge-type exp">经验</span>
+            <h5>ctx.result 在中间件链中为 None</h5>
+            <span class="owner">SOLO</span>
+          </div>
+          <div class="c-knowledge-item">
+            <span class="c-knowledge-type kn">知识</span>
+            <h5>FastAPI 生产环境最佳实践</h5>
+            <span class="owner">Trae</span>
+          </div>
+          <div class="c-knowledge-item">
+            <span class="c-knowledge-type mem">记忆</span>
+            <h5>用户偏好中文沟通</h5>
+            <span class="owner">SOLO</span>
+          </div>
+          <div class="c-knowledge-item">
+            <span class="c-knowledge-type kn">知识</span>
+            <h5>Hermes 版本演进记录</h5>
+            <span class="owner">共享</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 底部描述 -->
+<div class="scheme-desc" id="scheme-desc">
+  <h4 id="desc-title">A · Command Center 指挥中心</h4>
+  <div>
+    <p id="desc-text">Agent 身份固定在顶栏，左侧功能导航，右侧内容区。经典管理后台布局，信息密度高。</p>
+    <p><span class="pros">✓ 信息密度高 · 熟悉的操作模式 · 改造成本低</span> <span class="cons">· Agent 存在感弱 · 偏传统</span></p>
+  </div>
+</div>
+
+<script>
+const descs = {
+  a: { title: 'A · Command Center 指挥中心', text: 'Agent 身份固定在顶栏，左侧功能导航，右侧内容区。经典管理后台布局，信息密度高。', pros: '✓ 信息密度高 · 熟悉的操作模式 · 改造成本低', cons: '· Agent 存在感弱 · 偏传统' },
+  b: { title: 'B · Workspace 工作空间', text: '左侧 Agent 列表（可切换），右侧当前 Agent 的工作区。Agent 是一级入口，数据归属清晰。', pros: '✓ Agent 一等公民 · 多 Agent 切换自然 · 归属感强', cons: '· 左侧空间占用多 · 改造量中等' },
+  c: { title: 'C · Dashboard 仪表盘', text: 'Agent 身份在顶栏可下拉切换，Tab 导航，内容区双栏布局。紧凑高效，适合监控场景。', pros: '✓ 紧凑高效 · Agent 切换方便 · 适合实时监控', cons: '· 知识库等复杂页面空间不足 · Tab 过多会挤' }
+};
+
+function switchScheme(id) {
+  document.querySelectorAll('.scheme').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.scheme-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('scheme-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  const d = descs[id];
+  document.getElementById('desc-title').textContent = d.title;
+  document.getElementById('desc-text').innerHTML = d.text + '<br><span class="pros">' + d.pros + '</span> <span class="cons">' + d.cons + '</span>';
+}
+</script>
+</body>
+</html>
