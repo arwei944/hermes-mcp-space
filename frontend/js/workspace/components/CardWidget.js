@@ -105,22 +105,60 @@ const CardWidget = (() => {
 
         // 检查 Widget 是否已注册
         if (typeof WidgetRegistry !== 'undefined' && WidgetRegistry.has(card.widget)) {
-            // 显示 loading
-            _renderLoading(instance);
-
             try {
                 const widgetDef = WidgetRegistry.get(card.widget);
-                const widgetInstance = await widgetDef.mount(container, {
-                    cardId,
-                    desktopId,
-                    config: card.config || {}
-                });
+                if (!widgetDef || typeof widgetDef.mount !== 'function') {
+                    _renderPlaceholder(instance, card);
+                    return;
+                }
+
+                _renderLoading(instance);
+
+                // 错误边界：隔离单个 Widget 的错误
+                let widgetInstance;
+                try {
+                    widgetInstance = await widgetDef.mount(container, {
+                        cardId,
+                        desktopId,
+                        config: card.config || {}
+                    });
+                } catch (mountError) {
+                    Logger.error('[CardWidget] Widget mount error:', card.widget, mountError.message);
+                    _renderError(instance, mountError);
+                    return;
+                }
+
+                // 验证返回值
+                if (!widgetInstance || typeof widgetInstance !== 'object') {
+                    Logger.warn('[CardWidget] Widget did not return instance:', card.widget);
+                    widgetInstance = { destroy: () => {}, refresh: () => {} };
+                }
 
                 instance.widgetInstance = widgetInstance;
                 _clearLoading(instance);
+
+                // 包装 destroy 方法，防止 Widget 销毁时报错
+                const originalDestroy = widgetInstance.destroy.bind(widgetInstance);
+                widgetInstance.destroy = () => {
+                    try { originalDestroy(); } catch (e) {
+                        Logger.warn('[CardWidget] Widget destroy error:', card.widget, e.message);
+                    }
+                };
+
+                // 包装 refresh 方法
+                if (typeof widgetInstance.refresh === 'function') {
+                    const originalRefresh = widgetInstance.refresh.bind(widgetInstance);
+                    widgetInstance.refresh = () => {
+                        try { return originalRefresh(); } catch (e) {
+                            Logger.warn('[CardWidget] Widget refresh error:', card.widget, e.message);
+                            _renderError(instance, e);
+                        }
+                    };
+                }
+
                 Logger.debug('[CardWidget] Widget mounted:', card.widget, 'for card:', cardId);
             } catch (err) {
-                Logger.error('[CardWidget] Widget mount failed:', card.widget, err.message);
+                Logger.error('[CardWidget] Widget system error:', card.widget, err.message);
                 _renderError(instance, err);
             }
         } else {

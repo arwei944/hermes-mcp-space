@@ -28,6 +28,46 @@ const GestureManager = (() => {
     let _swipeStartX = 0;
     let _swipeStartY = 0;
     let _swiping = false;
+
+    // ── Pinch Zoom ──────────────────────────────────────────
+    let _pinchStartDist = 0;
+    let _pinching = false;
+    let _onPinchZoom = null;
+
+    function _getTouchDistance(touches) {
+        if (!touches || touches.length < 2) return 0;
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function _onTouchStart(e) {
+        if (e.touches.length === 2) {
+            _pinchStartDist = _getTouchDistance(e.touches);
+            _pinching = true;
+            // 取消长按
+            _cancelLongPress();
+        }
+    }
+
+    function _onTouchMove(e) {
+        if (_pinching && e.touches.length === 2) {
+            const dist = _getTouchDistance(e.touches);
+            const scale = dist / _pinchStartDist;
+
+            if (Math.abs(scale - 1) > 0.1) {
+                if (_onPinchZoom) _onPinchZoom(scale);
+                Bus.emit('ws:gesture:pinch', { scale });
+            }
+        }
+    }
+
+    function _onTouchEnd(e) {
+        if (e.touches.length < 2) {
+            _pinching = false;
+        }
+    }
+
     let _onSwipeLeft = null;
     let _onSwipeRight = null;
     let _initialized = false;
@@ -53,6 +93,12 @@ const GestureManager = (() => {
             Bus.emit('ws:gesture:longpress');
             Logger.debug('[GestureManager] Long press detected');
         }, LONG_PRESS_MS);
+
+        // 触摸设备上的触觉反馈增强
+        if ('vibrate' in navigator && e.type === 'touchstart') {
+            // 轻触反馈（如果支持）
+            if (navigator.vibrate) navigator.vibrate(5);
+        }
     }
 
     function _onPointerMove(e) {
@@ -140,8 +186,11 @@ const GestureManager = (() => {
 
         // 触摸事件
         container.addEventListener('touchstart', _onPointerDown, { passive: true });
+        container.addEventListener('touchstart', _onTouchStart, { passive: true });
         document.addEventListener('touchmove', _onPointerMove, { passive: true });
+        document.addEventListener('touchmove', _onTouchMove, { passive: true });
         document.addEventListener('touchend', _onPointerUp);
+        document.addEventListener('touchend', _onTouchEnd);
 
         // 点击空白退出编辑模式
         container.addEventListener('click', _onBackgroundClick);
@@ -156,13 +205,16 @@ const GestureManager = (() => {
         if (_container) {
             _container.removeEventListener('mousedown', _onPointerDown);
             _container.removeEventListener('touchstart', _onPointerDown);
+            _container.removeEventListener('touchstart', _onTouchStart);
             _container.removeEventListener('click', _onBackgroundClick);
         }
 
         document.removeEventListener('mousemove', _onPointerMove);
         document.removeEventListener('mouseup', _onPointerUp);
         document.removeEventListener('touchmove', _onPointerMove);
+        document.removeEventListener('touchmove', _onTouchMove);
         document.removeEventListener('touchend', _onPointerUp);
+        document.removeEventListener('touchend', _onTouchEnd);
 
         _cancelLongPress();
         _container = null;
@@ -181,6 +233,7 @@ const GestureManager = (() => {
     return {
         init,
         destroy,
-        onSwipe
+        onSwipe,
+        onPinchZoom
     };
 })();

@@ -802,3 +802,121 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* ── P4: Animation Performance ─────────────────────────── */
+
+/* GPU 加速层 */
+.ws-card,
+.ws-desktop,
+.ws-tabs,
+.ws-layout-switcher,
+.ws-store {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+/* 拖拽时提升到独立合成层 */
+.ws-card--dragging {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* 桌面切换动画优化 */
+.ws-desktop {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* 卡片进入动画 */
+@keyframes ws-card-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.ws-card {
+    animation: ws-card-enter 0.25s var(--ease-out) both;
+}
+
+/* 卡片删除动画 */
+@keyframes ws-card-exit {
+    to {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+.ws-card--removing {
+    animation: ws-card-exit 0.2s var(--ease-in) both;
+    pointer-events: none;
+}
+
+/* 编辑模式抖动优化（使用 transform 代替 rotate） */
+@keyframes ws-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(calc(-1 * var(--ws-shake-amount))); }
+    75% { transform: translateX(var(--ws-shake-amount)); }
+}
+
+/* Store 弹出动画优化 */
+.ws-store {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* 滚动条美化 */
+.ws-desktop::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ws-desktop::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ws-desktop::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 3px;
+}
+
+.ws-desktop::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+/* 减少动画（无障碍） */
+@media (prefers-reduced-motion: reduce) {
+    .ws-card,
+    .ws-desktop,
+    .ws-tabs,
+    .ws-store {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    .ws-card--editing {
+        animation: none !important;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .ws-card__actions {
+        opacity: 1;
+    }
+    
+    .ws-card__resize {
+        display: none;
+    }
+    
+    .ws-layout-switcher {
+        top: auto;
+        bottom: 80px;
+        right: var(--space-3);
+    }
+}

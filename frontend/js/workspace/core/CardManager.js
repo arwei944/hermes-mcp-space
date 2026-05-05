@@ -96,13 +96,16 @@ const CardManager = (() => {
         const containerWidth = _container ? _container.clientWidth : window.innerWidth;
         const layoutResult = LayoutEngine.calculate(_currentLayout, cards, containerWidth);
 
-        // 渲染卡片
-        for (const card of cards) {
-            _renderCard(desktopId, card.id);
+        // 虚拟滚动：超过阈值时只渲染可视区域
+        const VISIBLE_THRESHOLD = 30;
+        if (cards.length > VISIBLE_THRESHOLD) {
+            _enableVirtualScroll(desktopId, container, cards, layoutResult);
+        } else {
+            for (const card of cards) {
+                _renderCard(desktopId, card.id);
+            }
+            _applyLayout(layoutResult, containerWidth);
         }
-
-        // 应用布局位置
-        _applyLayout(layoutResult, containerWidth);
 
         Logger.info('[CardManager] Desktop rendered:', desktopId, 'cards:', cards.length, 'layout:', _currentLayout);
     }
@@ -334,6 +337,8 @@ const CardManager = (() => {
             _resizeObserver = null;
         }
 
+        _disableVirtualScroll();
+
         if (_container) {
             DragManager.destroy(_container);
             ResizeManager.destroy(_container);
@@ -346,6 +351,67 @@ const CardManager = (() => {
         _currentDesktopId = null;
         _initialized = false;
         Logger.info('[CardManager] Destroyed');
+    }
+
+    // ── Virtual Scroll ──────────────────────────────────────
+    let _virtualScrollEnabled = false;
+    let _intersectionObserver = null;
+
+    function _enableVirtualScroll(desktopId, container, cards, layoutResult) {
+        _virtualScrollEnabled = true;
+        const containerHeight = container.clientHeight;
+        const scrollTop = container.scrollTop || 0;
+        
+        // 先渲染所有卡片但设置不可见
+        const fragment = document.createDocumentFragment();
+        for (const card of cards) {
+            const el = CardWidget.createDOM(card, desktopId);
+            CardWidget.register(card.id, desktopId, el);
+            el.style.display = 'none';
+            fragment.appendChild(el);
+        }
+        container.appendChild(fragment);
+        
+        // 应用布局
+        _applyLayout(layoutResult, container.clientWidth);
+        
+        // 使用 IntersectionObserver 懒加载
+        if (_intersectionObserver) _intersectionObserver.disconnect();
+        
+        _intersectionObserver = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) {
+                    const cardEl = entry.target;
+                    const cardId = cardEl.dataset.cardId;
+                    cardEl.style.display = '';
+                    cardEl.style.opacity = '0';
+                    requestAnimationFrame(() => {
+                        cardEl.style.transition = 'opacity 0.2s';
+                        cardEl.style.opacity = '1';
+                    });
+                    CardWidget.mountWidget(cardId, desktopId);
+                    _intersectionObserver.unobserve(cardEl);
+                }
+            }
+        }, {
+            root: container,
+            rootMargin: '200px 0px',
+            threshold: 0
+        });
+        
+        // 观察所有卡片
+        const allCards = container.querySelectorAll('.ws-card');
+        allCards.forEach(el => _intersectionObserver.observe(el));
+        
+        Logger.info('[CardManager] Virtual scroll enabled for', cards.length, 'cards');
+    }
+
+    function _disableVirtualScroll() {
+        _virtualScrollEnabled = false;
+        if (_intersectionObserver) {
+            _intersectionObserver.disconnect();
+            _intersectionObserver = null;
+        }
     }
 
     return {
