@@ -77,7 +77,7 @@ const MemoWidget = (() => {
     WidgetRegistry.register('memo', {
         type: 'shortcut',
         label: '备忘录',
-        icon: '📝',
+        icon: 'fileText',
         description: '文本备忘录，自动保存到本地',
         defaultSize: { w: 1, h: 1 },
         category: 'shortcuts',
