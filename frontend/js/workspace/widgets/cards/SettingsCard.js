@@ -484,7 +484,7 @@
     WidgetRegistry.register('settings-card', {
       type: 'function',
       label: '系统设置',
-      icon: '\u2699\uFE0F',
+      icon: 'settings',
       defaultSize: { w: 2, h: 1 },
       category: 'functions',
       mount: mount
@@ -492,7 +492,7 @@
     WidgetRegistry.register('settings-entry', {
       type: 'entry',
       label: '设置入口',
-      icon: '\u2699\uFE0F',
+      icon: 'settings',
       defaultSize: { w: 1, h: 1 },
       category: 'entries',
       mount: mountEntry
