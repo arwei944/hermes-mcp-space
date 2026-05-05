@@ -11,6 +11,9 @@ Hermes Agent MCP Space - 部署入口
 import os
 os.environ["GRADIO_SSR_MODE"] = "false"
 os.environ["TZ"] = "Asia/Shanghai"
+# 持久化存储：将 HERMES_HOME 指向 HF Storage Bucket 挂载点
+if os.path.exists("/data") and not os.environ.get("HERMES_HOME"):
+    os.environ["HERMES_HOME"] = "/data/hermes"
 
 import json
 import logging
