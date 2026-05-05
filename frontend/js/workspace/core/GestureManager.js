@@ -230,6 +230,13 @@ const GestureManager = (() => {
         _onSwipeRight = onRight || null;
     }
 
+    /**
+     * 设置缩放回调
+     */
+    function onPinchZoom(callback) {
+        _onPinchZoom = callback || null;
+    }
+
     return {
         init,
         destroy,
