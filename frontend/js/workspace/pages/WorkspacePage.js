@@ -78,6 +78,10 @@ var WorkspacePage = (function () {
         if (typeof ContextMenuManager !== 'undefined') {
             ContextMenuManager.init(_desktopContainer);
         }
+        // 初始化响应式布局管理器
+        if (typeof ResponsiveManager !== 'undefined') {
+            ResponsiveManager.init();
+        }
 
         // 渲染桌面标签
         _renderDesktopTabs();
@@ -116,6 +120,9 @@ var WorkspacePage = (function () {
         }
         if (typeof ContextMenuManager !== 'undefined' && ContextMenuManager.destroy) {
             ContextMenuManager.destroy();
+        }
+        if (typeof ResponsiveManager !== 'undefined' && ResponsiveManager.destroy) {
+            ResponsiveManager.destroy();
         }
         if (typeof ResizeManager !== 'undefined' && ResizeManager.destroy) {
             ResizeManager.destroy();
