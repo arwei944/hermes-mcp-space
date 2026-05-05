@@ -77,7 +77,7 @@ const GestureManager = (() => {
     function _onPointerDown(e) {
         // 忽略按钮、输入框等交互元素上的长按
         const target = e.target;
-        if (target.closest('button, input, textarea, select, a, [data-action="card-delete"], [data-action="card-expand"], [data-action="card-more"], [data-action="card-refresh"], .ws-card__resize, .ws-layout-switcher, .ws-tabs'))) {
+        if (target.closest('button, input, textarea, select, a, [data-action="card-delete"], [data-action="card-expand"], [data-action="card-more"], [data-action="card-refresh"], .ws-card__resize, .ws-layout-switcher, .ws-tabs')) {
             return;
         }
 
