@@ -1,0 +1,268 @@
+/* ==========================================================================
+   Hermes Workspace V2 — Mobile Responsive Extensions
+   Extends workspace.css with comprehensive mobile adaptations.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. StatusBar — Mobile Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .ws-statusbar__clock {
+        display: none;
+    }
+
+    .ws-statusbar__title {
+        font-size: 14px;
+    }
+
+    .ws-statusbar {
+        padding: 0 12px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ws-statusbar__search-text {
+        display: none; /* Hide search text, keep icon */
+    }
+}
+
+/* ==========================================================================
+   2. Dock — Mobile Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .ws-dock {
+        padding: 6px 12px;
+        gap: 8px;
+    }
+
+    .ws-dock__item {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+    .ws-dock__tooltip {
+        display: none; /* No tooltips on touch */
+    }
+}
+
+@media (max-width: 480px) {
+    .ws-dock {
+        padding: 4px 8px;
+        gap: 4px;
+        bottom: 8px;
+    }
+
+    .ws-dock__item {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+
+    .ws-dock__item-label {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   3. Card — Mobile Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .ws-card {
+        border-radius: 12px;
+    }
+
+    .ws-card__header {
+        padding: 8px 10px;
+    }
+
+    .ws-card__body {
+        padding: 8px 10px;
+    }
+
+    .ws-card__actions {
+        gap: 4px;
+    }
+
+    .ws-card__action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ws-card__footer {
+        display: none; /* Hide footer on mobile */
+    }
+
+    .ws-card__expand {
+        display: none; /* No inline expand on mobile */
+    }
+}
+
+/* ==========================================================================
+   4. CardOverlay — Mobile Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .card-overlay {
+        padding: 0;
+    }
+
+    .card-overlay-content {
+        border-radius: 0;
+        max-width: 100%;
+        height: 100%;
+    }
+
+    .card-overlay-header {
+        padding: 12px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-overlay-backdrop {
+        background: rgba(0, 0, 0, 0.5);
+    }
+}
+
+/* ==========================================================================
+   5. SpotlightSearch — Mobile Adaptations
+   ========================================================================== */
+
+@media (max-width: 480px) {
+    .spotlight-search {
+        padding: 16px;
+    }
+
+    .spotlight-search__input {
+        font-size: 16px; /* Prevent iOS zoom on focus */
+    }
+
+    .spotlight-search__results {
+        max-height: 60vh;
+    }
+}
+
+/* ==========================================================================
+   6. Desktop Tabs — Mobile Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .ws-tabs {
+        gap: 4px;
+        padding: 4px 8px;
+    }
+
+    .ws-tabs__item {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+}
+
+/* ==========================================================================
+   7. Card Store — Mobile Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .ws-store {
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .ws-store__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+}
+
+/* ==========================================================================
+   8. Safe Area Insets — Notched Phones
+   ========================================================================== */
+
+.ws-statusbar {
+    padding-top: env(safe-area-inset-top);
+}
+
+.ws-dock {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ==========================================================================
+   9. Touch Optimizations
+   ========================================================================== */
+
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets for better tap accuracy */
+    .ws-card__action-btn {
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    .ws-tabs__item {
+        min-height: 36px;
+    }
+
+    .ws-layout-switcher__btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Disable hover transform effects on touch devices */
+    .ws-card:hover {
+        transform: none;
+    }
+
+    .ws-dock__item:hover {
+        transform: none;
+    }
+
+    /* Enlarged resize handles for touch dragging */
+    .ws-card__resize {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* ==========================================================================
+   10. Pull-to-Refresh Indicator
+   ========================================================================== */
+
+.rsp-pull-indicator {
+    position: fixed;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: top 0.3s ease;
+    z-index: 9999;
+}
+
+.rsp-pull-indicator--visible {
+    top: 60px;
+}
+
+.rsp-pull-indicator__arrow {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid var(--accent);
+    transition: transform 0.3s ease;
+}
+
+.rsp-pull-indicator--refreshing .rsp-pull-indicator__arrow {
+    transform: rotate(180deg);
+}
