@@ -227,7 +227,7 @@ def _validate_build(html: str) -> list:
         warnings.append(f"构建验证: {len(leading_space_keys)} 个 __m key 有前导空格: {leading_space_keys[:3]}")
 
     # 6. 关键全局变量存在性检查
-    required_globals = ["SSEManager", "Components", "API", "Store", "Bus", "Router"]
+    required_globals = ["SSEManager", "Components", "API", "Store", "Bus", "Router", "HermesClient", "CardOverlay", "StatusBar", "Dock", "SpotlightSearch"]
     for var in required_globals:
         # 检查是否有 var XXX = 或 window.XXX = 的定义
         pattern = rf'(?:var\s+{var}\s*=|window\.{var}\s*=)'
@@ -294,7 +294,7 @@ def build_full_html():
 
     # 1. Core 模块（按固定依赖顺序）
     core_order = ["Logger.js", "Store.js", "Bus.js", "ErrorHandler.js",
-                  "APIClient.js", "constants.js", "Router.js", "init.js"]
+                  "HermesClient.js", "APIClient.js", "constants.js", "Router.js", "init.js"]
     core_js = [f"js/core/{f}" for f in core_order]
     # core 目录下可能还有其他文件，也一并加入
     for extra in _scan_dir("core", exclude=set(core_order)):
