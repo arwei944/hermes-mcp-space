@@ -55,7 +55,7 @@ const MemoryEntryWidget = (() => {
     WidgetRegistry.register('memory-entry', {
         type: 'entry',
         label: '记忆入口',
-        icon: '🧠',
+        icon: 'brain',
         description: '记忆快速入口，显示记忆总数',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
