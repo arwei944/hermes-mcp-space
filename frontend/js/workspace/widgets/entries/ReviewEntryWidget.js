@@ -55,7 +55,7 @@ const ReviewEntryWidget = (() => {
     WidgetRegistry.register('review-entry', {
         type: 'entry',
         label: '审核入口',
-        icon: '✅',
+        icon: 'checkCircle',
         description: '审核快速入口，显示待审核总数',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
