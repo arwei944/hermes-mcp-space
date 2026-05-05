@@ -402,7 +402,21 @@ var CardOverlay = (() => {
             'agent-card':        { title: 'AI助手',  icon: '🤖', iconBg: 'linear-gradient(135deg, #34c759, #30d158)' },
             'agent-entry':       { title: 'AI助手',  icon: '🤖', iconBg: 'linear-gradient(135deg, #34c759, #30d158)' },
             'ops-card':          { title: '运维中心', icon: '📊', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' },
-            'ops-entry':         { title: '运维中心', icon: '📊', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' }
+            'ops-entry':         { title: '运维中心', icon: '📊', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' },
+            'memory-card':      { title: '记忆',     icon: '🧠', iconBg: 'linear-gradient(135deg, #ff2d55, #ff375f)' },
+            'memory-entry':     { title: '记忆',     icon: '🧠', iconBg: 'linear-gradient(135deg, #ff2d55, #ff375f)' },
+            'cron-card':        { title: '定时任务', icon: '⏰', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' },
+            'cron-entry':       { title: '定时任务', icon: '⏰', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' },
+            'rules-card':       { title: '规则引擎', icon: '📋', iconBg: 'linear-gradient(135deg, #007aff, #5ac8fa)' },
+            'rules-entry':      { title: '规则引擎', icon: '📋', iconBg: 'linear-gradient(135deg, #007aff, #5ac8fa)' },
+            'experience-card':  { title: '经验',     icon: '💡', iconBg: 'linear-gradient(135deg, #ffcc00, #ff9500)' },
+            'experience-entry': { title: '经验',     icon: '💡', iconBg: 'linear-gradient(135deg, #ffcc00, #ff9500)' },
+            'settings-card':    { title: '系统设置', icon: '⚙️', iconBg: 'linear-gradient(135deg, #8e8e93, #636366)' },
+            'settings-entry':   { title: '系统设置', icon: '⚙️', iconBg: 'linear-gradient(135deg, #8e8e93, #636366)' },
+            'logs-card':        { title: '系统日志', icon: '📝', iconBg: 'linear-gradient(135deg, #34c759, #30d158)' },
+            'logs-entry':       { title: '系统日志', icon: '📝', iconBg: 'linear-gradient(135deg, #34c759, #30d158)' },
+            'trash-card':       { title: '回收站',   icon: '🗑️', iconBg: 'linear-gradient(135deg, #8e8e93, #636366)' },
+            'trash-entry':      { title: '回收站',   icon: '🗑️', iconBg: 'linear-gradient(135deg, #8e8e93, #636366)' }
         };
 
         return metaMap[cardId] || { title: cardId, icon: '📦', iconBg: 'linear-gradient(135deg, #667eea, #764ba2)' };
