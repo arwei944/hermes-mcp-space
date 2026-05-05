@@ -392,7 +392,11 @@ var CardOverlay = (() => {
             rules:       { title: '规则引擎', icon: '📋', iconBg: 'linear-gradient(135deg, #007aff, #5ac8fa)' },
             sessions:    { title: '会话记录', icon: '💬', iconBg: 'linear-gradient(135deg, #34c759, #00c7be)' },
             notifications:{ title: '通知中心', icon: '🔔', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' },
-            settings:    { title: '系统设置', icon: '⚙️', iconBg: 'linear-gradient(135deg, #8e8e93, #636366)' }
+            settings:    { title: '系统设置', icon: '⚙️', iconBg: 'linear-gradient(135deg, #8e8e93, #636366)' },
+            'knowledge-card':  { title: '知识库', icon: '📚', iconBg: 'linear-gradient(135deg, #af52de, #5856d6)' },
+            'session-card':    { title: '会话',   icon: '💬', iconBg: 'linear-gradient(135deg, #34c759, #00c7be)' },
+            'knowledge-entry': { title: '知识库', icon: '📚', iconBg: 'linear-gradient(135deg, #af52de, #5856d6)' },
+            'session-entry':   { title: '会话',   icon: '💬', iconBg: 'linear-gradient(135deg, #34c759, #00c7be)' }
         };
 
         return metaMap[cardId] || { title: cardId, icon: '📦', iconBg: 'linear-gradient(135deg, #667eea, #764ba2)' };
