@@ -583,7 +583,7 @@
   WidgetRegistry.register('memory-card', {
     type: 'data',
     label: '记忆',
-    icon: '🧠',
+    icon: 'brain',
     defaultSize: { w: 2, h: 1 },
     category: 'data',
     mount: mount
@@ -592,7 +592,7 @@
   WidgetRegistry.register('memory-entry', {
     type: 'entry',
     label: '记忆入口',
-    icon: '🧠',
+    icon: 'brain',
     defaultSize: { w: 1, h: 1 },
     category: 'entries',
     mount: mountEntry
