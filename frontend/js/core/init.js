@@ -50,5 +50,9 @@
         return (Store.get('ops.alertHistory') || []).filter(h => h.level === 'critical' && !h.acknowledged).length;
     }, ['ops.alertHistory']);
 
+    // 4. Workspace 状态域（由 StateManager.init() 动态定义）
+    //    workspace / desktops / cards 命名空间在 StateManager.init() 中创建
+    //    这里只做标记，实际初始化在 App.init() 中调用 StateManager.init()
+
     Logger.info('[Store] 状态初始化完成');
 })();

@@ -6,6 +6,7 @@
 const App = (() => {
     // 直接引用全局 Page 变量（const 声明的全局变量不会挂到 window 上）
     const pages = {
+        workspace: WorkspacePage,
         dashboard: DashboardPage,
         knowledge: KnowledgePage,
         sessions: SessionsPage,
@@ -23,6 +24,7 @@ const App = (() => {
     };
 
     const pageTitles = {
+        workspace: '工作台',
         dashboard: '仪表盘',
         knowledge: '知识库',
         sessions: '会话管理',
@@ -48,6 +50,10 @@ const App = (() => {
         bindGlobalEvents();
         initTheme();
         replaceNavIcons();
+
+        // 初始化 Workspace 基础设施（P0）
+        if (typeof StateManager !== 'undefined') StateManager.init();
+        if (typeof DataService !== 'undefined') DataService.init();
 
         // 新手引导（首次访问）
         if (typeof Components !== 'undefined' && Components.Onboarding && !Components.Onboarding.isDone()) {
@@ -204,8 +210,8 @@ const App = (() => {
     }
 
     function handleRoute() {
-        const hash = window.location.hash.slice(1) || 'dashboard';
-        const pageName = pages[hash] ? hash : 'dashboard';
+        const hash = window.location.hash.slice(1) || 'workspace';
+        const pageName = pages[hash] ? hash : 'workspace';
         navigateTo(pageName);
     }
 
