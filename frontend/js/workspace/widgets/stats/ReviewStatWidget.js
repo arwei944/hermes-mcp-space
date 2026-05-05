@@ -58,7 +58,7 @@ const ReviewStatWidget = (() => {
     WidgetRegistry.register('review-stat', {
         type: 'stat',
         label: '审核统计',
-        icon: '\u2705',
+        icon: 'checkCircle',
         description: '显示审核统计数据：待审核数、已通过数、已拒绝数',
         defaultSize: { w: 1, h: 1 },
         category: 'stats',
