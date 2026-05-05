@@ -396,7 +396,13 @@ var CardOverlay = (() => {
             'knowledge-card':  { title: '知识库', icon: '📚', iconBg: 'linear-gradient(135deg, #af52de, #5856d6)' },
             'session-card':    { title: '会话',   icon: '💬', iconBg: 'linear-gradient(135deg, #34c759, #00c7be)' },
             'knowledge-entry': { title: '知识库', icon: '📚', iconBg: 'linear-gradient(135deg, #af52de, #5856d6)' },
-            'session-entry':   { title: '会话',   icon: '💬', iconBg: 'linear-gradient(135deg, #34c759, #00c7be)' }
+            'session-entry':   { title: '会话',   icon: '💬', iconBg: 'linear-gradient(135deg, #34c759, #00c7be)' },
+            'marketplace-card':  { title: '功能商店', icon: '🛒', iconBg: 'linear-gradient(135deg, #007aff, #5856d6)' },
+            'marketplace-entry': { title: '功能商店', icon: '🛒', iconBg: 'linear-gradient(135deg, #007aff, #5856d6)' },
+            'agent-card':        { title: 'AI助手',  icon: '🤖', iconBg: 'linear-gradient(135deg, #34c759, #30d158)' },
+            'agent-entry':       { title: 'AI助手',  icon: '🤖', iconBg: 'linear-gradient(135deg, #34c759, #30d158)' },
+            'ops-card':          { title: '运维中心', icon: '📊', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' },
+            'ops-entry':         { title: '运维中心', icon: '📊', iconBg: 'linear-gradient(135deg, #ff9500, #ff6b00)' }
         };
 
         return metaMap[cardId] || { title: cardId, icon: '📦', iconBg: 'linear-gradient(135deg, #667eea, #764ba2)' };
