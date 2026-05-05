@@ -586,7 +586,7 @@
   WidgetRegistry.register('cron-card', {
     type: 'data',
     label: '定时任务',
-    icon: '⏰',
+    icon: 'clock',
     defaultSize: { w: 2, h: 1 },
     category: 'data',
     mount: mount
@@ -595,7 +595,7 @@
   WidgetRegistry.register('cron-entry', {
     type: 'entry',
     label: '定时任务入口',
-    icon: '⏰',
+    icon: 'clock',
     defaultSize: { w: 1, h: 1 },
     category: 'entries',
     mount: mountEntry
