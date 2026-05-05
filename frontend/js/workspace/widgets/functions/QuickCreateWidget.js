@@ -67,7 +67,7 @@ const QuickCreateWidget = (() => {
     WidgetRegistry.register('quick-create', {
         type: 'function',
         label: '快捷创建',
-        icon: '➕',
+        icon: 'plus',
         description: '快捷创建知识、规则、记忆、会话',
         defaultSize: { w: 1, h: 1 },
         category: 'functions',
