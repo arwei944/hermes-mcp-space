@@ -32,7 +32,13 @@ const CardWidget = (() => {
             <div class="ws-card__delete-badge" data-action="card-delete" data-card-id="${card.id}" data-desktop-id="${desktopId}">×</div>
             <div class="ws-card__header">
                 <div class="ws-card__title">
-                    ${card.icon ? `<span class="ws-card__icon">${card.icon}</span>` : ''}
+                    ${(() => {
+            var iconHtml = card.icon || '';
+            if (iconHtml && iconHtml.length < 30 && typeof Components !== 'undefined' && Components.icon) {
+                iconHtml = Components.icon(iconHtml, 20);
+            }
+            return iconHtml ? `<span class="ws-card__icon">${iconHtml}</span>` : '';
+        })()}
                     <span class="ws-card__title-text">${card.title || '未命名卡片'}</span>
                 </div>
                 <div class="ws-card__actions">
