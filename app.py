@@ -227,7 +227,7 @@ def _validate_build(html: str) -> list:
         warnings.append(f"构建验证: {len(leading_space_keys)} 个 __m key 有前导空格: {leading_space_keys[:3]}")
 
     # 6. 关键全局变量存在性检查
-    required_globals = ["SSEManager", "Components", "API", "Store", "Bus", "Router", "HermesClient", "CardOverlay", "StatusBar", "Dock", "SpotlightSearch"]
+    required_globals = ["SSEManager", "Components", "API", "Store", "Bus", "Router", "HermesClient", "CardOverlay", "StatusBar", "Dock", "SpotlightSearch", "ContextMenuManager", "SkeletonLoader"]
     for var in required_globals:
         # 检查是否有 var XXX = 或 window.XXX = 的定义
         pattern = rf'(?:var\s+{var}\s*=|window\.{var}\s*=)'
