@@ -193,7 +193,7 @@ const TodoWidget = (() => {
     WidgetRegistry.register('todo', {
         type: 'shortcut',
         label: '待办事项',
-        icon: '✅',
+        icon: 'checkCircle',
         description: '简单的待办事项列表，支持添加/删除/勾选',
         defaultSize: { w: 1, h: 1 },
         category: 'shortcuts',
