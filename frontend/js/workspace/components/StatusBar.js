@@ -216,12 +216,12 @@ var StatusBar = (() => {
         _container.innerHTML = `
             <div class="status-bar">
                 <div class="status-bar-left">
-                    <span class="status-bar-logo">🏠</span>
+                    <span class="status-bar-logo" data-icon="home"></span>
                     <span class="status-bar-title">Hermes</span>
                     <span class="status-bar-version" id="sbVersion"></span>
                 </div>
                 <div class="status-bar-right">
-                    <span class="status-bar-item" id="sbSearch" title="搜索 (⌘K)">🔍</span>
+                    <span class="status-bar-item" id="sbSearch" title="搜索 (⌘K)" data-icon="search"></span>
                     <span class="status-bar-item" id="sbNotif" title="通知">
                         🔔
                         <span class="status-bar-badge" id="sbNotifBadge" style="display:none">0</span>
@@ -229,8 +229,8 @@ var StatusBar = (() => {
                     <span class="status-bar-item" id="sbSSE" title="连接状态">
                         <span class="status-bar-dot disconnected" id="sbSSEDot"></span>
                     </span>
-                    <span class="status-bar-item" id="sbTheme" title="切换主题">🌙</span>
-                    <span class="status-bar-item" id="sbEdit" title="编辑模式">✏️</span>
+                    <span class="status-bar-item" id="sbTheme" title="切换主题" data-icon="moon"></span>
+                    <span class="status-bar-item" id="sbEdit" title="编辑模式" data-icon="edit"></span>
                     <span class="status-bar-clock" id="sbClock"></span>
                 </div>
             </div>
@@ -252,8 +252,36 @@ var StatusBar = (() => {
         // 绑定事件
         _bindEvents();
 
+        // 更新 SVG 图标
+        _updateIcons();
+
         // 更新版本号
         _updateVersion();
+    }
+
+
+    // ========== SVG Icon Update ==========
+    function _setSvgIcon(el, iconName, size) {
+        if (!el) return;
+        if (typeof Components !== 'undefined' && Components.icon) {
+            el.innerHTML = Components.icon(iconName, size || 16);
+        }
+    }
+
+    function _updateIcons() {
+        var items = [
+            { id: 'sbLogo', icon: 'home', size: 16 },
+            { id: 'sbSearch', icon: 'search', size: 16 },
+            { id: 'sbNotif', icon: 'bell', size: 16 },
+            { id: 'sbTheme', icon: 'moon', size: 16 },
+            { id: 'sbEdit', icon: 'edit', size: 16 }
+        ];
+        for (var i = 0; i < items.length; i++) {
+            var el = document.getElementById(items[i].id);
+            if (el && el.getAttribute('data-icon')) {
+                _setSvgIcon(el, items[i].icon, items[i].size);
+            }
+        }
     }
 
     // ========== 启动时钟 ==========
@@ -328,10 +356,10 @@ var StatusBar = (() => {
         // 切换
         if (isDark) {
             document.documentElement.setAttribute('data-theme', 'light');
-            if (_themeBtn) _themeBtn.textContent = '🌙';
+            if (_themeBtn) _themeBtn.innerHTML = (typeof Components !== 'undefined' && Components.icon) ? Components.icon('moon', 16) : '🌙';
         } else {
             document.documentElement.setAttribute('data-theme', 'dark');
-            if (_themeBtn) _themeBtn.textContent = '☀️';
+            if (_themeBtn) _themeBtn.innerHTML = (typeof Components !== 'undefined' && Components.icon) ? Components.icon('sun', 16) : '☀️';
         }
 
         // 保存到 localStorage
