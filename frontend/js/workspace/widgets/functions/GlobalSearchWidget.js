@@ -77,7 +77,7 @@ const GlobalSearchWidget = (() => {
     WidgetRegistry.register('global-search', {
         type: 'function',
         label: '全局搜索',
-        icon: '🔍',
+        icon: 'search',
         description: '全局搜索知识、规则、记忆等',
         defaultSize: { w: 1, h: 1 },
         category: 'functions',
