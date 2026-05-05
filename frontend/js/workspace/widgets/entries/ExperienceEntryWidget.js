@@ -55,7 +55,7 @@ const ExperienceEntryWidget = (() => {
     WidgetRegistry.register('experience-entry', {
         type: 'entry',
         label: '经验入口',
-        icon: '💡',
+        icon: 'lightbulb',
         description: '经验快速入口，显示经验总数',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
