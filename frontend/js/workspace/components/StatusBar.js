@@ -356,17 +356,16 @@ var StatusBar = (() => {
     function _updateVersion() {
         if (!_versionEl) return;
 
-        // 尝试从 HermesClient 获取版本
+        // 尝试从 HermesClient 获取版本（异步）
         if (typeof HermesClient !== 'undefined' && HermesClient.getAppVersion) {
-            try {
-                var version = HermesClient.getAppVersion();
-                if (version) {
+            HermesClient.getAppVersion().then(function(version) {
+                if (version && _versionEl) {
                     _versionEl.textContent = 'v' + version;
-                    return;
                 }
-            } catch (e) {
+            }).catch(function() {
                 // 忽略错误
-            }
+            });
+            return;
         }
 
         // 尝试从全局变量获取
