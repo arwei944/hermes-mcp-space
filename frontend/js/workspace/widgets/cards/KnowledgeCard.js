@@ -414,7 +414,7 @@ var KnowledgeCard = (() => {
             container.innerHTML =
                 '<div class="ws-widget">' +
                     '<div class="kc-small" data-action="open-overlay">' +
-                        '<div class="kc-small__emoji">📖</div>' +
+                        '<div class="kc-small__emoji" data-icon="bookOpen" data-icon-size="32"></div>' +
                         '<div class="kc-small__label">知识库</div>' +
                         (loading
                             ? '<div class="kc-loading" style="padding:8px 0;"><div class="kc-loading__spinner" style="width:18px;height:18px;border-width:2px;"></div></div>'
@@ -427,11 +427,11 @@ var KnowledgeCard = (() => {
         // ========== Medium 渲染 ==========
         function _renderMedium() {
             if (loading) {
-                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon">📖</span><span class="kc-header__title">知识库</span></div>' + _skeletonHtml(5) + '</div>';
+                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon" data-icon="bookOpen" data-icon-size="18"></span><span class="kc-header__title">知识库</span></div>' + _skeletonHtml(5) + '</div>';
                 return;
             }
             if (error) {
-                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon">📖</span><span class="kc-header__title">知识库</span></div>' + _errorHtml(error) + '</div>';
+                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon" data-icon="bookOpen" data-icon-size="18"></span><span class="kc-header__title">知识库</span></div>' + _errorHtml(error) + '</div>';
                 return;
             }
 
@@ -453,7 +453,7 @@ var KnowledgeCard = (() => {
             container.innerHTML =
                 '<div class="ws-widget">' +
                     '<div class="kc-header">' +
-                        '<span class="kc-header__icon">📖</span>' +
+                        '<span class="kc-header__icon" data-icon="bookOpen" data-icon-size="18"></span>' +
                         '<span class="kc-header__title">知识库</span>' +
                         '<span class="kc-header__count">' + items.length + '条</span>' +
                     '</div>' +
@@ -464,11 +464,11 @@ var KnowledgeCard = (() => {
         // ========== Large 渲染 ==========
         function _renderLarge() {
             if (loading) {
-                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon">📖</span><span class="kc-header__title">知识库</span></div>' + _skeletonHtml(6) + '</div>';
+                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon" data-icon="bookOpen" data-icon-size="18"></span><span class="kc-header__title">知识库</span></div>' + _skeletonHtml(6) + '</div>';
                 return;
             }
             if (error) {
-                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon">📖</span><span class="kc-header__title">知识库</span></div>' + _errorHtml(error) + '</div>';
+                container.innerHTML = '<div class="ws-widget"><div class="kc-header"><span class="kc-header__icon" data-icon="bookOpen" data-icon-size="18"></span><span class="kc-header__title">知识库</span></div>' + _errorHtml(error) + '</div>';
                 return;
             }
 
@@ -505,7 +505,7 @@ var KnowledgeCard = (() => {
             container.innerHTML =
                 '<div class="ws-widget">' +
                     '<div class="kc-header">' +
-                        '<span class="kc-header__icon">📖</span>' +
+                        '<span class="kc-header__icon" data-icon="bookOpen" data-icon-size="18"></span>' +
                         '<span class="kc-header__title">知识库</span>' +
                         '<span class="kc-header__count">' + items.length + '条</span>' +
                     '</div>' +
@@ -1068,7 +1068,7 @@ var KnowledgeCard = (() => {
             container.innerHTML =
                 '<div class="ws-widget">' +
                     '<div class="kc-small" data-action="open-overlay">' +
-                        '<div class="kc-small__emoji">📖</div>' +
+                        '<div class="kc-small__emoji" data-icon="bookOpen" data-icon-size="32"></div>' +
                         '<div class="kc-small__label">知识库</div>' +
                         (loaded
                             ? '<div class="kc-small__count">' + count + '</div><div class="kc-small__unit">条知识</div>'
