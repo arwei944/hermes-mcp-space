@@ -264,7 +264,7 @@ def build_full_html():
     logger.info(f"build_full_html: frontend_dir={frontend_dir}, exists={frontend_dir.exists()}")
 
     # Load ALL CSS files and inline them
-    css_files = ["css/style.css", "css/dark-theme.css", "css/knowledge.css"]
+    css_files = ["css/style.css", "css/dark-theme.css", "css/knowledge.css", "css/workspace.css"]
     all_css = ""
     for css_path in css_files:
         full_path = frontend_dir / css_path
@@ -329,7 +329,34 @@ def build_full_html():
             for jsf in sorted(item.glob("*.js")):
                 page_files.append(f"js/pages/{item.name}/{jsf.name}")
     app_js = ["js/app.js"]
-    js_files = core_js + page_files + app_js
+
+    # 7. Workspace 模块（iOS 桌面风格工作台）
+    #    目录结构: frontend/js/workspace/{core,components,widgets,pages}/
+    #    加载顺序: core → components → widgets → pages（确保依赖关系正确）
+    workspace_dir = frontend_dir / "js" / "workspace"
+    workspace_files = []
+    if workspace_dir.exists():
+        for sub_dir in ["core", "components", "widgets", "pages"]:
+            sub_path = workspace_dir / sub_dir
+            if sub_path.exists():
+                if sub_dir == "widgets":
+                    # widgets 子目录按类型排序加载
+                    for type_dir in sorted(sub_path.iterdir()):
+                        if type_dir.is_dir():
+                            for jsf in sorted(type_dir.glob("*.js")):
+                                workspace_files.append(f"js/workspace/{sub_dir}/{type_dir.name}/{jsf.name}")
+                else:
+                    for item in sorted(sub_path.iterdir()):
+                        if item.is_file() and item.suffix == '.js':
+                            workspace_files.append(f"js/workspace/{sub_dir}/{item.name}")
+                        elif item.is_dir():
+                            for jsf in sorted(item.glob("*.js")):
+                                workspace_files.append(f"js/workspace/{sub_dir}/{item.name}/{jsf.name}")
+        logger.info(f"Auto-discovered {len(workspace_files)} workspace files")
+    else:
+        logger.warning(f"Workspace directory not found: {workspace_dir}")
+
+    js_files = core_js + workspace_files + page_files + app_js
 
     logger.info(f"Auto-discovered {len(page_files)} page files: {[f.split('/')[-1] for f in page_files]}")
 
