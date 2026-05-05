@@ -55,7 +55,7 @@ const SessionsEntryWidget = (() => {
     WidgetRegistry.register('sessions-entry', {
         type: 'entry',
         label: '会话入口',
-        icon: '💬',
+        icon: 'messageCircle',
         description: '会话快速入口，显示会话总数',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
