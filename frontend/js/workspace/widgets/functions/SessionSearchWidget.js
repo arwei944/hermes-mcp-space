@@ -134,7 +134,7 @@ const SessionSearchWidget = (() => {
     WidgetRegistry.register('session-search', {
         type: 'function',
         label: '会话搜索',
-        icon: '🔎',
+        icon: 'search',
         description: '搜索会话并快速跳转',
         defaultSize: { w: 1, h: 1 },
         category: 'functions',
