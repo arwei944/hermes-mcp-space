@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/dark-theme.css">
     <link rel="stylesheet" href="/css/knowledge.css">
+    <link rel="stylesheet" href="/css/workspace.css">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0071e3">
 </head>
@@ -55,7 +56,11 @@
         <nav class="sidebar-nav">
         <div class="nav-section">
             <div class="nav-section-title">概览</div>
-            <a class="nav-item active" data-page="dashboard" href="#dashboard" data-tooltip="系统运行状态总览">
+            <a class="nav-item active" data-page="workspace" href="#workspace" data-tooltip="iOS 桌面式自由工作台">
+                <span class="nav-icon" data-icon="layout"></span>
+                <span>工作台</span>
+            </a>
+            <a class="nav-item" data-page="dashboard" href="#dashboard" data-tooltip="系统运行状态总览">
                 <span class="nav-icon" data-icon="chart"></span>
                 <span>仪表盘</span>
             </a>
@@ -225,6 +230,47 @@
 <script src="/js/pages/sync/register.js" defer></script>
 <script src="/js/pages/ops-center/register.js" defer></script>
 <script src="/js/pages/about/register.js" defer></script>
+<!-- Workspace Module (P0-P3: Full Workspace) -->
+<script src="/js/workspace/core/StateManager.js" defer></script>
+<script src="/js/workspace/core/DataService.js" defer></script>
+<script src="/js/workspace/core/LayoutEngine.js" defer></script>
+<script src="/js/workspace/core/DragManager.js" defer></script>
+<script src="/js/workspace/core/ResizeManager.js" defer></script>
+<script src="/js/workspace/core/ZIndexManager.js" defer></script>
+<script src="/js/workspace/core/CardManager.js" defer></script>
+<script src="/js/workspace/core/GestureManager.js" defer></script>
+<script src="/js/workspace/core/DesktopManager.js" defer></script>
+<script src="/js/workspace/core/WidgetRegistry.js" defer></script>
+<script src="/js/workspace/widgets/entries/KnowledgeEntryWidget.js" defer></script>
+<script src="/js/workspace/widgets/entries/RulesEntryWidget.js" defer></script>
+<script src="/js/workspace/widgets/entries/ExperienceEntryWidget.js" defer></script>
+<script src="/js/workspace/widgets/entries/MemoryEntryWidget.js" defer></script>
+<script src="/js/workspace/widgets/entries/ReviewEntryWidget.js" defer></script>
+<script src="/js/workspace/widgets/entries/SessionsEntryWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/KnowledgeListWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/RulesListWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/ExperienceListWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/MemoryListWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/ReviewListWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/SessionRecentWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/CronListWidget.js" defer></script>
+<script src="/js/workspace/widgets/data/AgentListWidget.js" defer></script>
+<script src="/js/workspace/widgets/stats/ReviewStatWidget.js" defer></script>
+<script src="/js/workspace/widgets/stats/DashboardStatsWidget.js" defer></script>
+<script src="/js/workspace/widgets/stats/McpStatusWidget.js" defer></script>
+<script src="/js/workspace/widgets/stats/KnowledgeGraphWidget.js" defer></script>
+<script src="/js/workspace/widgets/stats/OpsMetricsWidget.js" defer></script>
+<script src="/js/workspace/widgets/functions/QuickCreateWidget.js" defer></script>
+<script src="/js/workspace/widgets/functions/GlobalSearchWidget.js" defer></script>
+<script src="/js/workspace/widgets/functions/SessionSearchWidget.js" defer></script>
+<script src="/js/workspace/widgets/shortcuts/MemoWidget.js" defer></script>
+<script src="/js/workspace/widgets/shortcuts/TodoWidget.js" defer></script>
+<script src="/js/workspace/components/CardWidget.js" defer></script>
+<script src="/js/workspace/components/LayoutSwitcher.js" defer></script>
+<script src="/js/workspace/components/DesktopContainer.js" defer></script>
+<script src="/js/workspace/components/DesktopTabs.js" defer></script>
+<script src="/js/workspace/components/CardStore.js" defer></script>
+<script src="/js/workspace/pages/WorkspacePage.js" defer></script>
 <script src="/js/app.js" defer></script>
 
 <!-- 全局错误边界：用户友好提示 -->
