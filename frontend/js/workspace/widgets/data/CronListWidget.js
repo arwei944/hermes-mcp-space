@@ -62,7 +62,7 @@ const CronListWidget = (() => {
     WidgetRegistry.register('cron-list', {
         type: 'data',
         label: '定时任务',
-        icon: '\u23F0',
+        icon: 'clock',
         description: '显示定时任务列表及其运行状态',
         defaultSize: { w: 2, h: 1 },
         category: 'data',
