@@ -52,9 +52,12 @@ async def list_mcp_servers() -> List[Dict[str, Any]]:
 
 
 @router.post("/servers", summary="添加外部 MCP 服务器")
-async def add_mcp_server(name: str, url: str, prefix: str = "") -> Dict[str, Any]:
+async def add_mcp_server(body: Dict[str, Any]) -> Dict[str, Any]:
     """添加外部 MCP 服务器并自动发现工具"""
     from backend.services.mcp_client_service import mcp_client_service
+    name = body.get("name", "")
+    url = body.get("url", "")
+    prefix = body.get("prefix", "")
     return mcp_client_service.add_server(name, url, prefix)
 
 
