@@ -45,11 +45,6 @@ var WorkspacePage = (function () {
             DesktopManager.init(_desktopContainer);
         }
 
-        // 初始化布局引擎
-        if (typeof LayoutEngine !== 'undefined') {
-            LayoutEngine.init(_desktopContainer);
-        }
-
         // 初始化卡片管理器
         if (typeof CardManager !== 'undefined') {
             CardManager.init(_desktopContainer);
