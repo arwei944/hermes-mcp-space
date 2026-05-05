@@ -8,10 +8,10 @@ var Dock = (() => {
 
     // ========== 默认 Dock 项 ==========
     var DEFAULT_ITEMS = [
-        { id: 'marketplace', icon: '🛒', label: '功能商店', bg: 'linear-gradient(135deg, #007aff, #5856d6)' },
-        { id: 'agents',      icon: '🤖', label: 'AI 助手',  bg: 'linear-gradient(135deg, #34c759, #30d158)' },
-        { id: 'ops_center',  icon: '📊', label: '运维中心', bg: 'linear-gradient(135deg, #ff9500, #ff6b00)' },
-        { id: 'config',      icon: '⚙️', label: '系统配置', bg: 'linear-gradient(135deg, #8e8e93, #636366)' }
+        { id: 'marketplace', icon: 'store', label: '功能商店', bg: 'rgba(0,0,0,0.04)' },
+        { id: 'agents',      icon: 'bot', label: 'AI 助手',  bg: 'rgba(0,0,0,0.04)' },
+        { id: 'ops_center',  icon: 'chart', label: '运维中心', bg: 'rgba(0,0,0,0.04)' },
+        { id: 'config',      icon: 'settings', label: '系统配置', bg: 'rgba(0,0,0,0.04)' }
     ];
 
     // ========== 状态 ==========
@@ -75,6 +75,7 @@ var Dock = (() => {
             .dock-item:hover .dock-item-icon {
                 transform: scale(1.25) translateY(-8px);
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+                background: var(--border, rgba(0, 0, 0, 0.08)) !important;
             }
 
             .dock-item:active .dock-item-icon {
@@ -168,17 +169,20 @@ var Dock = (() => {
     // ========== 构建 Dock 项 HTML ==========
     function _buildItemHTML(item) {
         var badgeHTML = item.badge ?
-            `<span class="dock-item-badge">${item.badge > 99 ? '99+' : item.badge}</span>` : '';
+            '<span class="dock-item-badge">' + (item.badge > 99 ? '99+' : item.badge) + '</span>' : '';
 
-        return `
-            <div class="dock-item" data-dock-id="${item.id}" title="${item.label || ''}">
-                <span class="dock-item-tooltip">${item.label || ''}</span>
-                ${badgeHTML}
-                <div class="dock-item-icon" style="background: ${item.bg || 'linear-gradient(135deg, #667eea, #764ba2)'}">
-                    ${item.icon || '📦'}
-                </div>
-            </div>
-        `;
+        var iconHtml = item.icon || 'package';
+        if (typeof Components !== 'undefined' && Components.icon) {
+            iconHtml = Components.icon(iconHtml, 24);
+        }
+
+        return '<div class="dock-item" data-dock-id="' + (item.id || '') + '" title="' + (item.label || '') + '">' +
+            '<span class="dock-item-tooltip">' + (item.label || '') + '</span>' +
+            badgeHTML +
+            '<div class="dock-item-icon" style="background: ' + (item.bg || 'rgba(0,0,0,0.04)') + '; color: var(--text-secondary, #6e6e73);">' +
+                iconHtml +
+            '</div>' +
+        '</div>';
     }
 
     // ========== 渲染 Dock ==========
