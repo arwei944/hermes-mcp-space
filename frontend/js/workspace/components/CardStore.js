@@ -212,34 +212,24 @@ const CardStore = (() => {
         if (!document.getElementById('ws-store-trigger-style')) {
             var style = document.createElement('style');
             style.id = 'ws-store-trigger-style';
-            style.textContent = \`
-                .ws-store-trigger {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 36px;
-                    height: 36px;
-                    border-radius: 10px;
-                    background: var(--surface-hover, rgba(0,0,0,0.04));
-                    border: 1.5px dashed var(--border, rgba(0,0,0,0.12));
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    color: var(--text-tertiary, #999);
-                    font-size: 20px;
-                    line-height: 1;
-                    user-select: none;
-                }
-                .ws-store-trigger:hover {
-                    background: var(--accent, #0071e3);
-                    border-color: var(--accent, #0071e3);
-                    color: #fff;
-                    transform: scale(1.05);
-                    box-shadow: 0 2px 12px rgba(0,113,227,0.3);
-                }
-                .ws-store-trigger:active {
-                    transform: scale(0.95);
-                }
-            \`;
+            style.textContent =
+                '.ws-store-trigger {' +
+                '  display:flex; align-items:center; justify-content:center;' +
+                '  width:36px; height:36px; border-radius:10px;' +
+                '  background:var(--surface-hover, rgba(0,0,0,0.04));' +
+                '  border:1.5px dashed var(--border, rgba(0,0,0,0.12));' +
+                '  cursor:pointer; transition:all 0.2s ease;' +
+                '  color:var(--text-tertiary, #999); font-size:20px; line-height:1;' +
+                '  user-select:none;' +
+                '}' +
+                '.ws-store-trigger:hover {' +
+                '  background:var(--accent, #0071e3); border-color:var(--accent, #0071e3);' +
+                '  color:#fff; transform:scale(1.05);' +
+                '  box-shadow:0 2px 12px rgba(0,113,227,0.3);' +
+                '}' +
+                '.ws-store-trigger:active {' +
+                '  transform:scale(0.95);' +
+                '}';
             document.head.appendChild(style);
         }
 
