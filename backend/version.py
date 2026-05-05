@@ -8,17 +8,39 @@
   - 次版本号 (MINOR): 新功能
   - 修订号 (PATCH): Bug 修复
 
-更新版本时只需修改此文件的 __version__ 即可，
-配合 release.sh 自动同步到 CHANGELOG 和 Git tag。
+版本号自动从 git tag 获取，无需手动修改。
+发布新版本时只需打 git tag（如 v15.5.7），构建时自动识别。
 
 """
 
 import os
+import subprocess
+
+
+def _get_version_from_git() -> str:
+    """从 git tag 自动获取版本号"""
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            capture_output=True, text=True, timeout=5,
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+        )
+        if result.returncode == 0:
+            tag = result.stdout.strip()
+            # 去掉 v 前缀（v15.5.6 → 15.5.6）
+            if tag.startswith("v"):
+                tag = tag[1:]
+            return tag
+    except Exception:
+        pass
+    return ""
+
 
 # ============================================
-# 唯一版本号 - 修改这里即可
+# 版本号自动获取：环境变量 > git tag > fallback
 # ============================================
-__version__ = os.environ.get("APP_VERSION", "15.5.5")
+_git_version = _get_version_from_git()
+__version__ = os.environ.get("APP_VERSION") or _git_version or "0.0.0"
 
 # 版本元信息
 __version_meta__ = {
