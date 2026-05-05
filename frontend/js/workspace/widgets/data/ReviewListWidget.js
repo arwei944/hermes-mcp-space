@@ -57,7 +57,7 @@ const ReviewListWidget = (() => {
     WidgetRegistry.register('review-list', {
         type: 'data',
         label: '审核列表',
-        icon: '\u2705',
+        icon: 'checkCircle',
         description: '显示待审核/已审核条目列表',
         defaultSize: { w: 2, h: 1 },
         category: 'data',
