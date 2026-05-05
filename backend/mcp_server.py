@@ -175,7 +175,7 @@ async def _call_tool(name: str, arguments: Dict[str, Any], agent_id: str = None)
     from backend.services.mcp_client_service import mcp_client_service
     if mcp_client_service.is_external_tool(name):
         try:
-            result = mcp_client_service.call_external_tool(name, arguments)
+            result = await mcp_client_service.call_external_tool(name, arguments)
             if isinstance(result, dict):
                 if "error" in result: raise ValueError(f"{result['error']}")
                 content_list = result.get("result", {}).get("content", [])

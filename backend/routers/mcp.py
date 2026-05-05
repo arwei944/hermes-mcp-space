@@ -58,7 +58,7 @@ async def add_mcp_server(body: Dict[str, Any]) -> Dict[str, Any]:
     name = body.get("name", "")
     url = body.get("url", "")
     prefix = body.get("prefix", "")
-    return mcp_client_service.add_server(name, url, prefix)
+    return await mcp_client_service.add_server(name, url, prefix)
 
 
 @router.delete("/servers/{server_name}", summary="移除外部 MCP 服务器")
@@ -72,14 +72,14 @@ async def remove_mcp_server(server_name: str) -> Dict[str, Any]:
 async def refresh_mcp_server(server_name: str) -> Dict[str, Any]:
     """刷新单个外部 MCP 服务器的工具列表"""
     from backend.services.mcp_client_service import mcp_client_service
-    return mcp_client_service.refresh_server(server_name)
+    return await mcp_client_service.refresh_server(server_name)
 
 
 @router.post("/servers/refresh-all", summary="刷新所有外部 MCP 服务器")
 async def refresh_all_mcp_servers() -> Dict[str, Any]:
     """刷新所有外部 MCP 服务器的工具列表"""
     from backend.services.mcp_client_service import mcp_client_service
-    return mcp_client_service.refresh_all()
+    return await mcp_client_service.refresh_all()
 
 
 @router.get("/discover", summary="扫描可用 MCP 服务")
@@ -249,12 +249,10 @@ async def add_discovered_services(body: Dict[str, Any]) -> Dict[str, Any]:
             results.append({"name": server.get("name", ""), "success": False, "detail": str(e)})
 
     # 第二阶段：异步并行发现所有工具
-    import asyncio
     async def discover_async(srv):
         name = srv.get("name", "")
         try:
-            loop = asyncio.get_event_loop()
-            count = await loop.run_in_executor(None, mcp_client_service._discover_tools, name)
+            count = await mcp_client_service._discover_tools(name)
             return {"name": name, "tools": count}
         except Exception as e:
             return {"name": name, "tools": 0, "error": str(e)}
