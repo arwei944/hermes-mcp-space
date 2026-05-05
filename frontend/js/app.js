@@ -1,382 +1,292 @@
 /**
- * Hermes Agent 管理面板 - 主应用 (Mac 极简风格)
- * 路由管理、页面切换、全局事件绑定
+ * Hermes Workspace v17 - App Entry Point (Rewrite)
+ *
+ * 重写说明：
+ * - 删除路由切换逻辑（navigateTo、handleRoute、pages 映射、Router 集成）
+ * - 删除侧边栏逻辑（toggleSidebar、updateNavActive、openMobileSidebar、closeMobileSidebar）
+ * - 删除全局搜索的页面跳转逻辑（handleGlobalSearch 中的 searchMap）
+ * - 保留主题切换（initTheme、applyTheme）
+ * - 保留 Toast/Modal 初始化
+ * - 保留新手引导
+ * - 新增 HermesClient.connect() 替代 SSEManager.connect()
+ * - 新增 StatusBar.render() 初始化
+ * - 新增 Dock.render() 初始化
+ * - 新增 WorkspacePage.render() 作为主界面
+ * - 保留 SSE 事件处理（改为 HermesClient.on）
+ * - 保留热更新检查
+ * - 保留全局快捷键（Cmd+K -> SpotlightSearch）
  */
+(function () {
+    'use strict';
 
-const App = (() => {
-    // 直接引用全局 Page 变量（const 声明的全局变量不会挂到 window 上）
-    const pages = {
-        workspace: WorkspacePage,
-        dashboard: DashboardPage,
-        knowledge: KnowledgePage,
-        sessions: SessionsPage,
-    about: AboutPage,
-        marketplace: MarketplacePage,
-        memory: MemoryPage,
-        cron: CronPage,
-        agents: AgentsPage,
-        agents_behavior: AgentsBehaviorPage,
-        config: ConfigPage,
-        trash: TrashPage,
-            sync: SyncPage,
-        ops_center: OpsCenterPage,
-                logs: LogsPage,
-    };
+    // ==================== 主题管理 ====================
 
-    const pageTitles = {
-        workspace: '工作台',
-        dashboard: '仪表盘',
-        knowledge: '知识库',
-        sessions: '会话管理',
-    about: '关于',
-        marketplace: '功能商店',
-        memory: '记忆管理',
-        cron: '定时任务',
-        agents: 'AI 助手',
-        agents_behavior: '性格设置',
-        config: '系统配置',
-        trash: '回收站',
-            sync: '备份恢复',
-        ops_center: '运维中心',
-                logs: '操作日志',
-    };
-
-    let _currentPage = null;
-
-    function init() {
-        // 全局错误边界 - 增强版
-        Components.Toast.init();
-        Components.Modal.init();
-        bindGlobalEvents();
-        initTheme();
-        replaceNavIcons();
-
-        // 初始化 Workspace 基础设施（P0）
-        if (typeof StateManager !== 'undefined') StateManager.init();
-        if (typeof DataService !== 'undefined') DataService.init();
-
-        // 新手引导（首次访问）
-        if (typeof Components !== 'undefined' && Components.Onboarding && !Components.Onboarding.isDone()) {
-            setTimeout(() => Components.Onboarding.start(), 800);
-        }
-
-        // 初始化 Router 并注册所有路由
-        initRouter();
-
-        // 初始化告警通知服务
-        if (typeof AlertNotifier !== 'undefined') AlertNotifier.init();
-
-        // 路由守卫：运维页面时启动同步和告警检查
-        if (typeof Router !== 'undefined') {
-            Router.guard(function(to) {
-                if (to === 'ops_center') {
-                    if (typeof OpsSyncService !== 'undefined') OpsSyncService.start();
-                    if (typeof AlertChecker !== 'undefined') AlertChecker.start();
-                } else {
-                    if (typeof OpsSyncService !== 'undefined') OpsSyncService.stop();
-                    if (typeof AlertChecker !== 'undefined') AlertChecker.stop();
-                }
-            });
-        }
-
-        // 预加载版本元数据
-        API.meta();
-
-        // 启动热更新检查
-        API.checkForUpdate();
-        API.startUpdateCheck(30000);
-
-        // 检测后端连接状态
-        checkBackendStatus();
-
-        // 启动 SSE 实时事件监听（带轮询降级 V7-19）
-        connectSSE();
-
-        // 监听 SSEManager 派发的事件
-        window.addEventListener('hermes:event', function (e) {
-            var event = e.detail;
-            if (event && event.data) {
-                handleSSEEvent(event.data);
-            }
-        });
-
-        // 初始路由
-        handleRoute();
-    }
-
-    // --- Router 集成 ---
-
-    function initRouter() {
-        if (typeof Router === 'undefined') return;
-
-        // 注册所有路由
-        const routesMap = {};
-        Object.keys(pages).forEach(function(key) {
-            routesMap[key] = {
-                title: pageTitles[key] || key,
-                component: pages[key]
-            };
-        });
-        Router.registerAll(routesMap);
-
-        // 路由守卫：切换页面时更新导航状态
-        Router.guard(function(to, from) {
-            updateNavActive(to);
-            document.getElementById('pageTitle').textContent = pageTitles[to] || to;
-        });
-
-        // 初始化 hash 监听
-        Router.init();
-
-        // 监听 Router 事件进行页面切换
-        if (typeof Bus !== 'undefined' && typeof Events !== 'undefined') {
-            Bus.on(Events.PAGE_CHANGED, function(data) {
-                var path = data.path;
-                if (pages[path]) {
-                    // 销毁旧页面
-                    if (_currentPage && pages[_currentPage] && pages[_currentPage].destroy) {
-                        pages[_currentPage].destroy();
-                    }
-                    _currentPage = path;
-                    // 渲染新页面
-                    pages[path].render().catch(function(err) {
-                        if (typeof Logger !== 'undefined') Logger.error('[App]', '页面 ' + path + ' 渲染失败:', err);
-                        document.getElementById('contentBody').innerHTML = Components.createEmptyState(
-                            Components.icon('alertTriangle', 14),
-                            '页面加载失败',
-                            err.message || '未知错误',
-                            '<button class="btn btn-primary" onclick="App.refresh()">重试</button>'
-                        );
-                    });
-                    closeMobileSidebar();
-                }
-            });
-        }
-
-        if (typeof Logger !== 'undefined') Logger.info('[App]', 'Router initialized with ' + Object.keys(routesMap).length + ' routes');
-    }
-
+    /**
+     * 初始化主题
+     */
     function initTheme() {
-        const saved = localStorage.getItem('hermes-theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const isDark = saved === 'dark' || (!saved && prefersDark);
-        applyTheme(isDark);
-
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const current = document.documentElement.getAttribute('data-theme') === 'dark';
-            applyTheme(!current);
-        });
-    }
-
-    function applyTheme(isDark) {
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        const btn = document.getElementById('themeToggle');
-        if (btn) btn.innerHTML = Components.icon(isDark ? 'sun' : 'moon', 18);
-        localStorage.setItem('hermes-theme', isDark ? 'dark' : 'light');
-    }
-
-    async function checkBackendStatus() {
-        const dot = document.getElementById('statusDot');
-        const text = document.getElementById('statusText');
+        var saved = null;
         try {
-            await API.system.health();
-            if (dot) dot.style.background = 'var(--green)';
-            if (text) text.textContent = '已连接';
-        } catch (_err) {
-            if (dot) dot.style.background = 'var(--orange)';
-            if (text) text.textContent = '降级模式';
+            saved = localStorage.getItem('hermes-theme');
+        } catch (e) {
+            // localStorage 不可用
         }
-    }
-
-    // --- SSE 实时事件（V7-19: 使用 SSEManager 带轮询降级） ---
-
-    function connectSSE() {
-        SSEManager.connect('/api/events');
-    }
-
-    function handleSSEEvent(event) {
-        const type = event.type || '';
-        const data = event.data || {};
-
-        // 传递给当前页面的 onSSEEvent 方法（实时增量更新）
-        const page = pages[_currentPage];
-        if (page && typeof page.onSSEEvent === 'function') {
-            try {
-                page.onSSEEvent(type, data);
-            } catch (_e) {
-                /* ignore */
-            }
-        }
-    }
-
-    function handleRoute() {
-        const hash = window.location.hash.slice(1) || 'workspace';
-        const pageName = pages[hash] ? hash : 'workspace';
-        navigateTo(pageName);
-    }
-
-    async function navigateTo(pageName) {
-        if (!pages[pageName]) return;
-
-        if (_currentPage && pages[_currentPage].destroy) {
-            pages[_currentPage].destroy();
-        }
-
-        // Workspace 路由适配
-        if (pageName === 'workspace') {
-            // 进入工作台时恢复 DataService
-            if (typeof DataService !== 'undefined') DataService.init();
+        if (saved) {
+            applyTheme(saved);
         } else {
-            // 离开工作台时取消所有 pending 请求
-            if (typeof DataService !== 'undefined') DataService.cancelAll();
+            // 跟随系统偏好
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
         }
+    }
 
-        updateNavActive(pageName);
-        document.getElementById('pageTitle').textContent = pageTitles[pageName] || pageName;
-
-        const page = pages[pageName];
-        _currentPage = pageName;
-
+    /**
+     * 应用主题
+     * @param {string} theme - 'light' | 'dark'
+     */
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
         try {
-            await page.render();
-        } catch (err) {
-            console.error(`[App] 页面 ${pageName} 渲染失败:`, err);
-            document.getElementById('contentBody').innerHTML = Components.createEmptyState(
-                Components.icon('alertTriangle', 14),
-                '页面加载失败',
-                err.message || '未知错误',
-                `<button class="btn btn-primary" onclick="App.refresh()">重试</button>`,
-            );
-        }
-
-        closeMobileSidebar();
-    }
-
-    function updateNavActive(pageName) {
-        document.querySelectorAll('.nav-item').forEach((item) => {
-            item.classList.toggle('active', item.dataset.page === pageName);
-        });
-    }
-
-    function refresh() {
-        if (_currentPage && pages[_currentPage]) {
-            pages[_currentPage].render();
+            localStorage.setItem('hermes-theme', theme);
+        } catch (e) {
+            // ignore
         }
     }
 
-    function replaceNavIcons() {
-        document.querySelectorAll('.nav-icon[data-icon]').forEach((el) => {
-            const name = el.getAttribute('data-icon');
-            if (name) {
-                el.innerHTML = Components.icon(name, 16);
-            }
-        });
-        // 主题切换按钮
-        const themeBtn = document.getElementById('themeToggle');
-        if (themeBtn) {
-            const iconName = themeBtn.getAttribute('data-icon') || 'moon';
-            themeBtn.innerHTML = Components.icon(iconName, 16);
-        }
+    /**
+     * 切换主题
+     */
+    function toggleTheme() {
+        var current = document.documentElement.getAttribute('data-theme') || 'light';
+        var next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
     }
 
+    // ==================== 全局快捷键 ====================
+
+    /**
+     * 绑定全局事件
+     */
     function bindGlobalEvents() {
-        // 刷新按钮
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            refresh();
-            showToast('已刷新');
-        });
+        document.addEventListener('keydown', function (e) {
+            var isCmd = e.metaKey || e.ctrlKey;
 
-        // 移动端菜单
-        document.getElementById('mobileMenuBtn').addEventListener('click', openMobileSidebar);
-        document.getElementById('sidebarOverlay').addEventListener('click', closeMobileSidebar);
-
-        // 全局搜索
-        document.getElementById('globalSearch').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleGlobalSearch(e.target.value);
-        });
-
-        // 快捷键
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            // Cmd+K / Ctrl+K -> SpotlightSearch
+            if (isCmd && e.key === 'k') {
                 e.preventDefault();
-                document.getElementById('globalSearch').focus();
-            }
-            if (e.key === 'Escape') {
-                Components.Modal.close();
-                closeMobileSidebar();
-            }
-        });
-
-        // 导航切换 (Mac 风格: .nav-item click -> .page active)
-        document.querySelectorAll('.nav-item').forEach((item) => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = item.dataset.page;
-                if (page) {
-                    window.location.hash = page;
+                if (typeof SpotlightSearch !== 'undefined' && SpotlightSearch.toggle) {
+                    SpotlightSearch.toggle();
                 }
-            });
-        });
-
-        // 监听 hash 变化
-        window.addEventListener('hashchange', handleRoute);
-
-        // 窗口大小变化
-        window.addEventListener(
-            'resize',
-            Components.debounce(() => {
-                if (window.innerWidth > 768) closeMobileSidebar();
-            }, 200),
-        );
-    }
-
-    function handleGlobalSearch(query) {
-        if (!query.trim()) return;
-        const term = query.toLowerCase().trim();
-        const searchMap = {
-            仪表盘: 'dashboard', 统计: 'dashboard', 概览: 'dashboard', 总览: 'dashboard',
-            知识库: 'knowledge', 知识: 'knowledge', 规则: 'knowledge',
-            会话: 'sessions', 会话管理: 'sessions', 历史: 'sessions', 聊天记录: 'sessions',
-            对话: 'sessions', 聊天: 'sessions',
-            功能商店: 'marketplace', 扩展管理: 'marketplace', 扩展: 'marketplace',
-            工具: 'marketplace', 函数: 'marketplace', 技能: 'marketplace', skill: 'marketplace',
-            mcp: 'marketplace', 服务: 'marketplace', 插件: 'marketplace',
-            AI助手: 'agents', 助手: 'agents', agent: 'agents', 子agent: 'agents', 子代理: 'agents',
-            性格: 'agents_behavior', 人格: 'agents_behavior', 行为: 'agents_behavior', 行为管理: 'agents_behavior',
-            记忆: 'memory', memory: 'memory', 画像: 'memory',
-            定时: 'cron', 任务: 'cron', cron: 'cron', 调度: 'cron', 计划任务: 'cron',
-            运维: 'ops_center', 监控: 'ops_center', ops: 'ops_center', 健康: 'ops_center',
-            告警: 'ops_center', 报警: 'ops_center', alert: 'ops_center',
-            日志: 'logs', log: 'logs', 操作: 'logs', 操作日志: 'logs',
-            备份: 'sync', 同步: 'sync', 恢复: 'sync', 更新: 'sync',
-            配置: 'config', 设置: 'config', config: 'config',
-            回收站: 'trash', 删除: 'trash',
-            截图: 'screenshot',
-            帮助: 'about',
-        };
-        for (const [keyword, page] of Object.entries(searchMap)) {
-            if (keyword.includes(term) || term.includes(keyword)) {
-                window.location.hash = page;
-                document.getElementById('globalSearch').value = '';
                 return;
             }
+
+            // Esc -> 关闭 CardOverlay + SpotlightSearch
+            if (e.key === 'Escape') {
+                if (typeof CardOverlay !== 'undefined' && CardOverlay.close) {
+                    CardOverlay.close();
+                }
+                if (typeof SpotlightSearch !== 'undefined' && SpotlightSearch.close) {
+                    SpotlightSearch.close();
+                }
+                return;
+            }
+
+            // E -> 切换编辑模式（不在输入框中时）
+            if (e.key === 'e' && !e.target.matches('input, textarea, [contenteditable]')) {
+                if (typeof WorkspacePage !== 'undefined' && WorkspacePage.toggleEditMode) {
+                    WorkspacePage.toggleEditMode();
+                }
+                return;
+            }
+        });
+
+        // 系统主题变化监听
+        if (window.matchMedia) {
+            try {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+                    // 仅在用户未手动设置主题时跟随系统
+                    var saved = null;
+                    try { saved = localStorage.getItem('hermes-theme'); } catch (ex) {}
+                    if (!saved) {
+                        applyTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            } catch (e) {
+                // matchMedia addEventListener 不支持时忽略
+            }
         }
-        showToast(`未找到与 "${query}" 匹配的页面`, 'info');
     }
 
-    function openMobileSidebar() {
-        document.getElementById('sidebar').classList.add('open');
-        document.getElementById('sidebarOverlay').classList.add('active');
+    // ==================== SSE 事件处理 ====================
+
+    /**
+     * 注册 SSE 事件监听
+     */
+    function setupSSEEventHandlers() {
+        if (typeof HermesClient === 'undefined') return;
+
+        // 通用 SSE 事件广播
+        HermesClient.on('sse:*', function (event, data) {
+            // 通知当前卡片数据更新
+            if (typeof WorkspacePage !== 'undefined' && WorkspacePage.onSSEEvent) {
+                WorkspacePage.onSSEEvent(event, data);
+            }
+
+            // 通知 StatusBar 更新
+            if (typeof StatusBar !== 'undefined' && StatusBar.onSSEEvent) {
+                StatusBar.onSSEEvent(event, data);
+            }
+        });
+
+        // 连接状态变化
+        HermesClient.on('connection:change', function (status) {
+            if (typeof StatusBar !== 'undefined' && StatusBar.updateConnectionStatus) {
+                StatusBar.updateConnectionStatus(status);
+            }
+        });
     }
 
-    function closeMobileSidebar() {
-        document.getElementById('sidebar').classList.remove('open');
-        document.getElementById('sidebarOverlay').classList.remove('active');
+    // ==================== 热更新检查 ====================
+
+    /**
+     * 设置热更新检查
+     */
+    function setupHotUpdate() {
+        if (typeof HermesClient === 'undefined') return;
+
+        // 首次检查
+        HermesClient.checkForUpdate();
+
+        // 定期检查（30秒）
+        HermesClient.startUpdateCheck(30000);
     }
 
-    // --- 全局错误边界 ---
+    // ==================== 全局错误边界 ====================
 
-    document.addEventListener('DOMContentLoaded', init);
+    /**
+     * 全局错误捕获
+     */
+    function setupGlobalErrorHandler() {
+        window.addEventListener('error', function (event) {
+            console.error('[App] Global error:', event.error);
 
-    return { init, refresh, navigateTo };
+            // 尝试通过 ErrorHandler 上报
+            if (typeof ErrorHandler !== 'undefined' && ErrorHandler.handleError) {
+                ErrorHandler.handleError(event.error || new Error(event.message), {
+                    source: 'global-error-boundary',
+                    filename: event.filename,
+                    lineno: event.lineno,
+                    colno: event.colno
+                });
+            }
+        });
+
+        window.addEventListener('unhandledrejection', function (event) {
+            console.error('[App] Unhandled rejection:', event.reason);
+
+            if (typeof ErrorHandler !== 'undefined' && ErrorHandler.handleError) {
+                ErrorHandler.handleError(
+                    event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
+                    { source: 'unhandled-rejection' }
+                );
+            }
+        });
+    }
+
+    // ==================== 主初始化 ====================
+
+    /**
+     * 应用初始化入口
+     */
+    function init() {
+        console.log('[App] Initializing Hermes Workspace v17...');
+
+        // 1. 全局初始化
+        if (typeof Components !== 'undefined' && Components.Toast && Components.Toast.init) {
+            Components.Toast.init();
+        }
+        if (typeof Components !== 'undefined' && Components.Modal && Components.Modal.init) {
+            Components.Modal.init();
+        }
+        initTheme();
+
+        // 2. 初始化 Workspace 基础设施
+        if (typeof StateManager !== 'undefined' && StateManager.init) {
+            StateManager.init();
+        }
+
+        // 3. 新手引导
+        if (typeof Components !== 'undefined' && Components.Onboarding && !Components.Onboarding.isDone()) {
+            setTimeout(function () {
+                Components.Onboarding.start();
+            }, 800);
+        }
+
+        // 4. 连接 SSE（通过 HermesClient）
+        if (typeof HermesClient !== 'undefined') {
+            HermesClient.connect('/api/events');
+        }
+
+        // 5. 初始化告警通知
+        if (typeof AlertNotifier !== 'undefined' && AlertNotifier.init) {
+            AlertNotifier.init();
+        }
+
+        // 6. 渲染工作台主界面
+        var container = document.getElementById('workspaceContainer');
+        if (container && typeof WorkspacePage !== 'undefined') {
+            WorkspacePage.render(container);
+        }
+
+        // 7. 渲染 StatusBar
+        if (typeof StatusBar !== 'undefined') {
+            var statusBarEl = document.createElement('div');
+            statusBarEl.id = 'statusBar';
+            container.parentNode.insertBefore(statusBarEl, container);
+            StatusBar.render(statusBarEl);
+        }
+
+        // 8. 渲染 Dock
+        if (typeof Dock !== 'undefined') {
+            var dockEl = document.createElement('div');
+            dockEl.id = 'dock';
+            document.body.appendChild(dockEl);
+            Dock.render(dockEl);
+        }
+
+        // 9. 全局快捷键
+        bindGlobalEvents();
+
+        // 10. 热更新检查
+        setupHotUpdate();
+
+        // 11. SSE 事件处理
+        setupSSEEventHandlers();
+
+        // 12. 全局错误边界
+        setupGlobalErrorHandler();
+
+        console.log('[App] Hermes Workspace v17 initialized successfully.');
+    }
+
+    // ==================== DOM Ready ====================
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // ==================== 暴露全局 API ====================
+
+    window.App = {
+        init: init,
+        initTheme: initTheme,
+        applyTheme: applyTheme,
+        toggleTheme: toggleTheme
+    };
+
 })();

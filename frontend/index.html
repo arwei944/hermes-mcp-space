@@ -1,331 +1,137 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hermes Agent</title>
-    <!-- 资源预加载 -->
-    <link rel="preload" href="/css/style.css" as="style">
-    <link rel="preload" href="/js/app.js" as="script">
-    <!-- CDN 预连接（可选） -->
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js" defer></script>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/dark-theme.css">
-    <link rel="stylesheet" href="/css/knowledge.css">
-    <link rel="stylesheet" href="/css/workspace.css">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0071e3">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Workspace v17 - 卡片工作台</title>
+
+<!-- CSS -->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/workspace.css">
+<link rel="stylesheet" href="css/card-overlay.css">
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
 </head>
 <body>
 
-<!-- Toast 通知容器 -->
-<div id="toastContainer" class="toast-container"></div>
+  <!-- Toast 通知容器 -->
+  <div id="toastContainer" class="toast-container"></div>
 
-<!-- 模态框 -->
-<div id="modalOverlay" class="modal-overlay">
-    <div class="modal">
-        <div class="modal-header">
-            <h2 id="modalTitle">标题</h2>
-            <button id="modalClose" class="modal-close">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-        </div>
-        <div id="modalBody" class="modal-body"></div>
-        <div id="modalFooter" class="modal-footer"></div>
-    </div>
-</div>
+  <!-- 模态框 -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content" id="modalContent"></div>
+  </div>
 
-<!-- 移动端侧边栏遮罩 -->
-<div id="sidebarOverlay" class="sidebar-overlay"></div>
+  <!-- 卡片放大覆盖层 -->
+  <div id="cardOverlay"></div>
 
-<!-- 侧边栏 -->
-<aside id="sidebar" class="sidebar">
-    <div class="sidebar-brand">
-        <div class="icon">H</div>
-        <span>Hermes</span>
-    </div>
+  <!-- 工作台主容器 -->
+  <div id="workspaceContainer"></div>
 
-    <div class="sidebar-search">
-        <input type="text" id="globalSearch" placeholder="搜索...  ⌘K">
-    </div>
+  <!-- ==================== Scripts ==================== -->
 
-        <nav class="sidebar-nav">
-        <div class="nav-section">
-            <div class="nav-section-title">概览</div>
-            <a class="nav-item active" data-page="workspace" href="#workspace" data-tooltip="iOS 桌面式自由工作台">
-                <span class="nav-icon" data-icon="layout"></span>
-                <span>工作台</span>
-            </a>
-            <a class="nav-item" data-page="dashboard" href="#dashboard" data-tooltip="系统运行状态总览">
-                <span class="nav-icon" data-icon="chart"></span>
-                <span>仪表盘</span>
-            </a>
-            <a class="nav-item" data-page="knowledge" href="#knowledge" data-tooltip="管理 AI 的知识、规则和经验">
-                <span class="nav-icon" data-icon="bookOpen"></span>
-                <span>知识库</span>
-            </a>
-        </div>
+  <!-- 1. Core 基础模块 -->
+  <script src="js/core/Logger.js"></script>
+  <script src="js/core/Store.js"></script>
+  <script src="js/core/Bus.js"></script>
+  <script src="js/core/ErrorHandler.js"></script>
+  <script src="js/core/constants.js"></script>
+  <script src="js/core/Router.js"></script>
+  <script src="js/core/init.js"></script>
 
-        <div class="nav-section">
-            <div class="nav-section-title">对话</div>
-            <a class="nav-item" data-page="sessions" href="#sessions">
-                <span class="nav-icon" data-icon="messageCircle"></span>
-                <span>会话管理</span>
-            </a>
-            
-        </div>
+  <!-- 2. HermesClient 统一通信层（新增） -->
+  <script src="js/core/HermesClient.js"></script>
 
-        <div class="nav-section">
-            <div class="nav-section-title">能力</div>
-            <a class="nav-item" data-page="marketplace" href="#marketplace" data-tooltip="浏览和安装 MCP 服务、技能和插件">
-                <span class="nav-icon" data-icon="store"></span>
-                <span>功能商店</span>
-            </a>
-            <a class="nav-item" data-page="agents" href="#agents" data-tooltip="管理 AI 助手的配置和状态">
-                <span class="nav-icon" data-icon="bot"></span>
-                <span>AI 助手</span>
-            </a>
-            <a class="nav-item" data-page="agents_behavior" href="#agents_behavior" data-tooltip="定义 AI 助手的性格和行为方式">
-                <span class="nav-icon" data-icon="smile"></span>
-                <span>性格设置</span>
-            </a>
-        </div>
+  <!-- 3. APIClient（保留 - 向后兼容） -->
+  <script src="js/core/APIClient.js"></script>
 
-        <div class="nav-section">
-            <div class="nav-section-title">数据</div>
-            <a class="nav-item" data-page="memory" href="#memory" data-tooltip="查看和管理 AI 的长期记忆">
-                <span class="nav-icon" data-icon="brain"></span>
-                <span>记忆管理</span>
-            </a>
-            <a class="nav-item" data-page="cron" href="#cron" data-tooltip="设置自动执行的计划任务">
-                <span class="nav-icon" data-icon="clock"></span>
-                <span>定时任务</span>
-            </a>
-        </div>
+  <!-- 4. SSE（保留 - 向后兼容） -->
+  <script src="js/utils/sse.js"></script>
 
-        <div class="nav-section">
-            <div class="nav-section-title">运维</div>
-            <a class="nav-item" data-page="ops_center" href="#ops_center" data-tooltip="实时监控运行状态和资源使用">
-                <span class="nav-icon" data-icon="activity"></span>
-                <span>运维中心</span>
-                <span class="nav-badge" id="opsCenterBadge"></span>
-            </a>
-            <a class="nav-item" data-page="logs" href="#logs">
-                <span class="nav-icon" data-icon="fileText"></span>
-                <span>操作日志</span>
-            </a>
-        </div>
+  <!-- 5. API 端点定义（保留 - 向后兼容，window.API 会被 HermesClient 覆盖） -->
+  <script src="js/api.js"></script>
 
-        <div class="nav-section">
-            <div class="nav-section-title">系统</div>
-            <a class="nav-item" data-page="sync" href="#sync" data-tooltip="数据备份与恢复管理">
-                <span class="nav-icon" data-icon="refreshCw"></span>
-                <span>备份恢复</span>
-            </a>
-            <a class="nav-item" data-page="config" href="#config">
-                <span class="nav-icon" data-icon="settings"></span>
-                <span>系统配置</span>
-            </a>
-            <a class="nav-item" data-page="trash" href="#trash">
-                <span class="nav-icon" data-icon="trash"></span>
-                <span>回收站</span>
-            </a>
-        </div>
+  <!-- 6. Services 服务层 -->
+  <script src="js/services/OpsSyncService.js"></script>
+  <script src="js/services/AlertChecker.js"></script>
+  <script src="js/services/AlertNotifier.js"></script>
 
-        <div class="nav-section">
-            <div class="nav-section-title">工具</div>
-            
-        </div>
+  <!-- 7. Utilities 工具层 -->
+  <script src="js/i18n.js"></script>
+  <script src="js/utils/utils.js"></script>
 
-        <div class="nav-section nav-section-footer">
-            <a class="nav-item" onclick="window.open('/docs','_blank')">
-                <span class="nav-icon" data-icon="book"></span>
-                <span>API 文档</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-external-icon"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-            </a>
-            
-        </div>
-    </nav>
+  <!-- 8. Components 组件层 -->
+  <script src="js/components/icons.js"></script>
+  <script src="js/components/utils.js"></script>
+  <script src="js/components/config.js"></script>
+  <script src="js/components/colors.js"></script>
+  <script src="js/components/feedback.js"></script>
+  <script src="js/components/layout.js"></script>
+  <script src="js/components/form.js"></script>
+  <script src="js/components/data-display.js"></script>
+  <script src="js/components/onboarding.js"></script>
+  <script src="js/components/index.js"></script>
 
-    <div class="sidebar-footer">
-        <div class="status">
-            <span class="status-dot" id="statusDot"></span>
-            <span id="statusText">连接中...</span>
-        </div>
-    </div>
-</aside>
+  <!-- 9. Pages 页面模块（保留） -->
+  <script src="js/pages/register.js"></script>
 
-<!-- 主内容 -->
-<div class="main">
-    <header class="header">
-        <div class="header-left">
-            <button id="mobileMenuBtn" class="mobile-menu-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-            </button>
-            <h1 id="pageTitle" class="header-title">仪表盘</h1>
-        </div>
-        <div class="header-actions">
-            <button id="refreshBtn" class="btn btn-ghost btn-sm" title="刷新">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-                <span>刷新</span>
-            </button>
-        </div>
-    </header>
+  <!-- 10. Workspace Core 工作台核心 -->
+  <script src="js/workspace/core/StateManager.js"></script>
+  <script src="js/workspace/core/DataService.js"></script>
+  <script src="js/workspace/core/LayoutEngine.js"></script>
+  <script src="js/workspace/core/DragManager.js"></script>
+  <script src="js/workspace/core/ResizeManager.js"></script>
+  <script src="js/workspace/core/ZIndexManager.js"></script>
+  <script src="js/workspace/core/CardManager.js"></script>
+  <script src="js/workspace/core/GestureManager.js"></script>
+  <script src="js/workspace/core/DesktopManager.js"></script>
+  <script src="js/workspace/core/WidgetRegistry.js"></script>
 
-    <div class="content" id="contentBody">
-        <!-- 页面内容由 JS 动态渲染 -->
-    </div>
-</div>
+  <!-- 11. CardOverlay 卡片放大系统（新增） -->
+  <script src="js/workspace/core/CardOverlay.js"></script>
 
-<!-- 主题切换按钮 -->
-<button id="themeToggle" class="theme-toggle" title="切换深色模式" data-icon="moon"></button>
+  <!-- 12. Workspace Widgets 工作台组件 -->
+  <script src="js/workspace/widgets/dashboard.js"></script>
+  <script src="js/workspace/widgets/knowledge.js"></script>
+  <script src="js/workspace/widgets/sessions.js"></script>
+  <script src="js/workspace/widgets/mcp-status.js"></script>
+  <script src="js/workspace/widgets/memo.js"></script>
+  <script src="js/workspace/widgets/todo.js"></script>
+  <script src="js/workspace/widgets/metrics.js"></script>
+  <script src="js/workspace/widgets/alerts.js"></script>
+  <script src="js/workspace/widgets/memory.js"></script>
+  <script src="js/workspace/widgets/rules.js"></script>
+  <script src="js/workspace/widgets/experiences.js"></script>
+  <script src="js/workspace/widgets/cron-tasks.js"></script>
+  <script src="js/workspace/widgets/logs.js"></script>
+  <script src="js/workspace/widgets/recycle-bin.js"></script>
+  <script src="js/workspace/widgets/config.js"></script>
+  <script src="js/workspace/widgets/store.js"></script>
+  <script src="js/workspace/widgets/ai-assistant.js"></script>
+  <script src="js/workspace/widgets/ops-center.js"></script>
 
-<!-- Scripts -->
-<!-- V2 Core Layer -->
-<script src="/js/core/Logger.js" defer></script>
-<script src="/js/core/Store.js" defer></script>
-<script src="/js/core/Bus.js" defer></script>
-<script src="/js/core/ErrorHandler.js" defer></script>
-<script src="/js/core/APIClient.js" defer></script>
-<script src="/js/core/constants.js" defer></script>
-<script src="/js/core/Router.js" defer></script>
-<script src="/js/core/init.js" defer></script>
-<!-- V2 Services -->
-<script src="/js/services/OpsSyncService.js" defer></script>
-<script src="/js/services/AlertChecker.js" defer></script>
-<script src="/js/services/AlertNotifier.js" defer></script>
-<!-- Utilities & Base -->
-<script src="/js/i18n.js" defer></script>
-<script src="/js/utils/sse.js" defer></script>
-<script src="/js/utils/export-progress.js" defer></script>
-<script src="/js/utils/confirm-dialog.js" defer></script>
-<script src="/js/api.js" defer></script>
-<!-- V2 Components (modular) -->
-<script src="/js/components/icons.js" defer></script>
-<script src="/js/components/utils.js" defer></script>
-<script src="/js/constants/config.js" defer></script>
-<script src="/js/constants/colors.js" defer></script>
-<script src="/js/components/feedback.js" defer></script>
-<script src="/js/components/layout.js" defer></script>
-<script src="/js/components/form.js" defer></script>
-<script src="/js/components/data-display.js" defer></script>
-<script src="/js/components/onboarding.js" defer></script>
-<script src="/js/components/index.js" defer></script>
-<!-- V2 Page Modules (register.js entry points) -->
-<script src="/js/pages/dashboard/register.js" defer></script>
-<script src="/js/pages/knowledge/register.js" defer></script>
-<script src="/js/pages/sessions/register.js" defer></script>
-<script src="/js/pages/memory/register.js" defer></script>
-<script src="/js/pages/cron/register.js" defer></script>
-<script src="/js/pages/agents_behavior/register.js" defer></script>
-<script src="/js/pages/config/register.js" defer></script>
-<script src="/js/pages/trash/register.js" defer></script>
-<script src="/js/pages/agents/register.js" defer></script>
-<script src="/js/pages/marketplace/register.js" defer></script>
-<script src="/js/pages/logs/register.js" defer></script>
-<script src="/js/pages/sync/register.js" defer></script>
-<script src="/js/pages/ops-center/register.js" defer></script>
-<script src="/js/pages/about/register.js" defer></script>
-<!-- Workspace Module (P0-P3: Full Workspace) -->
-<script src="/js/workspace/core/StateManager.js" defer></script>
-<script src="/js/workspace/core/DataService.js" defer></script>
-<script src="/js/workspace/core/LayoutEngine.js" defer></script>
-<script src="/js/workspace/core/DragManager.js" defer></script>
-<script src="/js/workspace/core/ResizeManager.js" defer></script>
-<script src="/js/workspace/core/ZIndexManager.js" defer></script>
-<script src="/js/workspace/core/CardManager.js" defer></script>
-<script src="/js/workspace/core/GestureManager.js" defer></script>
-<script src="/js/workspace/core/DesktopManager.js" defer></script>
-<script src="/js/workspace/core/WidgetRegistry.js" defer></script>
-<script src="/js/workspace/widgets/entries/KnowledgeEntryWidget.js" defer></script>
-<script src="/js/workspace/widgets/entries/RulesEntryWidget.js" defer></script>
-<script src="/js/workspace/widgets/entries/ExperienceEntryWidget.js" defer></script>
-<script src="/js/workspace/widgets/entries/MemoryEntryWidget.js" defer></script>
-<script src="/js/workspace/widgets/entries/ReviewEntryWidget.js" defer></script>
-<script src="/js/workspace/widgets/entries/SessionsEntryWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/KnowledgeListWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/RulesListWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/ExperienceListWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/MemoryListWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/ReviewListWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/SessionRecentWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/CronListWidget.js" defer></script>
-<script src="/js/workspace/widgets/data/AgentListWidget.js" defer></script>
-<script src="/js/workspace/widgets/stats/ReviewStatWidget.js" defer></script>
-<script src="/js/workspace/widgets/stats/DashboardStatsWidget.js" defer></script>
-<script src="/js/workspace/widgets/stats/McpStatusWidget.js" defer></script>
-<script src="/js/workspace/widgets/stats/KnowledgeGraphWidget.js" defer></script>
-<script src="/js/workspace/widgets/stats/OpsMetricsWidget.js" defer></script>
-<script src="/js/workspace/widgets/functions/QuickCreateWidget.js" defer></script>
-<script src="/js/workspace/widgets/functions/GlobalSearchWidget.js" defer></script>
-<script src="/js/workspace/widgets/functions/SessionSearchWidget.js" defer></script>
-<script src="/js/workspace/widgets/shortcuts/MemoWidget.js" defer></script>
-<script src="/js/workspace/widgets/shortcuts/TodoWidget.js" defer></script>
-<script src="/js/workspace/components/CardWidget.js" defer></script>
-<script src="/js/workspace/components/LayoutSwitcher.js" defer></script>
-<script src="/js/workspace/components/DesktopContainer.js" defer></script>
-<script src="/js/workspace/components/DesktopTabs.js" defer></script>
-<script src="/js/workspace/components/CardStore.js" defer></script>
-<script src="/js/workspace/pages/WorkspacePage.js" defer></script>
-<script src="/js/app.js" defer></script>
+  <!-- 13. Workspace Components 工作台 UI 组件 -->
+  <script src="js/workspace/components/CardWidget.js"></script>
+  <script src="js/workspace/components/LayoutSwitcher.js"></script>
+  <script src="js/workspace/components/DesktopContainer.js"></script>
+  <script src="js/workspace/components/DesktopTabs.js"></script>
+  <script src="js/workspace/components/CardStore.js"></script>
 
-<!-- 全局错误边界：用户友好提示 -->
-<script>
-(function() {
-    function _friendlyError(msg) {
-        const map = {
-            'Failed to fetch': '网络连接失败，请检查网络后重试',
-            'NetworkError': '网络连接失败，请检查网络后重试',
-            'Load failed': '资源加载失败，请刷新页面重试',
-            'Timeout': '请求超时，服务器可能繁忙，请稍后重试',
-            '500': '服务器内部错误，请稍后重试',
-            '502': '服务暂时不可用，请稍后重试',
-            '503': '服务暂时不可用，请稍后重试',
-        };
-        for (const [key, friendly] of Object.entries(map)) {
-            if (msg && msg.includes(key)) return friendly;
-        }
-        return '操作出现问题，请稍后重试';
-    }
+  <!-- 14. StatusBar 状态栏（新增） -->
+  <script src="js/workspace/components/StatusBar.js"></script>
 
-    window.onerror = function(msg, url, line, col, err) {
-        if (typeof Logger !== 'undefined') Logger.error('[Global]', msg, url, line, col);
-        else console.error('[JS Error]', msg, url, line, col, err);
-        var content = document.getElementById('contentBody');
-        if (content && !content.querySelector('.js-error-boundary')) {
-            var friendly = _friendlyError(msg);
-            content.innerHTML = '<div class="js-error-boundary">' +
-                '<div class="error-icon">' + (typeof Components !== 'undefined' ? Components.icon('alertTriangle', 40) : '⚠️') + '</div>' +
-                '<div class="error-title">出了点问题</div>' +
-                '<div class="error-desc">' + friendly + '</div>' +
-                '<button class="btn btn-primary" onclick="location.reload()">刷新页面</button>' +
-                '</div>';
-        }
-        return true;
-    };
-    window.addEventListener('unhandledrejection', function(e) {
-        if (typeof Logger !== 'undefined') Logger.error('[Promise]', e.reason);
-        else console.error('[Promise Error]', e.reason);
-    });
-})();
-</script>
+  <!-- 15. Dock 栏（新增） -->
+  <script src="js/workspace/components/Dock.js"></script>
 
-<!-- V7-24: Service Worker 注册 -->
-<script>
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-        navigator.serviceWorker.register('/sw.js').then(function (reg) {
-            console.log('[SW] Registered:', reg.scope);
-        }).catch(function (err) {
-            console.warn('[SW] Registration failed:', err);
-        });
-    });
-}
-</script>
+  <!-- 16. SpotlightSearch 聚焦搜索（新增） -->
+  <script src="js/workspace/components/SpotlightSearch.js"></script>
+
+  <!-- 17. WorkspacePage 工作台主页面 -->
+  <script src="js/workspace/pages/WorkspacePage.js"></script>
+
+  <!-- 18. App 入口 -->
+  <script src="js/app.js"></script>
 
 </body>
 </html>
