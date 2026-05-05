@@ -213,19 +213,20 @@ const CardStore = (() => {
             var style = document.createElement('style');
             style.id = 'ws-store-trigger-style';
             style.textContent =
+                '.ws-card-store-trigger-container {' +
+                '  position:absolute; bottom:80px; right:20px; z-index:100;' +
+                '}' +
                 '.ws-store-trigger {' +
                 '  display:flex; align-items:center; justify-content:center;' +
-                '  width:36px; height:36px; border-radius:10px;' +
-                '  background:var(--surface-hover, rgba(0,0,0,0.04));' +
-                '  border:1.5px dashed var(--border, rgba(0,0,0,0.12));' +
-                '  cursor:pointer; transition:all 0.2s ease;' +
-                '  color:var(--text-tertiary, #999); font-size:20px; line-height:1;' +
-                '  user-select:none;' +
+                '  width:48px; height:48px; border-radius:14px;' +
+                '  background:var(--accent, #0071e3);' +
+                '  border:none; cursor:pointer; transition:all 0.2s ease;' +
+                '  color:#fff; font-size:28px; line-height:1; user-select:none;' +
+                '  box-shadow:0 4px 16px rgba(0,113,227,0.35);' +
                 '}' +
                 '.ws-store-trigger:hover {' +
-                '  background:var(--accent, #0071e3); border-color:var(--accent, #0071e3);' +
-                '  color:#fff; transform:scale(1.05);' +
-                '  box-shadow:0 2px 12px rgba(0,113,227,0.3);' +
+                '  transform:scale(1.1);' +
+                '  box-shadow:0 6px 24px rgba(0,113,227,0.45);' +
                 '}' +
                 '.ws-store-trigger:active {' +
                 '  transform:scale(0.95);' +
