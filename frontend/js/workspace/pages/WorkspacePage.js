@@ -1,12 +1,19 @@
 /**
- * WorkspacePage — 工作台主页面
+ * WorkspacePage — 工作台主页面 (P1 增强)
  *
  * 页面模块约定（与现有架构一致）:
  * - render() → 渲染页面 HTML
  * - onSSEEvent(event, data) → 处理 SSE 推送
  * - destroy() → 清理资源
  *
- * 依赖: StateManager, DataService, Bus, Store, Logger (全局)
+ * P1 增强:
+ * - 使用 CardManager 管理卡片生命周期
+ * - 使用 LayoutSwitcher 组件
+ * - 使用 ZIndexManager 管理层级
+ * - 事件委托处理所有交互
+ *
+ * 依赖: StateManager, DataService, CardManager, LayoutSwitcher, ZIndexManager,
+ *       Bus, Store, Logger (全局)
  */
 const WorkspacePage = (() => {
     'use strict';
@@ -14,29 +21,9 @@ const WorkspacePage = (() => {
     // ── Internal State ────────────────────────────────────
     let _container = null;
     let _destroyed = false;
-    let _watcherIds = [];
     let _busCleanupFns = [];
     let _currentLayout = 'grid';
-
-    // ── Layout Icons (SVG) ───────────────────────────────
-    const LAYOUT_ICONS = {
-        grid: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/>
-            <rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/>
-        </svg>`,
-        list: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="14" height="3" rx="1"/><rect x="1" y="6.5" width="14" height="3" rx="1"/>
-            <rect x="1" y="12" width="14" height="3" rx="1"/>
-        </svg>`,
-        masonry: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="6" height="8" rx="1"/><rect x="9" y="1" width="6" height="5" rx="1"/>
-            <rect x="9" y="8" width="6" height="7" rx="1"/><rect x="1" y="11" width="6" height="4" rx="1"/>
-        </svg>`,
-        canvas: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="1" width="5" height="5" rx="0.5"/><rect x="7" y="3" width="4" height="4" rx="0.5"/>
-            <rect x="3" y="8" width="6" height="4" rx="0.5"/><rect x="11" y="9" width="4" height="5" rx="0.5"/>
-        </svg>`
-    };
+    let _currentDesktopId = null;
 
     const EMPTY_ICON = `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
         <rect x="8" y="8" width="48" height="48" rx="8"/>
@@ -48,22 +35,6 @@ const WorkspacePage = (() => {
     </svg>`;
 
     // ── Render Methods ────────────────────────────────────
-
-    function _renderLayoutSwitcher() {
-        const layouts = ['grid', 'list', 'masonry', 'canvas'];
-        const labels = { grid: '网格', list: '列表', masonry: '瀑布流', canvas: '画布' };
-
-        return `
-        <div class="ws-layout-switcher" data-action="layout-switcher">
-            ${layouts.map(layout => `
-                <button class="ws-layout-switcher__btn ${layout === _currentLayout ? 'ws-layout-switcher__btn--active' : ''}"
-                        data-action="switch-layout" data-layout="${layout}"
-                        title="${labels[layout]}">
-                    ${LAYOUT_ICONS[layout]}
-                </button>
-            `).join('')}
-        </div>`;
-    }
 
     function _renderDesktopTabs() {
         const desktopIds = StateManager.getDesktopIds();
@@ -103,69 +74,6 @@ const WorkspacePage = (() => {
         </div>`;
     }
 
-    function _renderDesktopContent(desktopId) {
-        const cardIds = StateManager.getCardIds(desktopId);
-
-        if (cardIds.length === 0) {
-            return _renderEmptyState();
-        }
-
-        // P0 阶段只渲染卡片占位，P1 会实现真正的 CardWidget
-        const cardsHtml = cardIds.map(cardId => {
-            const card = StateManager.getCard(desktopId, cardId);
-            if (!card) return '';
-
-            const title = card.title || '未命名卡片';
-            const icon = card.icon || '';
-            const sizeClass = card.layout.w >= 2 && card.layout.h >= 2 ? 'ws-card--lg' :
-                             card.layout.w >= 2 ? 'ws-card--md' : 'ws-card--sm';
-
-            return `
-            <div class="ws-card ${sizeClass}" data-card-id="${cardId}" data-action="card" data-desktop-id="${desktopId}">
-                <div class="ws-card__header">
-                    <div class="ws-card__title">
-                        ${icon ? `<span class="ws-card__icon">${icon}</span>` : ''}
-                        <span>${title}</span>
-                    </div>
-                    <div class="ws-card__actions">
-                        <button class="ws-card__action-btn" data-action="card-expand" data-card-id="${cardId}" title="展开">↕</button>
-                        <button class="ws-card__action-btn" data-action="card-more" data-card-id="${cardId}" title="更多">⋯</button>
-                    </div>
-                </div>
-                <div class="ws-card__body">
-                    <div class="ws-card__summary">
-                        卡片内容将在 P1 阶段实现。类型: ${card.type} | 组件: ${card.widget || '待分配'}
-                    </div>
-                </div>
-                <div class="ws-card__delete-badge" data-action="card-delete" data-card-id="${cardId}" data-desktop-id="${desktopId}">×</div>
-            </div>`;
-        }).join('');
-
-        const layoutClass = `ws-${_currentLayout}`;
-        return `<div class="${layoutClass}">${cardsHtml}</div>`;
-    }
-
-    function _renderDesktops() {
-        const desktopIds = StateManager.getDesktopIds();
-        const activeId = StateManager.getActiveDesktopId();
-
-        return desktopIds.map(id => {
-            const isActive = id === activeId;
-            let positionClass = 'ws-desktop--right';
-            if (isActive) positionClass = 'ws-desktop--active';
-            else {
-                const activeIdx = desktopIds.indexOf(activeId);
-                const thisIdx = desktopIds.indexOf(id);
-                if (thisIdx < activeIdx) positionClass = 'ws-desktop--left';
-            }
-
-            return `
-            <div class="ws-desktop ${positionClass}" data-desktop-id="${id}">
-                ${isActive ? _renderDesktopContent(id) : ''}
-            </div>`;
-        }).join('');
-    }
-
     // ── Event Handlers ────────────────────────────────────
 
     function _handleAction(e) {
@@ -181,6 +89,9 @@ const WorkspacePage = (() => {
             case 'switch-layout':
                 _switchLayout(layout);
                 break;
+            case 'reset-layout':
+                _resetLayout();
+                break;
             case 'switch-desktop':
                 _switchDesktop(desktopId);
                 break;
@@ -190,12 +101,17 @@ const WorkspacePage = (() => {
             case 'open-store':
                 Bus.emit('ws:store:open');
                 break;
-            case 'card':
-                _onCardClick(desktopId, cardId);
-                break;
             case 'card-expand':
                 e.stopPropagation();
-                _onCardExpand(cardId);
+                CardWidget.toggleExpand(cardId);
+                break;
+            case 'card-refresh':
+                e.stopPropagation();
+                _refreshCard(desktopId, cardId);
+                break;
+            case 'card-retry':
+                e.stopPropagation();
+                _refreshCard(desktopId, cardId);
                 break;
             case 'card-delete':
                 e.stopPropagation();
@@ -210,48 +126,105 @@ const WorkspacePage = (() => {
     function _switchLayout(layout) {
         if (!layout || layout === _currentLayout) return;
         _currentLayout = layout;
-        StateManager.setDesktopLayout(StateManager.getActiveDesktopId(), layout);
-        _render();
+        LayoutSwitcher.setActive(layout);
+        CardManager.switchLayout(_currentDesktopId, layout);
         Logger.info('[WorkspacePage] Layout switched to:', layout);
     }
 
+    function _resetLayout() {
+        LayoutEngine.clearPinned(_currentDesktopId);
+        CardManager.renderDesktop(_currentDesktopId, _getActiveDesktopContainer(), _currentLayout);
+        Logger.info('[WorkspacePage] Layout reset');
+    }
+
     function _switchDesktop(desktopId) {
-        if (!desktopId) return;
+        if (!desktopId || desktopId === _currentDesktopId) return;
         StateManager.setActiveDesktop(desktopId);
+        _currentDesktopId = desktopId;
         _currentLayout = StateManager.getDesktopLayout(desktopId) || 'grid';
-        _render();
+        LayoutSwitcher.setActive(_currentLayout);
+        _renderActiveDesktop();
+        _renderTabs();
         Logger.info('[WorkspacePage] Switched to desktop:', desktopId);
     }
 
     function _addDesktop() {
         const id = StateManager.createDesktop();
         StateManager.setActiveDesktop(id);
+        _currentDesktopId = id;
         _currentLayout = StateManager.getDesktopLayout(id) || 'grid';
-        _render();
+        LayoutSwitcher.setActive(_currentLayout);
+        _renderActiveDesktop();
+        _renderTabs();
         Logger.info('[WorkspacePage] Created desktop:', id);
     }
 
-    function _onCardClick(desktopId, cardId) {
+    function _refreshCard(desktopId, cardId) {
         if (!desktopId || !cardId) return;
-        StateManager.bringCardToFront(desktopId, cardId);
-        Logger.debug('[WorkspacePage] Card clicked:', cardId);
-    }
-
-    function _onCardExpand(cardId) {
-        if (!cardId) return;
-        const cardEl = _container.querySelector(`.ws-card[data-card-id="${cardId}"]`);
-        if (!cardEl) return;
-        const expandEl = cardEl.querySelector('.ws-card__expand');
-        if (expandEl) {
-            expandEl.classList.toggle('ws-card__expand--open');
-        }
+        CardWidget.mountWidget(cardId, desktopId);
+        Logger.debug('[WorkspacePage] Card refreshed:', cardId);
     }
 
     function _onCardDelete(desktopId, cardId) {
         if (!desktopId || !cardId) return;
-        StateManager.deleteCard(desktopId, cardId);
-        _render();
+        CardManager.deleteCard(desktopId, cardId);
+        // 检查是否空了
+        const remaining = StateManager.getCardIds(desktopId);
+        if (remaining.length === 0) {
+            _renderActiveDesktop();
+        }
         Logger.info('[WorkspacePage] Card deleted:', cardId);
+    }
+
+    // ── Desktop Rendering ─────────────────────────────────
+
+    function _getActiveDesktopContainer() {
+        if (!_container) return null;
+        const activeEl = _container.querySelector('.ws-desktop--active');
+        return activeEl || _container.querySelector('.ws-desktop');
+    }
+
+    function _renderActiveDesktop() {
+        if (!_container || !_currentDesktopId) return;
+
+        const desktopsEl = _container.querySelector('.ws-desktops');
+        if (!desktopsEl) return;
+
+        const desktopIds = StateManager.getDesktopIds();
+        const cardIds = StateManager.getCardIds(_currentDesktopId);
+
+        // 生成桌面 DOM
+        desktopsEl.innerHTML = desktopIds.map(id => {
+            const isActive = id === _currentDesktopId;
+            let positionClass = 'ws-desktop--right';
+            if (isActive) positionClass = 'ws-desktop--active';
+            else {
+                const activeIdx = desktopIds.indexOf(_currentDesktopId);
+                const thisIdx = desktopIds.indexOf(id);
+                if (thisIdx < activeIdx) positionClass = 'ws-desktop--left';
+            }
+
+            const layoutClass = isActive ? `ws-${_currentLayout}` : '';
+            return `
+            <div class="ws-desktop ${positionClass} ${layoutClass}" data-desktop-id="${id}">
+                ${isActive && cardIds.length === 0 ? _renderEmptyState() : ''}
+            </div>`;
+        }).join('');
+
+        // 使用 CardManager 渲染卡片（如果有卡片）
+        if (cardIds.length > 0) {
+            const activeContainer = _getActiveDesktopContainer();
+            if (activeContainer) {
+                CardManager.renderDesktop(_currentDesktopId, activeContainer, _currentLayout);
+            }
+        }
+    }
+
+    function _renderTabs() {
+        const tabsContainer = _container.querySelector('.ws-tabs');
+        if (tabsContainer) {
+            tabsContainer.outerHTML = _renderDesktopTabs();
+        }
     }
 
     // ── Setup / Teardown ──────────────────────────────────
@@ -261,50 +234,58 @@ const WorkspacePage = (() => {
         _container.addEventListener('click', _handleAction);
 
         // 监听桌面切换
-        const id1 = Bus.on('ws:desktop:switched', () => _render());
-        const id2 = Bus.on('ws:desktop:created', () => _render());
-        const id3 = Bus.on('ws:desktop:deleted', () => _render());
-        const id4 = Bus.on('ws:desktop:renamed', () => _renderTabs());
-        const id5 = Bus.on('ws:desktop:layout-changed', ({ layout }) => {
-            _currentLayout = layout;
-            _render();
+        const id1 = Bus.on('ws:desktop:switched', ({ desktopId }) => {
+            _currentDesktopId = desktopId;
+            _currentLayout = StateManager.getDesktopLayout(desktopId) || 'grid';
+            LayoutSwitcher.setActive(_currentLayout);
+            _renderActiveDesktop();
+            _renderTabs();
         });
 
+        const id2 = Bus.on('ws:desktop:created', () => {
+            _renderActiveDesktop();
+            _renderTabs();
+        });
+
+        const id3 = Bus.on('ws:desktop:deleted', () => {
+            _currentDesktopId = StateManager.getActiveDesktopId();
+            _renderActiveDesktop();
+            _renderTabs();
+        });
+
+        const id4 = Bus.on('ws:desktop:renamed', () => _renderTabs());
+
         // 监听卡片变化
-        const id6 = Bus.on('ws:card:created', () => _render());
-        const id7 = Bus.on('ws:card:deleted', () => _render());
-        const id8 = Bus.on('ws:card:updated', () => _render());
+        const id5 = Bus.on('ws:card:created', () => _renderActiveDesktop());
+        const id6 = Bus.on('ws:card:deleted', () => _renderActiveDesktop());
 
         // 监听编辑模式
-        const id9 = Bus.on('ws:edit:enter', () => _toggleEditMode(true));
-        const id10 = Bus.on('ws:edit:exit', () => _toggleEditMode(false));
+        const id7 = Bus.on('ws:edit:enter', () => _toggleEditMode(true));
+        const id8 = Bus.on('ws:edit:exit', () => _toggleEditMode(false));
+
+        // 监听 z-index 变化
+        const id9 = Bus.on('ws:zindex:changed', ({ cardId, z }) => {
+            CardWidget.updateZIndex(cardId, z);
+        });
 
         _busCleanupFns = [
             () => Bus.off('ws:desktop:switched', id1),
             () => Bus.off('ws:desktop:created', id2),
             () => Bus.off('ws:desktop:deleted', id3),
             () => Bus.off('ws:desktop:renamed', id4),
-            () => Bus.off('ws:desktop:layout-changed', id5),
-            () => Bus.off('ws:card:created', id6),
-            () => Bus.off('ws:card:deleted', id7),
-            () => Bus.off('ws:card:updated', id8),
-            () => Bus.off('ws:edit:enter', id9),
-            () => Bus.off('ws:edit:exit', id10)
+            () => Bus.off('ws:card:created', id5),
+            () => Bus.off('ws:card:deleted', id6),
+            () => Bus.off('ws:edit:enter', id7),
+            () => Bus.off('ws:edit:exit', id8),
+            () => Bus.off('ws:zindex:changed', id9)
         ];
     }
 
     function _toggleEditMode(isEditing) {
         if (!_container) return;
-        const cards = _container.querySelectorAll('.ws-card');
-        cards.forEach(card => {
-            card.classList.toggle('ws-card--editing', isEditing);
-        });
-    }
-
-    function _renderTabs() {
-        const tabsContainer = _container.querySelector('.ws-tabs');
-        if (tabsContainer) {
-            tabsContainer.outerHTML = _renderDesktopTabs();
+        const cardIds = StateManager.getCardIds(_currentDesktopId);
+        for (const cardId of cardIds) {
+            CardWidget.setEditMode(cardId, isEditing);
         }
     }
 
@@ -318,56 +299,63 @@ const WorkspacePage = (() => {
         if (!_container) return;
 
         _destroyed = false;
-        _currentLayout = StateManager.getDesktopLayout(StateManager.getActiveDesktopId()) || 'grid';
+        _currentDesktopId = StateManager.getActiveDesktopId();
+        _currentLayout = StateManager.getDesktopLayout(_currentDesktopId) || 'grid';
+
+        // 初始化 ZIndexManager
+        ZIndexManager.init();
 
         _container.innerHTML = `
         <div class="ws-workspace" data-action="workspace">
-            ${_renderLayoutSwitcher()}
+            ${LayoutSwitcher.render(_currentLayout)}
             <div class="ws-desktops" data-action="desktops">
-                ${_renderDesktops()}
+                ${_renderActiveDesktopHTML()}
             </div>
             ${_renderDesktopTabs()}
         </div>`;
 
+        // 初始化 CardManager（绑定拖拽/缩放到容器）
+        const activeContainer = _getActiveDesktopContainer();
+        if (activeContainer) {
+            CardManager.init(activeContainer);
+        }
+
+        // 使用 CardManager 渲染卡片
+        const cardIds = StateManager.getCardIds(_currentDesktopId);
+        if (cardIds.length > 0 && activeContainer) {
+            CardManager.renderDesktop(_currentDesktopId, activeContainer, _currentLayout);
+        }
+
         _setupListeners();
-        Logger.info('[WorkspacePage] Rendered');
+        Logger.info('[WorkspacePage] Rendered (P1)');
     }
 
-    /**
-     * 重新渲染（内部使用）
-     */
-    function _render() {
-        if (_destroyed || !_container) return;
+    function _renderActiveDesktopHTML() {
+        const desktopIds = StateManager.getDesktopIds();
+        const cardIds = StateManager.getCardIds(_currentDesktopId);
 
-        const workspaceEl = _container.querySelector('.ws-workspace');
-        if (!workspaceEl) return;
+        return desktopIds.map(id => {
+            const isActive = id === _currentDesktopId;
+            let positionClass = 'ws-desktop--right';
+            if (isActive) positionClass = 'ws-desktop--active';
+            else {
+                const activeIdx = desktopIds.indexOf(_currentDesktopId);
+                const thisIdx = desktopIds.indexOf(id);
+                if (thisIdx < activeIdx) positionClass = 'ws-desktop--left';
+            }
 
-        // 更新布局切换器
-        const switcher = workspaceEl.querySelector('.ws-layout-switcher');
-        if (switcher) {
-            switcher.outerHTML = _renderLayoutSwitcher();
-        }
-
-        // 更新桌面内容
-        const desktopsEl = workspaceEl.querySelector('.ws-desktops');
-        if (desktopsEl) {
-            desktopsEl.innerHTML = _renderDesktops();
-        }
-
-        // 更新标签
-        _renderTabs();
-
-        // 更新编辑模式状态
-        const isEditing = Store.get('workspace.config.editMode');
-        if (isEditing) _toggleEditMode(true);
+            const layoutClass = isActive ? `ws-${_currentLayout}` : '';
+            return `
+            <div class="ws-desktop ${positionClass} ${layoutClass}" data-desktop-id="${id}">
+                ${isActive && cardIds.length === 0 ? _renderEmptyState() : ''}
+            </div>`;
+        }).join('');
     }
 
     /**
      * 处理 SSE 事件
      */
     function onSSEEvent(event, data) {
-        // DataService 会自动处理缓存失效和数据刷新
-        // 这里只处理需要页面级别响应的事件
         Logger.debug('[WorkspacePage] SSE event:', event);
     }
 
@@ -382,6 +370,12 @@ const WorkspacePage = (() => {
             cleanup();
         }
         _busCleanupFns = [];
+
+        // 清理 CardManager
+        CardManager.destroy();
+
+        // 清理 ZIndexManager
+        ZIndexManager.destroy();
 
         // 清理事件监听
         if (_container) {
