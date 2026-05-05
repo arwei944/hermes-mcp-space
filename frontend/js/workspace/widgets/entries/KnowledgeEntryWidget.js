@@ -55,7 +55,7 @@ const KnowledgeEntryWidget = (() => {
     WidgetRegistry.register('knowledge-entry', {
         type: 'entry',
         label: '知识库入口',
-        icon: '📖',
+        icon: 'bookOpen',
         description: '知识库快速入口，显示知识总数',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
