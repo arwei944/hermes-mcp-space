@@ -201,10 +201,66 @@ const CardStore = (() => {
         // 不自动关闭，允许连续添加
     }
 
+    /**
+     * 渲染"添加卡片"触发按钮到指定容器
+     * @param {HTMLElement} container - 目标容器
+     */
+    function renderTrigger(container) {
+        if (!container) return;
+
+        // 注入样式（仅一次）
+        if (!document.getElementById('ws-store-trigger-style')) {
+            var style = document.createElement('style');
+            style.id = 'ws-store-trigger-style';
+            style.textContent = \`
+                .ws-store-trigger {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    background: var(--surface-hover, rgba(0,0,0,0.04));
+                    border: 1.5px dashed var(--border, rgba(0,0,0,0.12));
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    color: var(--text-tertiary, #999);
+                    font-size: 20px;
+                    line-height: 1;
+                    user-select: none;
+                }
+                .ws-store-trigger:hover {
+                    background: var(--accent, #0071e3);
+                    border-color: var(--accent, #0071e3);
+                    color: #fff;
+                    transform: scale(1.05);
+                    box-shadow: 0 2px 12px rgba(0,113,227,0.3);
+                }
+                .ws-store-trigger:active {
+                    transform: scale(0.95);
+                }
+            \`;
+            document.head.appendChild(style);
+        }
+
+        // 创建按钮
+        var btn = document.createElement('div');
+        btn.className = 'ws-store-trigger';
+        btn.setAttribute('data-action', 'card-store-open');
+        btn.setAttribute('title', '添加卡片');
+        btn.textContent = '+';
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            open();
+        });
+        container.appendChild(btn);
+    }
+
     return {
         open,
         close,
-        isOpen
+        isOpen,
+        renderTrigger
     };
 })();
 
