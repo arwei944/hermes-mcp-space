@@ -85,6 +85,30 @@ class MCPClientService:
             "tools_count": tools_count,
         }
 
+    def add_server_no_discover(self, name: str, url: str, prefix: str = "") -> Dict[str, Any]:
+        """添加外部 MCP 服务器（不发现工具，用于批量添加场景）"""
+        if not name or not url:
+            return {"success": False, "message": "名称和 URL 不能为空"}
+        if name in self._servers:
+            return {"success": False, "message": f"服务器 '{name}' 已存在"}
+
+        prefix = prefix or f"mcp_{name}_"
+        self._servers[name] = {
+            "url": url,
+            "tools": [],
+            "status": "pending",
+            "last_check": None,
+            "prefix": prefix,
+        }
+        self._save_config()
+        self._rebuild_tools_cache()
+        return {
+            "success": True,
+            "message": f"服务器 '{name}' 已添加（工具发现中）",
+            "server": name,
+            "tools_count": 0,
+        }
+
     def remove_server(self, name: str) -> Dict[str, Any]:
         """移除外部 MCP 服务器"""
         if name not in self._servers:
@@ -170,7 +194,7 @@ class MCPClientService:
             logger.warning(f"MCP 服务器 '{server_name}' 连接失败: {e}")
             return 0
 
-    def _mcp_request(self, url: str, payload: dict, session_id: str = "", timeout: int = 15) -> dict:
+    def _mcp_request(self, url: str, payload: dict, session_id: str = "", timeout: int = 30) -> dict:
         """发送 MCP JSON-RPC 请求，自动处理 SSE 响应格式"""
         headers = {
             "Content-Type": "application/json",

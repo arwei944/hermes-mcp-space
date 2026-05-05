@@ -227,22 +227,44 @@ async def discover_mcp_services(
 
 @router.post("/discover/add", summary="批量添加发现的 MCP 服务")
 async def add_discovered_services(body: Dict[str, Any]) -> Dict[str, Any]:
-    """批量添加扫描到的 MCP 服务"""
+    """批量添加扫描到的 MCP 服务（并行发现工具，避免超时）"""
     from backend.services.mcp_client_service import mcp_client_service
-    
+
     servers = body.get("servers", [])
     results = []
-    
+
+    # 第一阶段：快速添加所有服务器（不发现工具，避免阻塞）
     for server in servers:
         try:
             name = server.get("name", "")
             url = server.get("url", "")
             prefix = server.get("prefix", "")
-            result = mcp_client_service.add_server(name, url, prefix)
+            # 直接写入配置，跳过工具发现
+            result = mcp_client_service.add_server_no_discover(name, url, prefix)
             results.append({"name": name, "success": True, "detail": result})
         except Exception as e:
             results.append({"name": server.get("name", ""), "success": False, "detail": str(e)})
-    
+
+    # 第二阶段：异步并行发现所有工具
+    import asyncio
+    async def discover_async(srv):
+        name = srv.get("name", "")
+        try:
+            loop = asyncio.get_event_loop()
+            count = await loop.run_in_executor(None, mcp_client_service._discover_tools, name)
+            return {"name": name, "tools": count}
+        except Exception as e:
+            return {"name": name, "tools": 0, "error": str(e)}
+
+    if servers:
+        discover_results = await asyncio.gather(*[discover_async(s) for s in servers], return_exceptions=True)
+        for dr in discover_results:
+            if isinstance(dr, Exception):
+                continue
+            for r in results:
+                if r["name"] == dr.get("name"):
+                    r["detail"]["tools_discovered"] = dr.get("tools", 0)
+
     success_count = sum(1 for r in results if r["success"])
     return {"added": success_count, "total": len(results), "results": results}
 
