@@ -1116,7 +1116,7 @@ var OpsCard = (() => {
     WidgetRegistry.register('ops-card', {
         type: 'stat',
         label: '运维中心',
-        icon: '📊',
+        icon: 'chart',
         description: '系统监控、MCP健康状态、告警管理',
         defaultSize: { w: 2, h: 1 },
         category: 'stats',
@@ -1126,7 +1126,7 @@ var OpsCard = (() => {
     WidgetRegistry.register('ops-entry', {
         type: 'entry',
         label: '运维中心入口',
-        icon: '📊',
+        icon: 'chart',
         description: '运维中心快速入口',
         defaultSize: { w: 1, h: 1 },
         category: 'entries',
