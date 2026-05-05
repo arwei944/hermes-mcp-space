@@ -426,7 +426,7 @@
     WidgetRegistry.register('logs-card', {
       type: 'data',
       label: '系统日志',
-      icon: '\uD83D\uDCDD',
+      icon: 'fileText',
       defaultSize: { w: 2, h: 1 },
       category: 'data',
       mount: mount
@@ -434,7 +434,7 @@
     WidgetRegistry.register('logs-entry', {
       type: 'entry',
       label: '日志入口',
-      icon: '\uD83D\uDCDD',
+      icon: 'fileText',
       defaultSize: { w: 1, h: 1 },
       category: 'entries',
       mount: mountEntry
