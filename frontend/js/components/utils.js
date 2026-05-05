@@ -12,36 +12,40 @@ function _formatTime(dateStr) {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
-    // 转换为北京时间 UTC+8
-    const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-    const bj = new Date(utc + 8 * 3600000);
+    // 后端已统一使用北京时间，前端直接按北京时间显示
+    const options = { timeZone: 'Asia/Shanghai', hour12: false };
+    const timeStr = date.toLocaleTimeString('zh-CN', { ...options, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const now = new Date();
-    const nowUtc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const nowBj = new Date(nowUtc + 8 * 3600000);
-    const pad = (n) => String(n).padStart(2, '0');
-    const time = `${pad(bj.getHours())}:${pad(bj.getMinutes())}:${pad(bj.getSeconds())}`;
-    // 今天（北京时间）
-    if (bj.toDateString() === nowBj.toDateString()) return time;
-    // 昨天（北京时间）
-    const yesterdayBj = new Date(nowBj);
-    yesterdayBj.setDate(yesterdayBj.getDate() - 1);
-    if (bj.toDateString() === yesterdayBj.toDateString())
-        return `昨天 ${pad(bj.getHours())}:${pad(bj.getMinutes())}`;
+    const todayStr = now.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    const dateStr2 = date.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    // 今天
+    if (dateStr2 === todayStr) return timeStr;
+    // 昨天
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+    if (dateStr2 === yesterdayStr) {
+        const hmStr = date.toLocaleTimeString('zh-CN', { ...options, hour: '2-digit', minute: '2-digit' });
+        return `昨天 ${hmStr}`;
+    }
     // 更早
-    return `${bj.getFullYear()}-${pad(bj.getMonth() + 1)}-${pad(bj.getDate())} ${pad(bj.getHours())}:${pad(bj.getMinutes())}`;
+    return date.toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' })
+        + ' ' + date.toLocaleTimeString('zh-CN', { ...options, hour: '2-digit', minute: '2-digit' });
 }
 
 function _formatDateTime(dateStr) {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
-    return date.toLocaleDateString('zh-CN', {
+    return date.toLocaleString('zh-CN', {
+        timeZone: 'Asia/Shanghai',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
+        hour12: false,
     });
 }
 
